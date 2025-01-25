@@ -1,0 +1,6 @@
+DB1
+DB1-log
+*.sql
+.vs/
+bin/
+obj/
