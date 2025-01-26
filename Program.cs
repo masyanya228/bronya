@@ -15,6 +15,8 @@ using Bronya.Entities;
 
 public class Program
 {
+    private static LogService LogService;
+
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -75,16 +77,21 @@ public class Program
             RequestPath = "/Images"
         });
 
-        //new MigrateData();
+        AppDomain.CurrentDomain.ProcessExit += (s, e) => OnStop();
 
         app.Lifetime.ApplicationStarted.Register(OnStarted);
         app.Run();
     }
 
+    private static void OnStop()
+    {
+        LogService.Dispose();
+    }
+
     public static void OnStarted()
     {
-        LogService logService = new LogService();
-        new BronyaService(logService, new TGAPI(logService, "7434892034:AAHZlmmmNZlPdsPU1hye-JcKqYlzayb-VRI"));
+        LogService = new LogService();
+        new BronyaService(LogService, new TGAPI(LogService, "7434892034:AAHZlmmmNZlPdsPU1hye-JcKqYlzayb-VRI"));
 
         Container.GetDomainService<WorkSchedule>().Save(new WorkSchedule()
         {

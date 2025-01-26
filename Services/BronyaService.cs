@@ -28,7 +28,7 @@ namespace vkteams.Services
                 GetContactsForMenu(),
                 messageId,
                 new InlineKeyboardConstructor()
-                    .AddButtonDown("Бронь", "/book")
+                    .AddButtonDown("Бронь", "/mybooklist")
                     .AddButtonDown("Правила", $"/rules")
                     .AddButtonDown("Меню", $"/barmenu")
                     .AddButtonDown("Соц. сети", $"/socmedia"));
@@ -75,16 +75,12 @@ namespace vkteams.Services
         [TGPointer("book")]
         private string Book(Account acc, long chatId, int messageId = 0)
         {
-            if (new BookService().GetMyActualBook(acc).Any())
-            {
-                return MyBook(acc, chatId, messageId);
-            }
             return TGAPI.SendOrEdit(chatId,
                 $"{GetContactsForMenu()}",
                 messageId,
                 new InlineKeyboardConstructor()
                     .AddTableButtons()
-                    .AddButtonDown("Назад", $"/menu"));
+                    .AddButtonDown("Назад", $"/mybooklist"));
         }
 
         [TGPointer("table")]
@@ -94,7 +90,7 @@ namespace vkteams.Services
             acc.SelectedTable = table;
             AccountService.AccountDS.Save(acc);
 
-            DateTime[] avalableTimes = new BookService().GetAvailableTimes(table);
+            DateTime[] avalableTimes = new BookService().GetAvailableTimesForBook(table);
             if(!avalableTimes.Any())
             {
                 return TGAPI.SendOrEdit(chatId,
@@ -146,7 +142,7 @@ namespace vkteams.Services
                 return Book(acc, chatId, messageId);
             }
 
-            if (!new BookService().GetAvailableTimes(acc.SelectedTable).Contains(acc.SelectedTime))
+            if (!new BookService().GetAvailableTimesForBook(acc.SelectedTable).Contains(acc.SelectedTime))
             {
                 return TGAPI.SendOrEdit(chatId,
                     $"{GetContactsForMenu()}" +
@@ -163,22 +159,17 @@ namespace vkteams.Services
                 Account = acc,
                 ActualBookStartTime = acc.SelectedTime,
                 Table = acc.SelectedTable,
-                BookEndTime = acc.SelectedTime.AddHours(2),
+                BookLength = new BookService().GetCurrentSmena().Schedule.MinPeriod,
                 SeatAmount = places,
             };
             BookDS.Save(newBook);
 
-            return MyBook(acc, chatId, messageId);
+            return MyBook(newBook, chatId, messageId);
         }
 
         [TGPointer("mybook")]
-        private string MyBook(Account acc, long chatId, int messageId)
+        private string MyBook(Book book, long chatId, int messageId)
         {
-            var book = new BookService()
-                .GetMyActualBook(acc)
-                .OrderBy(x => x.ActualBookStartTime)
-                .FirstOrDefault();
-
             if (book is null)
             {
                 return Com_Menu(chatId, messageId);
@@ -191,8 +182,129 @@ namespace vkteams.Services
                 $"\r\n Гостей: {book.SeatAmount}*",
                 messageId,
                 new InlineKeyboardConstructor()
-                    .AddButtonDown("Отменить бронь", $"/try_cancel_book")
-                    .AddButtonDown("Перенести на 20 минут", $"/try_move_book")
+                    .AddButtonDownIf(() => new BookService().CanMove(book), "Перенести на 20 минут", $"/try_move_book/{book.Id}")
+                    .AddButtonDown("Отменить бронь", $"/try_cancel_book/{book.Id}")
+                    .AddButtonDown("Назад", $"/mybooklist"));
+        }
+
+        [TGPointer("try_cancel_book")]
+        private string TryCancelBook(Book book, long chatId, int messageId)
+        {
+            if (book is null)
+            {
+                return Com_Menu(chatId, messageId);
+            }
+
+            if (!new BookService().CanCancel(book))
+            {
+                return TGAPI.SendOrEdit(chatId,
+                    $"{GetContactsForMenu()}" +
+                    $"\r\n\r\n *Бронь не получится отменить*",
+                    messageId,
+                    new InlineKeyboardConstructor()
+                        .AddButtonDown("Назад", $"/mybooklist"));
+            }
+            return TGAPI.SendOrEdit(chatId,
+                $"{GetContactsForMenu()}" +
+                $"\r\n\r\n Отменить бронь на {book.ActualBookStartTime:dd.MM HH:mm}?",
+                messageId,
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("Отменить", $"/cancel_book/{book.Id}")
+                    .AddButtonDown("Назад", $"/mybook/{book.Id}"));
+        }
+
+        [TGPointer("cancel_book")]
+        private string CancelBook(Book book, long chatId, int messageId)
+        {
+            if (book is null)
+            {
+                return Com_Menu(chatId, messageId);
+            }
+
+            if (new BookService().Cancel(book))
+            {
+                return MyBookList(book.Account, chatId, messageId);
+            }
+            else
+            {
+                return TGAPI.SendOrEdit(chatId,
+                    $"{GetContactsForMenu()}" +
+                    $"\r\n\r\n *Бронь не получилось перенести*",
+                    messageId,
+                    new InlineKeyboardConstructor()
+                        .AddButtonDown("Назад", $"/mybook/{book.Id}"));
+            }
+        }
+        
+        [TGPointer("try_move_book")]
+        private string TryMoveBook(Book book, long chatId, int messageId)
+        {
+            if (book is null)
+            {
+                return Com_Menu(chatId, messageId);
+            }
+
+            if (!new BookService().CanMove(book))
+            {
+                return TGAPI.SendOrEdit(chatId,
+                    $"{GetContactsForMenu()}" +
+                    $"\r\n\r\n *Бронь не получится перенести*",
+                    messageId,
+                    new InlineKeyboardConstructor()
+                        .AddButtonDown("Назад", $"/mybook/{book.Id}"));
+            }
+            var newTime = new BookService().GetTimeAfterMove(book);
+            return TGAPI.SendOrEdit(chatId,
+                $"{GetContactsForMenu()}" +
+                $"\r\n\r\n Перенести бронь на {newTime:dd.MM HH:mm}?",
+                messageId,
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("Перенести", $"/move_book/{book.Id}")
+                    .AddButtonDown("Назад", $"/mybook/{book.Id}"));
+        }
+
+        [TGPointer("move_book")]
+        private string MoveBook(Book book, long chatId, int messageId)
+        {
+            if (book is null)
+            {
+                return Com_Menu(chatId, messageId);
+            }
+
+            if (new BookService().Move(book))
+            {
+                return MyBook(book, chatId, messageId);
+            }
+            else
+            {
+                return TGAPI.SendOrEdit(chatId,
+                    $"{GetContactsForMenu()}" +
+                    $"\r\n\r\n *Бронь не получилось перенести*",
+                    messageId,
+                    new InlineKeyboardConstructor()
+                        .AddButtonDown("Назад", $"/mybook/{book.Id}"));
+            }
+        }
+
+        [TGPointer("mybooklist")]
+        private string MyBookList(Account acc, long chatId, int messageId)
+        {
+            var books = new BookService()
+                .GetMyActualBook(acc)
+                .OrderBy(x => x.ActualBookStartTime)
+                .ToArray();
+            if (!books.Any())
+            {
+                return Book(acc, chatId, messageId);
+            }
+
+            return TGAPI.SendOrEdit(chatId,
+                $"{GetContactsForMenu()}" +
+                $"\r\n\r\n Ваши брони:",
+                messageId,
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("+Новая бронь", $"/book")
+                    .AddBooks(books)
                     .AddButtonDown("Назад", $"/menu"));
         }
 

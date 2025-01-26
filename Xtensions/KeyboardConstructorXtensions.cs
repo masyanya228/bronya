@@ -27,7 +27,7 @@ namespace Buratino.Xtensions
             int tablesInRow = 3;
             foreach (var table in tables)
             {
-                bool isBusy = !bookService.GetAvailableTimes(table).Any();
+                bool isBusy = !bookService.GetAvailableTimesForBook(table).Any();
                 var btnTitle = isBusy
                     ? $"🔒 {table.Name}"
                     : $"{table.Name}";
@@ -72,6 +72,20 @@ namespace Buratino.Xtensions
                 constructor.AddButtonDown(i.ToString(), $"/places/{i}");
             }
             constructor.AddButtonDown($"{selectedTable.NormalSeatAmount}+", "/morethan");
+            return constructor;
+        }
+
+        public static InlineKeyboardConstructor AddBooks(this InlineKeyboardConstructor constructor, IEnumerable<Book> books)
+        {
+            if (books is null)
+            {
+                throw new ArgumentNullException(nameof(books));
+            }
+
+            foreach (var item in books)
+            {
+                constructor.AddButtonDown($"{item.ActualBookStartTime:dd.MM HH:mm} Стол: {item.Table.Name} Гостей:{item.SeatAmount}", $"/mybook/{item.Id}");
+            }
             return constructor;
         }
     }

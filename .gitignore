@@ -4,3 +4,4 @@ DB1-log
 .vs/
 bin/
 obj/
+logs/

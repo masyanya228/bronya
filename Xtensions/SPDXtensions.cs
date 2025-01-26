@@ -1,4 +1,7 @@
-﻿using Buratino.Entities.Abstractions;
+﻿using Bronya.Entities;
+
+using Buratino.DI;
+using Buratino.Entities.Abstractions;
 using Buratino.Helpers;
 
 using System.Reflection;
@@ -27,6 +30,10 @@ namespace Buratino.Xtensions
             }
             else if (target.IsAssignableTo(typeof(EntityBase)))
             {
+                if (target == typeof(Book))
+                {
+                    return Container.GetObjectDomainService(target).Get((Guid)str.StringValueCast(typeof(Guid)));
+                }
                 var entity = Activator.CreateInstance(target) as EntityBase;
                 if (Guid.TryParse(str, out Guid entityId))
                 {

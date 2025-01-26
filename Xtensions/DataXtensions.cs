@@ -594,7 +594,7 @@ namespace Buratino.Xtensions
                 WriteIndented = false
             };
 
-            var res = System.Text.Json.JsonSerializer.Serialize(inputData, options);
+            var res = JsonSerializer.Serialize(inputData, options);
             return res;
         }
         public static T Deserialize<T>(this string inputData)
@@ -607,7 +607,7 @@ namespace Buratino.Xtensions
             };
             try
             {
-                var res = System.Text.Json.JsonSerializer.Deserialize<T>(inputData, options);
+                var res = JsonSerializer.Deserialize<T>(inputData, options);
                 return res;
             }
             catch (Exception ex)

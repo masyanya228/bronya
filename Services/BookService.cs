@@ -1,4 +1,5 @@
-﻿using Bronya.Entities;
+﻿using Bronya.Dtos;
+using Bronya.Entities;
 
 using Buratino.DI;
 using Buratino.Entities;
@@ -13,9 +14,14 @@ namespace Bronya.Services
         public WorkScheduleService ScheduleService = new WorkScheduleService();
         public TimeService TimeService = new TimeService();
 
-        public DateTime[] GetAvailableTimes(Table table)
+        public DateTime[] GetAvailableTimesForBook(Table table)
         {
-            return GetAvailableTimes(table, TimeService.GetNow());
+            return GetAvailableTimesForBook(table, TimeService.GetNow());
+        }
+
+        public DateTime[] GetAvailableTimesForMove(Table table)
+        {
+            return GetAvailableTimesForMove(table, TimeService.GetNow());
         }
 
         /// <summary>
@@ -26,42 +32,121 @@ namespace Bronya.Services
         /// <returns></returns>
         public IEnumerable<Book> GetMyActualBook(Account account)
         {
-            return GetMyActualBook(account, TimeService.GetNow());
+            return GetMyActualBooks(account, TimeService.GetNow());
         }
 
-        private IEnumerable<Book> GetMyActualBook(Account account, DateTime now)
+        private IEnumerable<Book> GetMyActualBooks(Account account, DateTime now)
         {
-            var workSchedule = ScheduleService.GetWorkSchedule(now);
-            now = RoundTime(now);
-
-            DateTime smenaStart, smenaEnd;
-            GetCurrentSmena(now, workSchedule, out smenaStart, out smenaEnd);
-            var books = GetCurrentBooks(smenaStart, smenaEnd)
+            var smena = GetCurrentSmena(now);
+            var books = GetCurrentBooks(smena.SmenaStart, smena.SmenaEnd)
                 .Where(x => x.Account.Id == account.Id
-                    && x.TableClosed != default)
+                    && x.TableClosed == default)
                 .ToList();
             return books;
         }
 
-        private DateTime[] GetAvailableTimes(Table table, DateTime now)
+        public bool CanCancel(Book book)
         {
-            var workSchedule = ScheduleService.GetWorkSchedule(now);
-            return GetAvailableTimes(table, now, workSchedule);
+            return !book.IsCanceled && book.TableStarted == default && book.TableClosed == default;
         }
 
-        private DateTime[] GetAvailableTimes(Table table, DateTime now, WorkSchedule workSchedule)
+        public bool Cancel(Book book)
         {
-            List<DateTime> times = new();
-            now = RoundTime(now);//Временное решение, когда текущее время округляется до часов, в меньшую сторону. Переделать на округление с шагом step, в меньшую сторону
+            if (CanCancel(book))
+            {
+                book.IsCanceled = true;
+                BookDS.Save(book);
+                return true;
+            }
+            return false;
+        }
 
+        public bool CanMove(Book book)
+        {
+            var times = GetAvailableTimesForMove(book.Table);
+            var smena = GetCurrentSmena(TimeService.GetNow());
+            return times.Contains(book.BookEndTime.Add(smena.Schedule.Step));
+        }
+
+        public bool Move(Book book)
+        {
+            if (CanMove(book))
+            {
+                book.ActualBookStartTime = GetTimeAfterMove(book);
+                BookDS.Save(book);
+                return true;
+            }
+            return false;
+        }
+
+        public DateTime GetTimeAfterMove(Book book)
+        {
+            var smena = GetCurrentSmena(TimeService.GetNow());
+            return book.ActualBookStartTime.Add(smena.Schedule.Step);
+        }
+
+        public SmenaDto GetCurrentSmena()
+        {
+            DateTime now = TimeService.GetNow();
+            var workSchedule = ScheduleService.GetWorkSchedule(now);
+            now = RoundTime(now);
             DateTime smenaStart, smenaEnd;
             GetCurrentSmena(now, workSchedule, out smenaStart, out smenaEnd);
-            DateTime minStartTime = GetMinimumBookTime(now, smenaStart);
-            List<Book> books = GetCurrentBooks(table, smenaStart, smenaEnd);
-
-            for (var i = minStartTime; i <= smenaEnd.Subtract(workSchedule.MinPeriod); i = i.Add(workSchedule.Step))
+            return new SmenaDto()
             {
-                if (books.Any(x => i > x.ActualBookStartTime.AddHours(-2).Add(-workSchedule.Buffer) && i < x.BookEndTime.Add(workSchedule.Buffer)))
+                Schedule = workSchedule,
+                SmenaStart = smenaStart,
+                SmenaEnd = smenaEnd,
+                MinimumTimeToBook = GetMinimumBookTime(now, smenaStart),
+            };
+        }
+
+        private SmenaDto GetCurrentSmena(DateTime now)
+        {
+            var workSchedule = ScheduleService.GetWorkSchedule(now);
+            now = RoundTime(now);
+            DateTime smenaStart, smenaEnd;
+            GetCurrentSmena(now, workSchedule, out smenaStart, out smenaEnd);
+            return new SmenaDto()
+            {
+                Schedule = workSchedule,
+                SmenaStart = smenaStart,
+                SmenaEnd = smenaEnd,
+                MinimumTimeToBook = GetMinimumBookTime(now, smenaStart),
+            };
+        }
+
+        private DateTime[] GetAvailableTimesForBook(Table table, DateTime now)
+        {
+            List<DateTime> times = new();
+
+            var smena = GetCurrentSmena(now);
+            List<Book> books = GetCurrentBooks(table, smena.SmenaStart, smena.SmenaEnd);
+
+            for (var i = smena.MinimumTimeToBook; i <= smena.SmenaEnd.Subtract(smena.Schedule.MinPeriod); i = i.Add(smena.Schedule.Step))
+            {
+                if (books.Any(x => i > x.ActualBookStartTime.Add(-smena.Schedule.MinPeriod).Add(-smena.Schedule.Buffer) && i < x.BookEndTime.Add(smena.Schedule.Buffer)))
+                {
+                    continue;
+                }
+                else
+                {
+                    times.Add(i);
+                }
+            }
+            return times.ToArray();
+        }
+
+        private DateTime[] GetAvailableTimesForMove(Table table, DateTime now)
+        {
+            List<DateTime> times = new();
+
+            var smena = GetCurrentSmena(now);
+            List<Book> books = GetCurrentBooks(table, smena.SmenaStart, smena.SmenaEnd);
+
+            for (var i = smena.MinimumTimeToBook; i <= smena.SmenaEnd; i = i.Add(smena.Schedule.Step))
+            {
+                if (books.Any(x => i > x.ActualBookStartTime.Add(-smena.Schedule.Buffer) && i < x.BookEndTime.Add(smena.Schedule.Buffer)))
                 {
                     continue;
                 }
@@ -94,8 +179,10 @@ namespace Bronya.Services
         private List<Book> GetCurrentBooks(DateTime smenaStart, DateTime smenaEnd)
         {
             return BookDS.GetAll()
-                .Where(x => x.ActualBookStartTime >= smenaStart && x.BookEndTime <= smenaEnd
+                .Where(x => x.ActualBookStartTime >= smenaStart
                     && !x.IsCanceled)
+                .ToList()
+                .Where(x => x.ActualBookStartTime + x.BookLength <= smenaEnd)
                 .ToList();
         }
 

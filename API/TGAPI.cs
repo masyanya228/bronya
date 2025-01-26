@@ -1,4 +1,6 @@
-﻿using Buratino.Helpers;
+﻿using Bronya.Xtensions;
+
+using Buratino.Helpers;
 using Buratino.Xtensions;
 
 using Telegram.Bot;
@@ -39,26 +41,39 @@ namespace Buratino.API
             try
             {
                 UpdateEvent.Invoke(this, update);
-                //return OnUpdateWrapper(update);
             }
             catch (Exception e)
             {
-                var chat = update.Message?.Chat?.Id ?? update.CallbackQuery?.Message?.Chat?.Id ?? 0;
-                if (chat > 0)
-                    botClient.SendOrUpdateMessage(chat, $"{e.Message}");
+                logService.Log(e);
+                string sumText = e.CollectMessagesFromException();
+                if (sumText.Contains("message is not modified"))
+                {
+                    if (update.Type == UpdateType.CallbackQuery)
+                    {
+                        var cqId = update.CallbackQuery.Id;
+                        botClient.AnswerCallbackQueryAsync(cqId, "Помедленнее");
+                    }
+                }
+                else
+                {
+                    if (update.Type == UpdateType.Message)
+                    {
+                        var chat = update.Message.Chat.Id;
+                        botClient.SendOrUpdateMessage(chat, $"{e.Message}");
+                    }
+                    else if (update.Type == UpdateType.CallbackQuery)
+                    {
+                        var chat = update.CallbackQuery.Message.Chat.Id;
+                        botClient.SendOrUpdateMessage(chat, $"{e.Message}");
+                    }
+                }
             }
             return Task.CompletedTask;
         }
 
         private Task HandlePollingError(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
-            var ErrorMessage = exception switch
-            {
-                ApiRequestException apiRequestException
-                    => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
-                _ => exception.ToString()
-            };
-            Console.WriteLine(ErrorMessage);
+            logService.Log(exception);
             return Task.CompletedTask;
         }
 

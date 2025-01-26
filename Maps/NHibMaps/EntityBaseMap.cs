@@ -15,6 +15,7 @@ public class EntityBaseMap : NHClassMap<EntityBase>
         Map(x => x.TimeStamp)
             .Default("now()");
 
-        References(x => x.Account);
+        References(x => x.Account)
+            .Not.LazyLoad();
     }
 }

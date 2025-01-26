@@ -16,9 +16,20 @@ namespace Bronya.Entities
         public virtual DateTime TableStarted { get; set; }
 
         /// <summary>
+        /// Продолжительность брони
+        /// </summary>
+        public virtual TimeSpan BookLength { get; set; }
+
+        /// <summary>
         /// Бронь кончается
         /// </summary>
-        public virtual DateTime BookEndTime { get; set; }
+        public virtual DateTime BookEndTime
+        {
+            get
+            {
+                return ActualBookStartTime.Add(BookLength);
+            }
+        }
         
         /// <summary>
         /// Время расчета стола

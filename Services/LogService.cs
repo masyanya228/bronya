@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using Bronya.Xtensions;
+
+using System.Text;
 
 namespace vkteams.Services
 {
@@ -7,16 +9,16 @@ namespace vkteams.Services
     /// </summary>
     public class LogService : IDisposable
     {
-        public StreamWriter LogWriter { get; set; } = new StreamWriter($"logs/log_{DateTime.Now:g}.txt", Encoding.UTF8, new FileStreamOptions()
+        public StreamWriter LogWriter { get; set; } = new StreamWriter($"logs/log_{DateTime.Now:d HH}.txt", Encoding.UTF8, new FileStreamOptions()
         {
             Access = FileAccess.Write,
-            Share = FileShare.Write,
+            Share = FileShare.Read,
             Mode = FileMode.Append,
-            Options = FileOptions.Asynchronous,
         });
 
         public void Dispose()
         {
+            LogWriter.Close();
             LogWriter.Dispose();
         }
 
@@ -32,7 +34,7 @@ namespace vkteams.Services
 
         public void Log(Exception exception)
         {
-            Log(exception.Message +
+            Log(exception.CollectMessagesFromException() +
                 "\r\n\r\n[Stack trace]:" +
                 $"\r\n{exception.StackTrace}");
         }
