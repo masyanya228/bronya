@@ -4,7 +4,6 @@ using Buratino.Helpers;
 using Buratino.Xtensions;
 
 using Telegram.Bot;
-using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 

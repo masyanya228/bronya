@@ -17,7 +17,7 @@ namespace vkteams.Services
     {
         public IDomainService<Table> TableDS { get; set; } = Container.GetDomainService<Table>();
         public IDomainService<Book> BookDS { get; set; } = Container.GetDomainService<Book>();
-        public BronyaService(LogService logService, TGAPI tgAPI) : base(logService, tgAPI)
+        public BronyaService(LogService logService, TGAPI tGAPI) : base(logService, tGAPI)
         {
         }
 
@@ -304,7 +304,7 @@ namespace vkteams.Services
                 messageId,
                 new InlineKeyboardConstructor()
                     .AddButtonDown("+Новая бронь", $"/book")
-                    .AddBooks(books)
+                    .AddBooksButtons(books)
                     .AddButtonDown("Назад", $"/menu"));
         }
 

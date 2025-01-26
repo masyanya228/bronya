@@ -20,6 +20,11 @@ namespace Buratino.Xtensions
                 ? constructor.AddButtonRight(title, callbackQuery)
         : constructor;
 
+        /// <summary>
+        /// Отображение столов для гостя
+        /// </summary>
+        /// <param name="constructor"></param>
+        /// <returns></returns>
         public static InlineKeyboardConstructor AddTableButtons(this InlineKeyboardConstructor constructor)
         {
             var tables = Container.GetDomainService<Table>().GetAll().Where(x => x.IsBookAvailable).ToArray();
@@ -46,6 +51,12 @@ namespace Buratino.Xtensions
             return constructor;
         }
 
+        /// <summary>
+        /// Отображение времени для гостя
+        /// </summary>
+        /// <param name="constructor"></param>
+        /// <param name="avalableTimes"></param>
+        /// <returns></returns>
         public static InlineKeyboardConstructor AddTimeButtons(this InlineKeyboardConstructor constructor, DateTime[] avalableTimes)
         {
             DateTime prevTime = DateTime.MinValue;
@@ -60,6 +71,13 @@ namespace Buratino.Xtensions
             return constructor;
         }
 
+        /// <summary>
+        /// Отображение посадочных мест для гостя
+        /// </summary>
+        /// <param name="constructor"></param>
+        /// <param name="selectedTable"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public static InlineKeyboardConstructor AddPlacesButtons(this InlineKeyboardConstructor constructor, Table selectedTable)
         {
             if (selectedTable is null)
@@ -75,7 +93,14 @@ namespace Buratino.Xtensions
             return constructor;
         }
 
-        public static InlineKeyboardConstructor AddBooks(this InlineKeyboardConstructor constructor, IEnumerable<Book> books)
+        /// <summary>
+        /// Отображение броней для гостя
+        /// </summary>
+        /// <param name="constructor"></param>
+        /// <param name="books"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static InlineKeyboardConstructor AddBooksButtons(this InlineKeyboardConstructor constructor, IEnumerable<Book> books)
         {
             if (books is null)
             {
@@ -85,6 +110,34 @@ namespace Buratino.Xtensions
             foreach (var item in books)
             {
                 constructor.AddButtonDown($"{item.ActualBookStartTime:dd.MM HH:mm} Стол: {item.Table.Name} Гостей:{item.SeatAmount}", $"/mybook/{item.Id}");
+            }
+            return constructor;
+        }
+
+
+        public static InlineKeyboardConstructor AddHostesTableButtons(this InlineKeyboardConstructor constructor)
+        {
+            var tables = Container.GetDomainService<Table>().GetAll().Where(x => x.IsBookAvailable).ToArray();
+            int count = 0;
+            int tablesInRow = 3;
+            foreach (var table in tables)
+            {
+                var books = bookService.GetCurrentBooks(table);
+                bool isBusy = !bookService.GetAvailableTimesForBook(table).Any();
+                var btnTitle = isBusy
+                    ? $"🔒 {table.Name} ({books.Count})"
+                    : $"{table.Name} ({books.Count})";
+
+                if (count == tablesInRow)
+                {
+                    count = 0;
+                    constructor.AddButtonDown(btnTitle, $"/table/{table.Name}");
+                }
+                else
+                {
+                    constructor.AddButtonRight(btnTitle, $"/table/{table.Name}");
+                }
+                count++;
             }
             return constructor;
         }

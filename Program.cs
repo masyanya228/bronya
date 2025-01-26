@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.FileProviders;
 using vkteams.Services;
 using Bronya.Entities;
+using Bronya.Services;
 
 public class Program
 {
@@ -91,7 +92,7 @@ public class Program
     public static void OnStarted()
     {
         LogService = new LogService();
-        new BronyaService(LogService, new TGAPI(LogService, "7434892034:AAHZlmmmNZlPdsPU1hye-JcKqYlzayb-VRI"));
+        new AuthorizeService(LogService, new TGAPI(LogService, "7434892034:AAHZlmmmNZlPdsPU1hye-JcKqYlzayb-VRI"));
 
         Container.GetDomainService<WorkSchedule>().Save(new WorkSchedule()
         {
@@ -118,15 +119,6 @@ public class Program
         {
 
         }
-
-        Container.GetDomainService<RoleAccountLink>().CascadeSave(new RoleAccountLink()
-        {
-            Account = accounts.GetAll().First(),
-            Role = new Role()
-            {
-                Name = "Administrator"
-            }
-        });
 
         var list = Container.GetDomainService<RoleAccountLink>().GetAll();
     }

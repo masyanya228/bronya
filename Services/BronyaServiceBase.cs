@@ -13,7 +13,7 @@ using Telegram.Bot.Types.Enums;
 
 namespace vkteams.Services
 {
-    public class BronyaServiceBase
+    public class BronyaServiceBase : IBronyaServiceBase
     {
         public LogService LogService { get; }
         public TGAPI TGAPI { get; set; }
@@ -21,13 +21,11 @@ namespace vkteams.Services
         private IEnumerable<KeyValuePair<MethodInfo, TGPointerAttribute>> _availablePointers = null;
         protected AccountService AccountService;
 
-        public BronyaServiceBase(LogService logService, TGAPI tgAPI)
+        public BronyaServiceBase(LogService logService, TGAPI tGAPI)
         {
             LogService = logService;
             AccountService = new AccountService();
-            TGAPI = tgAPI;
-            TGAPI.UpdateEvent += OnUpdateWrapper;
-            tgAPI.Start();
+            TGAPI = tGAPI;
         }
 
         public IEnumerable<KeyValuePair<MethodInfo, TGPointerAttribute>> AvailablePointers
@@ -43,9 +41,8 @@ namespace vkteams.Services
             set => _availablePointers = value;
         }
 
-        private Task OnUpdateWrapper(object sender, Update update)
+        public Task OnUpdateWrapper(Update update, Account acc)
         {
-            var acc = AccountService.GetAccount(update);
             if (update.Type == UpdateType.Message)
             {
                 return ProcessMessage(acc, update);

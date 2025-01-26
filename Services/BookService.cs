@@ -170,19 +170,17 @@ namespace Bronya.Services
         }
 
         /// <summary>
-        /// Возвращает брони на текущую смену
+        /// Возвращает брони на текущую смену, на указанный стол
         /// </summary>
         /// <param name="table"></param>
         /// <param name="smenaStart"></param>
         /// <param name="smenaEnd"></param>
         /// <returns></returns>
-        private List<Book> GetCurrentBooks(DateTime smenaStart, DateTime smenaEnd)
+        public List<Book> GetCurrentBooks(Table table)
         {
-            return BookDS.GetAll()
-                .Where(x => x.ActualBookStartTime >= smenaStart
-                    && !x.IsCanceled)
-                .ToList()
-                .Where(x => x.ActualBookStartTime + x.BookLength <= smenaEnd)
+            var smena = GetCurrentSmena();
+            return GetCurrentBooks(smena.SmenaStart, smena.SmenaEnd)
+                .Where(x => x.Table.Id == table.Id)
                 .ToList();
         }
 
@@ -197,6 +195,23 @@ namespace Bronya.Services
         {
             return GetCurrentBooks(smenaStart, smenaEnd)
                 .Where(x => x.Table.Id == table.Id)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Возвращает брони на текущую смену
+        /// </summary>
+        /// <param name="table"></param>
+        /// <param name="smenaStart"></param>
+        /// <param name="smenaEnd"></param>
+        /// <returns></returns>
+        private List<Book> GetCurrentBooks(DateTime smenaStart, DateTime smenaEnd)
+        {
+            return BookDS.GetAll()
+                .Where(x => x.ActualBookStartTime >= smenaStart
+                    && !x.IsCanceled)
+                .ToList()
+                .Where(x => x.ActualBookStartTime + x.BookLength <= smenaEnd)
                 .ToList();
         }
 
