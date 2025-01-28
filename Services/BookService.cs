@@ -118,6 +118,8 @@ namespace Bronya.Services
 
         private DateTime[] GetAvailableTimesForBook(Table table, DateTime now)
         {
+            if (!table.IsBookAvailable)
+                return Array.Empty<DateTime>();
             List<DateTime> times = new();
 
             var smena = GetCurrentSmena(now);
@@ -211,7 +213,8 @@ namespace Bronya.Services
                 .Where(x => x.ActualBookStartTime >= smenaStart
                     && !x.IsCanceled)
                 .ToList()
-                .Where(x => x.ActualBookStartTime + x.BookLength <= smenaEnd)
+                .Where(x => x.BookEndTime <= smenaEnd)
+                .OrderBy(x => x.ActualBookStartTime)
                 .ToList();
         }
 
@@ -242,6 +245,22 @@ namespace Bronya.Services
                 smena = smena.AddDays(-1);
             smenaStart = smena.Add(workSchedule.Start);
             smenaEnd = smenaStart.Add(workSchedule.Length);
+        }
+
+        public DateTime[] GetAvailableTimesForBook()
+        {
+            IEnumerable<DateTime> allTimes = Array.Empty<DateTime>();
+            foreach (var table in TableDS.GetAll())
+            {
+                allTimes = allTimes.Union(GetAvailableTimesForBook(table));
+            }
+            return allTimes.OrderBy(x => x).ToArray();
+        }
+
+        public bool CanRepair(Book book)
+        {
+            var smena = GetCurrentSmena();
+            return smena.MinimumTimeToBook <= book.ActualBookStartTime;
         }
     }
 }

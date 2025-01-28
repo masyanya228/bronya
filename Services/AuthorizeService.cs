@@ -35,6 +35,7 @@ namespace Bronya.Services
         private Task OnUpdateWrapper(object sender, Update update)
         {
             var acc = AccountService.GetAccount(update);
+            var dataPackage = new DataPackage(acc, update);
             var roles = RoleDS.GetAll().Where(x => x.Account.Id == acc.Id).ToList();
             if (roles.Any(x=>x.Role.Name=="Administrator"))
             {
@@ -42,11 +43,11 @@ namespace Bronya.Services
             }
             else if (roles.Any(x => x.Role.Name == "Hostes"))
             {
-                return BronyaHostesService.OnUpdateWrapper(update, acc);
+                return BronyaHostesService.OnUpdateWrapper(dataPackage);
             }
             else
             {
-                return BronyaService.OnUpdateWrapper(update, acc);
+                return BronyaService.OnUpdateWrapper(dataPackage);
             }
         }
     }

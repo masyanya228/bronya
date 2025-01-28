@@ -1,6 +1,7 @@
 ﻿using Bronya.Entities;
 
 using Buratino.Entities.Abstractions;
+using Buratino.Enums;
 using Buratino.Models.Attributes;
 
 namespace Buratino.Entities
@@ -33,9 +34,31 @@ namespace Buratino.Entities
 
         public virtual DateTime SelectedTime { get; set; }
 
+        public virtual int SelectedPlaces { get; set; }
+
+        public virtual WaitingText Waiting { get; set; }
+
+        public virtual string GetNewBookState()
+        {
+            string state = "Новая бронь:";
+            if (SelectedTime != default)
+            {
+                state += $"\r\n⏱️Время: {SelectedTime:dd.MM HH:mm}";
+            }
+            if (SelectedTable != default)
+            {
+                state += $"\r\n🔲Стол: {SelectedTable.Name}";
+            }
+            if (SelectedPlaces != default)
+            {
+                state += $"\r\n👤Гостей: {SelectedPlaces}";
+            }
+            return state;
+        }
+
         public override string ToString()
         {
-            return $"{Name} {LastName} (@{TGTag})";
+            return $"{Name} {LastName}";
         }
     }
 }

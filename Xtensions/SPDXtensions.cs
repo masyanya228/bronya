@@ -30,20 +30,7 @@ namespace Buratino.Xtensions
             }
             else if (target.IsAssignableTo(typeof(EntityBase)))
             {
-                if (target == typeof(Book))
-                {
-                    return Container.GetObjectDomainService(target).Get((Guid)str.StringValueCast(typeof(Guid)));
-                }
-                var entity = Activator.CreateInstance(target) as EntityBase;
-                if (Guid.TryParse(str, out Guid entityId))
-                {
-                    entity.Id = entityId;
-                }
-                else
-                {
-                    return null;
-                }
-                return entity;
+                return Container.GetObjectDomainService(target).Get((Guid)str.StringValueCast(typeof(Guid)));
             }
             else if (target.IsEnum)
             {

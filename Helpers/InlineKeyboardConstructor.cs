@@ -2,7 +2,7 @@
 
 namespace Buratino.Helpers
 {
-    public class InlineKeyboardConstructor
+    public class InlineKeyboardConstructor : IReplyConstructor
     {
         public List<List<InlineKeyboardButton>> KeyboardButtons { get; set; } = new();
 
@@ -45,7 +45,7 @@ namespace Buratino.Helpers
             return this;
         }
 
-        public InlineKeyboardMarkup GetMarkup()
+        public IReplyMarkup GetMarkup()
         {
             foreach (var row in KeyboardButtons)
             {

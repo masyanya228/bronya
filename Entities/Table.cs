@@ -9,5 +9,10 @@ namespace Bronya.Entities
         public virtual bool HasConsole { get; set; }
         
         public virtual bool IsBookAvailable { get; set; }
+
+        /// <summary>
+        /// Порядковый номер стола
+        /// </summary>
+        public virtual int Number { get; set; }
     }
 }

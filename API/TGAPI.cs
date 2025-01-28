@@ -6,6 +6,7 @@ using Buratino.Xtensions;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 using vkteams.Services;
 
@@ -76,7 +77,7 @@ namespace Buratino.API
             return Task.CompletedTask;
         }
 
-        public string SendOrEdit(long chatId, string text, int msgId = default, InlineKeyboardConstructor inlineKeyboard = null, ParseMode? parseMode = ParseMode.Markdown)
+        public string SendOrEdit(long chatId, string text, int msgId = default, IReplyConstructor replyConstructor = null, ParseMode? parseMode = ParseMode.Markdown)
         {
             if (parseMode == ParseMode.MarkdownV2)
             {
@@ -88,20 +89,22 @@ namespace Buratino.API
                 }));
             }
             if (msgId == default)
-                return Send(chatId, text, parseMode, inlineKeyboard);
+                return Send(chatId, text, parseMode, replyConstructor);
             else
-                return Edit(chatId, msgId, text, parseMode, inlineKeyboard);
+                return Edit(chatId, msgId, text, parseMode, replyConstructor);
         }
 
-        private string Send(long chatId, string text, ParseMode? parseMode, InlineKeyboardConstructor inlineKeyboard = null)
+        private string Send(long chatId, string text, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
         {
-            return client.SendTextMessageAsync(chatId, text, parseMode, null, null, null, null, null, null, inlineKeyboard?.GetMarkup())
+            return client.SendTextMessageAsync(chatId, text, parseMode, null, null, null, null, null, null, replyConstructor?.GetMarkup())
                 .GetAwaiter().GetResult().MessageId.ToString();
         }
 
-        private string Edit(long chatId, int messageId, string text, ParseMode? parseMode, InlineKeyboardConstructor inlineKeyboard = null)
+        private string Edit(long chatId, int messageId, string text, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
         {
-            return client.EditMessageTextAsync(chatId, messageId, text, parseMode, null, null, inlineKeyboard?.GetMarkup())
+            if (!(replyConstructor is InlineKeyboardConstructor inlineKeyboardConstructor))
+                throw new InvalidOperationException("Нельзя передать кнопки сообщения. Нужно передать кнопки клавиатуры");
+            return client.EditMessageTextAsync(chatId, messageId, text, parseMode, null, null, inlineKeyboardConstructor?.GetMarkup() as InlineKeyboardMarkup)
                 .GetAwaiter().GetResult().MessageId.ToString();
         }
 
@@ -110,13 +113,13 @@ namespace Buratino.API
             throw new NotImplementedException();
         }
 
-        private string ReplaceMessages(long chatId, int messageId, string text, ParseMode? parseMode, InlineKeyboardConstructor inlineKeyboard = null)
+        private string ReplaceMessages(long chatId, int messageId, string text, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
         {
             Delete(chatId, messageId);
-            return SendOrEdit(chatId, text, default, inlineKeyboard, parseMode);
+            return SendOrEdit(chatId, text, default, replyConstructor, parseMode);
         }
 
-        private string SendFile(object chatId, string imageId, string caption, InlineKeyboardConstructor inlineKeyboard = null)
+        private string SendFile(object chatId, string imageId, string caption, IReplyConstructor replyConstructor = null)
         {
             throw new NotImplementedException();
         }

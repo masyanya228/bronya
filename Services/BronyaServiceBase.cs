@@ -2,8 +2,8 @@
 
 using Buratino.API;
 using Buratino.Attributes;
-using Buratino.Entities;
 using Buratino.Enums;
+using Buratino.Helpers;
 using Buratino.Xtensions;
 
 using System.Reflection;
@@ -15,11 +15,12 @@ namespace vkteams.Services
 {
     public class BronyaServiceBase : IBronyaServiceBase
     {
+        public DataPackage Package {  get; set; }
         public LogService LogService { get; }
         public TGAPI TGAPI { get; set; }
 
         private IEnumerable<KeyValuePair<MethodInfo, TGPointerAttribute>> _availablePointers = null;
-        protected AccountService AccountService;
+        public AccountService AccountService {  get; set; }
 
         public BronyaServiceBase(LogService logService, TGAPI tGAPI)
         {
@@ -41,15 +42,16 @@ namespace vkteams.Services
             set => _availablePointers = value;
         }
 
-        public Task OnUpdateWrapper(Update update, Account acc)
+        public Task OnUpdateWrapper(DataPackage dataPackage)
         {
-            if (update.Type == UpdateType.Message)
+            Package = dataPackage;
+            if (Package.Update.Type == UpdateType.CallbackQuery)
             {
-                return ProcessMessage(acc, update);
+                return ProcessCallbackQuery(Package.Update);
             }
-            else if (update.Type == UpdateType.CallbackQuery)
+            else if (Package.Update.Type == UpdateType.Message)
             {
-                return ProcessCallbackQuery(acc, update);
+                return ProcessMessage(Package.Update);
             }
             else
             {
@@ -57,18 +59,16 @@ namespace vkteams.Services
             }
         }
 
-        private Task ProcessCallbackQuery(Account acc, Update update)
+        private Task ProcessCallbackQuery(Update update)
         {
             var com = ParseCommand(update.CallbackQuery.Data, out string[] args);
-            var chat = update.CallbackQuery.Message.Chat.Id;
-            var messageId = update.CallbackQuery.Message.MessageId;
-            //client.AnswerCallbackQueryAsync(update.CallbackQuery.Id);
+            Package.ChatId = update.CallbackQuery.Message.Chat.Id;
+            Package.MessageId = update.CallbackQuery.Message.MessageId;
 
-            var availablePointers = this.GetMethodsWithAttribute<TGPointerAttribute>();
-            var method = availablePointers.SingleOrDefault(x => x.Value.Pointers.Contains(com));
+            var method = GetMethod(com);
             if (method.Key is not null)
             {
-                InvokeCommand(method, chat, messageId, args, acc);
+                InvokeCommand(method, args);
             }
             else
             {
@@ -77,28 +77,27 @@ namespace vkteams.Services
             return Task.CompletedTask;
         }
 
-        private Task ProcessMessage(Account acc, Update update)
+        private Task ProcessMessage(Update update)
         {
-            var chat = update.Message.Chat.Id;
+            Package.ChatId = update.Message.Chat.Id;
             string text = update.Message.Text;
             if (!text.StartsWith("/"))
             {
-                return ProcessTextMessage(acc, chat, text);
+                return ProcessTextMessage(text);
             }
             else
             {
-                return ProcessCommandMessage(acc, chat, text);
+                return ProcessCommandMessage(text);
             }
         }
 
-        private Task ProcessCommandMessage(Account acc, long chat, string text)
+        private Task ProcessCommandMessage(string text)
         {
             var com = ParseCommand(text, out string[] args);
-            var availablePointers = this.GetMethodsWithAttribute<TGPointerAttribute>();
-            var method = availablePointers.SingleOrDefault(x => x.Value.Pointers.Contains(com));
+            var method = GetMethod(com);
             if (method.Key is not null)
             {
-                InvokeCommand(method, chat, 0, args, acc);
+                InvokeCommand(method, args);
             }
             else
             {
@@ -107,18 +106,18 @@ namespace vkteams.Services
             return Task.CompletedTask;
         }
 
-        private Task ProcessTextMessage(Account acc, long chat, string text)
+        private Task ProcessTextMessage(string text)
         {
             var lines = text.Split("\n", StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim('\r', ' ', '\t')).ToArray();
-            TGActionType actionType = TGActionType.AddCharge;
-            //if (!ChatActionPointer.TryGetValue(chat, out TGActionType actionType))
-            //{
-            //    throw new ArgumentNullException(nameof(actionType));
-            //}
-            //ChatSourcePointer.TryGetValue(chat, out Guid id);//get from DB
+            var acc = Package.Account;
+            if (acc.Waiting == WaitingText.None)
+                return Task.CompletedTask;
 
-            if (actionType == TGActionType.AddCharge)
+            var com = acc.Waiting.GetAttribute<TGPointerAttribute>()?.Pointers.SingleOrDefault();
+            var method = GetMethod(com);
+            if (method.Key is not null)
             {
+                InvokeCommand(method, lines);
             }
             return Task.CompletedTask;
         }
@@ -171,7 +170,7 @@ namespace vkteams.Services
         /// <param name="sourceEvent"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
-        private string InvokeCommand(KeyValuePair<MethodInfo, TGPointerAttribute> method, object chat, object messageId, string[] args, Account acc = null, Update sourceEvent = null)
+        private string InvokeCommand(KeyValuePair<MethodInfo, TGPointerAttribute> method, string[] args)
         {
             var parameters = method.Key.GetParameters();
             var arguments = new object[parameters.Length];
@@ -179,15 +178,7 @@ namespace vkteams.Services
             for (int i = 0; i < parameters.Length; i++)
             {
                 var item = parameters[i];
-                if (item.Name == "chatId")
-                    arguments[i] = chat;
-                else if (item.Name == "messageId")
-                    arguments[i] = messageId;
-                else if (item.Name == "acc")
-                    arguments[i] = acc;
-                else if (item.Name == "source")
-                    arguments[i] = sourceEvent;
-                else if (comArgs.Any())
+                if (comArgs.Any())
                 {
                     arguments[i] = comArgs.Dequeue().Cast(item.ParameterType);
                 }
@@ -201,6 +192,11 @@ namespace vkteams.Services
                 }
             }
             return method.Key.Invoke(this, arguments).ToString();
+        }
+
+        protected string SendOrEdit(string text, IReplyConstructor replyConstructor = null, ParseMode? parseMode = ParseMode.Markdown)
+        {
+            return TGAPI.SendOrEdit(Package.ChatId, text, Package.MessageId, replyConstructor, parseMode);
         }
     }
 }

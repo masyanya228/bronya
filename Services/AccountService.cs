@@ -34,9 +34,8 @@ namespace Bronya.Services
                 }
                 acc = new Account()
                 {
+                    Name = string.Join(" ", [name, lastName]),
                     TGChatId = chatId.ToString(),
-                    Name = name,
-                    LastName = lastName,
                     TGTag = tgTag
                 };
                 AccountDS.Save(acc);

@@ -9,6 +9,8 @@ public class AccountNHMap : NHSubclassClassMap<Account>
         Map(x => x.TGChatId);
         Map(x => x.TGTag);
         Map(x => x.SelectedTime);
+        Map(x => x.SelectedPlaces);
+        Map(x => x.Waiting);
 
         References(x => x.SelectedTable)
             .Not.LazyLoad();
