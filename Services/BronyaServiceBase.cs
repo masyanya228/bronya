@@ -1,4 +1,5 @@
-﻿using Bronya.Services;
+﻿using Bronya.Dtos;
+using Bronya.Services;
 
 using Buratino.API;
 using Buratino.Attributes;
@@ -19,7 +20,7 @@ namespace vkteams.Services
         public LogService LogService { get; }
         public TGAPI TGAPI { get; set; }
 
-        private IEnumerable<KeyValuePair<MethodInfo, TGPointerAttribute>> _availablePointers = null;
+        private IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> _availablePointers = null;
         public AccountService AccountService {  get; set; }
 
         public BronyaServiceBase(LogService logService, TGAPI tGAPI)
@@ -29,13 +30,13 @@ namespace vkteams.Services
             TGAPI = tGAPI;
         }
 
-        public IEnumerable<KeyValuePair<MethodInfo, TGPointerAttribute>> AvailablePointers
+        public IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> AvailablePointers
         {
             get
             {
                 if (_availablePointers is null)
                 {
-                    _availablePointers = this.GetMethodsWithAttribute<TGPointerAttribute>();
+                    _availablePointers = this.GetMethodsWithAttribute<ApiPointer>();
                 }
                 return _availablePointers;
             }
@@ -51,7 +52,15 @@ namespace vkteams.Services
             }
             else if (Package.Update.Type == UpdateType.Message)
             {
-                return ProcessMessage(Package.Update);
+                if (Package.Update.Message.Type == MessageType.Photo)
+                {
+                    var fileId = Package.Update.Message.Photo.Last().FileId;
+                    return Task.CompletedTask;
+                }
+                else
+                {
+                    return ProcessMessage(Package.Update);
+                }
             }
             else
             {
@@ -113,7 +122,7 @@ namespace vkteams.Services
             if (acc.Waiting == WaitingText.None)
                 return Task.CompletedTask;
 
-            var com = acc.Waiting.GetAttribute<TGPointerAttribute>()?.Pointers.SingleOrDefault();
+            var com = acc.Waiting.GetAttribute<ApiPointer>()?.Pointers.SingleOrDefault();
             var method = GetMethod(com);
             if (method.Key is not null)
             {
@@ -153,7 +162,7 @@ namespace vkteams.Services
         /// </summary>
         /// <param name="com"></param>
         /// <returns></returns>
-        private KeyValuePair<MethodInfo, TGPointerAttribute> GetMethod(string com)
+        private KeyValuePair<MethodInfo, ApiPointer> GetMethod(string com)
         {
             var method = AvailablePointers.SingleOrDefault(x => x.Value.Pointers.Contains(com));
             return method;
@@ -170,7 +179,7 @@ namespace vkteams.Services
         /// <param name="sourceEvent"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
-        private string InvokeCommand(KeyValuePair<MethodInfo, TGPointerAttribute> method, string[] args)
+        private string InvokeCommand(KeyValuePair<MethodInfo, ApiPointer> method, string[] args)
         {
             var parameters = method.Key.GetParameters();
             var arguments = new object[parameters.Length];
@@ -194,9 +203,9 @@ namespace vkteams.Services
             return method.Key.Invoke(this, arguments).ToString();
         }
 
-        protected string SendOrEdit(string text, IReplyConstructor replyConstructor = null, ParseMode? parseMode = ParseMode.Markdown)
+        protected string SendOrEdit(string text, IReplyConstructor replyConstructor = null, ParseMode? parseMode = ParseMode.Markdown, string imageId = default)
         {
-            return TGAPI.SendOrEdit(Package.ChatId, text, Package.MessageId, replyConstructor, parseMode);
+            return TGAPI.SendOrEdit(Package, text, replyConstructor, parseMode, imageId);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Bronya.Xtensions;
+﻿using Bronya.Dtos;
+using Bronya.Xtensions;
 
 using Buratino.Helpers;
 using Buratino.Xtensions;
@@ -6,6 +7,7 @@ using Buratino.Xtensions;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.ReplyMarkups;
 
 using vkteams.Services;
@@ -77,8 +79,11 @@ namespace Buratino.API
             return Task.CompletedTask;
         }
 
-        public string SendOrEdit(long chatId, string text, int msgId = default, IReplyConstructor replyConstructor = null, ParseMode? parseMode = ParseMode.Markdown)
+        public string SendOrEdit(DataPackage package, string text, IReplyConstructor replyConstructor = null, ParseMode? parseMode = ParseMode.Markdown, string imageId = default)
         {
+            if (parseMode == default)
+                parseMode = ParseMode.Markdown;
+
             if (parseMode == ParseMode.MarkdownV2)
             {
                 text = string.Concat(text.ToArray().Select(x =>
@@ -88,10 +93,50 @@ namespace Buratino.API
                     return x.ToString();
                 }));
             }
-            if (msgId == default)
-                return Send(chatId, text, parseMode, replyConstructor);
+
+            if (imageId == default)
+            {
+                if (package.MessageId == default)
+                    return Send(package.ChatId, text, parseMode, replyConstructor);
+                else
+                {
+                    if (package.Update.Type == UpdateType.CallbackQuery)
+                    {
+                        if (package.Update.CallbackQuery.Message.Type == MessageType.Photo)
+                        {
+                            Send(package.ChatId, text, parseMode, replyConstructor);
+                            return Delete(package.ChatId, package.MessageId);
+                        }
+                        else
+                        {
+
+                            return Edit(package.ChatId, package.MessageId, text, parseMode, replyConstructor);
+                        }
+                    }
+                    return Edit(package.ChatId, package.MessageId, text, parseMode, replyConstructor);
+                }   
+            }
             else
-                return Edit(chatId, msgId, text, parseMode, replyConstructor);
+            {
+                if (package.MessageId == default)
+                    return SendFile(package.ChatId, imageId, text, parseMode, replyConstructor);
+                else
+                {
+                    if (package.Update.Type == UpdateType.CallbackQuery)
+                    {
+                        if (package.Update.CallbackQuery.Message.Type == MessageType.Photo)
+                        {
+                            return EditFile(package.ChatId, package.MessageId, imageId, text, parseMode, replyConstructor);
+                        }
+                        else
+                        {
+                            SendFile(package.ChatId, imageId, text, parseMode, replyConstructor);
+                            return Delete(package.ChatId, package.MessageId);
+                        }
+                    }
+                    return EditFile(package.ChatId, package.MessageId, imageId, text, parseMode, replyConstructor);
+                }
+            }
         }
 
         private string Send(long chatId, string text, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
@@ -110,18 +155,23 @@ namespace Buratino.API
 
         public string Delete(long chatId, int messageId)
         {
-            throw new NotImplementedException();
+            client.DeleteMessageAsync(chatId, messageId)
+                .GetAwaiter().GetResult();
+            return string.Empty;
         }
 
-        private string ReplaceMessages(long chatId, int messageId, string text, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
+        private string SendFile(long chatId, string imageId, string caption, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
         {
-            Delete(chatId, messageId);
-            return SendOrEdit(chatId, text, default, replyConstructor, parseMode);
+            return client.SendPhotoAsync(chatId, new InputOnlineFile("AgACAgIAAxkBAAOgZ5pWHbT-EVNXc96-Q0oD7LZCnGMAAjzqMRtkA9FI7XDK_OV9DSQBAAMCAAN4AAM2BA"), caption, parseMode, null, null, null, null, null, replyConstructor?.GetMarkup())
+                .GetAwaiter().GetResult().MessageId.ToString();
         }
-
-        private string SendFile(object chatId, string imageId, string caption, IReplyConstructor replyConstructor = null)
+        
+        private string EditFile(long chatId, int messageId, string imageId, string caption, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
         {
-            throw new NotImplementedException();
+            if (!(replyConstructor is InlineKeyboardConstructor inlineKeyboardConstructor))
+                throw new InvalidOperationException("Нельзя передать кнопки сообщения. Нужно передать кнопки клавиатуры");
+            return client.EditMessageMediaAsync(chatId, messageId, new InputMediaPhoto("AgACAgIAAxkBAAOgZ5pWHbT-EVNXc96-Q0oD7LZCnGMAAjzqMRtkA9FI7XDK_OV9DSQBAAMCAAN4AAM2BA") { Caption = caption, ParseMode = parseMode }, inlineKeyboardConstructor?.GetMarkup() as InlineKeyboardMarkup)
+                .GetAwaiter().GetResult().MessageId.ToString();
         }
 
         public void AnswerCallbackQuery(object queryId, string text = null)

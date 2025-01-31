@@ -1,4 +1,6 @@
-﻿namespace vkteams.Services
+﻿using Bronya.Dtos;
+
+namespace vkteams.Services
 {
     public interface IBronyaServiceBase
     {

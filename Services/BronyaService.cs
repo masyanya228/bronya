@@ -20,7 +20,7 @@ namespace vkteams.Services
         {
         }
 
-        [TGPointer("start", "menu")]
+        [ApiPointer("start", "menu")]
         private string Menu()
         {
             return SendOrEdit(
@@ -32,7 +32,7 @@ namespace vkteams.Services
                     .AddButtonDown("Соц. сети", $"/socmedia"));
         }
 
-        [TGPointer("rules")]
+        [ApiPointer("rules")]
         private string Rules()
         {
             return SendOrEdit(
@@ -45,7 +45,7 @@ namespace vkteams.Services
                     .AddButtonDown("Назад", $"/menu"));
         }
 
-        [TGPointer("barmenu")]
+        [ApiPointer("barmenu")]
         private string BarMenu()
         {
             return SendOrEdit(
@@ -55,7 +55,7 @@ namespace vkteams.Services
                     .AddButtonDown("Назад", $"/menu"));
         }
 
-        [TGPointer("socmedia")]
+        [ApiPointer("socmedia")]
         private string SocialMedias()
         {
             return SendOrEdit(
@@ -67,7 +67,7 @@ namespace vkteams.Services
                     .AddButtonDown("Назад", $"/menu"));
         }
 
-        [TGPointer("book")]
+        [ApiPointer("book")]
         private string Book()
         {
             return SendOrEdit(
@@ -77,7 +77,7 @@ namespace vkteams.Services
                     .AddButtonDown("Назад", $"/mybooklist"));
         }
 
-        [TGPointer("table")]
+        [ApiPointer("table")]
         private string Table(string tableName)
         {
             var table = TableDS.GetAll().Where(x => x.Name == tableName).Single();
@@ -105,7 +105,7 @@ namespace vkteams.Services
                     .AddButtonDown("Назад", $"/book"));
         }
 
-        [TGPointer("set_time")]
+        [ApiPointer("set_time")]
         private string SetTime(DateTime time)
         {
             if (Package.Account.SelectedTable is null)
@@ -125,7 +125,7 @@ namespace vkteams.Services
                     .AddButtonDown("Назад", $"/table/{Package.Account.SelectedTable.Name}"));
         }
 
-        [TGPointer("places")]
+        [ApiPointer("places")]
         private string Places(int places)
         {
             if (Package.Account.SelectedTable is null || Package.Account.SelectedTime == default)
@@ -157,7 +157,7 @@ namespace vkteams.Services
             return MyBook(newBook);
         }
 
-        [TGPointer("mybook")]
+        [ApiPointer("mybook")]
         private string MyBook(Book book)
         {
             if (book is null)
@@ -176,7 +176,7 @@ namespace vkteams.Services
                     .AddButtonDown("Назад", $"/mybooklist"));
         }
 
-        [TGPointer("try_cancel_book")]
+        [ApiPointer("try_cancel_book")]
         private string TryCancelBook(Book book)
         {
             if (book is null)
@@ -200,7 +200,7 @@ namespace vkteams.Services
                     .AddButtonDown("Назад", $"/mybook/{book.Id}"));
         }
 
-        [TGPointer("cancel_book")]
+        [ApiPointer("cancel_book")]
         private string CancelBook(Book book)
         {
             if (book is null)
@@ -222,7 +222,7 @@ namespace vkteams.Services
             }
         }
         
-        [TGPointer("try_move_book")]
+        [ApiPointer("try_move_book")]
         private string TryMoveBook(Book book)
         {
             if (book is null)
@@ -247,7 +247,7 @@ namespace vkteams.Services
                     .AddButtonDown("Назад", $"/mybook/{book.Id}"));
         }
 
-        [TGPointer("move_book")]
+        [ApiPointer("move_book")]
         private string MoveBook(Book book)
         {
             if (book is null)
@@ -269,7 +269,7 @@ namespace vkteams.Services
             }
         }
 
-        [TGPointer("mybooklist")]
+        [ApiPointer("mybooklist")]
         private string MyBookList()
         {
             var books = new BookService()
@@ -290,7 +290,7 @@ namespace vkteams.Services
                     .AddButtonDown("Назад", $"/menu"));
         }
 
-        [TGPointer("morethan")]
+        [ApiPointer("morethan")]
         private string TooManyPlaces()
         {
             return SendOrEdit(

@@ -8,7 +8,6 @@ using Buratino.DI;
 using Bronya.Services;
 using Buratino.Entities;
 using Buratino.Enums;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace vkteams.Services
 {
@@ -25,29 +24,45 @@ namespace vkteams.Services
         {
         }
 
-        [TGPointer("start", "menu")]
+        [ApiPointer("start", "menu")]
         private string Menu()
         {
             return SendOrEdit(
                 "Меню хостеса:",
                 new InlineKeyboardConstructor()
+                    .AddButtonDown("Сейчас", "/now")
                     .AddButtonDown("🔲 Столы", "/tables")
                     .AddButtonDown("➕📋 Новая бронь", "/book_select_time")
                 );
         }
 
-        [TGPointer("tables")]
+        [ApiPointer("tables")]
         private string Tables()
         {
             return SendOrEdit(
                 "Меню хостеса:",
                 new InlineKeyboardConstructor()
-                    .AddAllHostesTableButtons()
-                    .AddButtonDown("Назад", $"/menu")
+                    .AddHostesAllTableButtons()
+                    .AddButtonDown("Назад", $"/menu"),
+                default,
+                "AgACAgIAAxkBAAOgZ5pWHbT-EVNXc96-Q0oD7LZCnGMAAjzqMRtkA9FI7XDK_OV9DSQBAAMCAAN4AAM2BA"
                 );
         }
 
-        [TGPointer("table")]
+        [ApiPointer("now")]
+        private string Now()
+        {
+            return SendOrEdit(
+                "Меню хостеса:",
+                new InlineKeyboardConstructor()
+                    .AddHostesNowTableButtons()
+                    .AddButtonDown("Назад", $"/menu"),
+                default,
+                "AgACAgIAAxkBAAOgZ5pWHbT-EVNXc96-Q0oD7LZCnGMAAjzqMRtkA9FI7XDK_OV9DSQBAAMCAAN4AAM2BA"
+                );
+        }
+
+        [ApiPointer("table")]
         private string Table(Table table)
         {
             if (Package.Account.SelectedTable != default)
@@ -61,16 +76,18 @@ namespace vkteams.Services
                 $"Стол: {table.Name}{isAvailable}",
                 new InlineKeyboardConstructor()
                     .AddHostesBooksButtons(books)
-                    .AddButtonDown("➕📋", $"/book_select_time/{table.Id}")
                     .AddButtonDownIf(() => table.IsBookAvailable, "🚫 Отключить бронирование", $"/disable/{table.Id}")
                     .AddButtonDownIf(() => !table.IsBookAvailable, "✅ Включить бронирование", $"/enable/{table.Id}")
-                    .AddButtonDown("В начало", $"/menu")
-                    .AddButtonRight("🔲 Столы", $"/tables")
+                    .AddButtonRight("➕📋", $"/book_select_time/{table.Id}")
+                    .AddButtonDown("🔲 Столы", $"/tables")
+                    .AddButtonRight("В начало", $"/menu"),
+                default,
+                "AgACAgIAAxkBAAOgZ5pWHbT-EVNXc96-Q0oD7LZCnGMAAjzqMRtkA9FI7XDK_OV9DSQBAAMCAAN4AAM2BA"
                 );
         }
 
         //todo
-        [TGPointer("show_book")]
+        [ApiPointer("show_book")]
         private string ShowBook(Book book)
         {
             if (book.IsCanceled)
@@ -80,6 +97,7 @@ namespace vkteams.Services
                 new InlineKeyboardConstructor()
                     .AddButtonDown("🟢", $"/try_repair/{book.Id}")
                     .AddButtonRight("🔲", $"/table/{book.Table.Id}")
+                    .AddButtonDown("В начало", $"/menu")
                 );
             }
             else if(book.TableClosed != default)
@@ -87,8 +105,9 @@ namespace vkteams.Services
                 return SendOrEdit(
                     book.GetState(),
                     new InlineKeyboardConstructor()
-                        .AddButtonDown("↔️", $"/try_prolongate/{book.Id}")//todo
+                        .AddButtonDown("↔️", $"/try_prolongate/{book.Id}")
                         .AddButtonRight("🔲", $"/table/{book.Table.Id}")
+                        .AddButtonDown("В начало", $"/menu")
                     );
             }
             else if (book.TableStarted != default)
@@ -97,8 +116,9 @@ namespace vkteams.Services
                     book.GetState(),
                     new InlineKeyboardConstructor()
                         .AddButtonDown("⛔️", $"/try_close/{book.Id}")
-                        .AddButtonRight("↔️", $"/try_prolongate/{book.Id}")//todo
+                        .AddButtonRight("↔️", $"/try_prolongate/{book.Id}")
                         .AddButtonRight("🔲", $"/table/{book.Table.Id}")
+                        .AddButtonDown("В начало", $"/menu")
                     );
             }
             else
@@ -107,41 +127,115 @@ namespace vkteams.Services
                     book.GetState(),
                     new InlineKeyboardConstructor()
                         .AddButtonDown("🔴", $"/try_cancel_book/{book.Id}")
-                        .AddButtonRightIf(() => new BookService().CanMove(book), "⤵️", $"/move_times/{book.Id}")
+                        .AddButtonRightIf(() => new BookService().CanMove(book), "⤵️", $"/try_move/{book.Id}")
                         .AddButtonRight("✅", $"/try_start_book/{book.Id}")
                         .AddButtonRight("🔲", $"/table/{book.Table.Id}")
+                        .AddButtonDown("В начало", $"/menu")
                     );
             }
         }
 
-        [TGPointer("try_start_book")]
-        private string TryStartBook(Book book)
+        [ApiPointer("try_move")]
+        private string TryMove(Book book)
         {
-            var smena = BookService.GetCurrentSmena();
-            string text = $"Открыть стол и поставить отметку о вынесенном кальяне?";
-            double diffInMinutes = book.ActualBookStartTime.Subtract(DateTime.Now).TotalMinutes;
-            if (Math.Abs(diffInMinutes) > smena.Schedule.Buffer.TotalMinutes)
-            {
-                var trueText = diffInMinutes > 0 ? "рано" : "поздно";
-                text += $"\r\n*Обратите внимание*, гость пришел слишком {trueText}. Проверьте себя.";
-            }
+            var vars = BookService.GetMoveVariants(book);
+            string text = vars.Any()
+                ? $"Варианты переноса стола:"
+                : $"Этот стол нельзя перенести";
             return SendOrEdit(
                 $"{book.GetState()}" +
                 $"\r\n\r\n{text}",
                 new InlineKeyboardConstructor()
-                    .AddButtonDown("✅Кальян вынесен✅", $"/start_book/{book.Id}")
+                    .AddHostesMoveVariantsButtons(book, vars)
                     .AddButtonDown("Назад", $"/show_book/{book.Id}"));
         }
 
-        [TGPointer("start_book")]
+        [ApiPointer("move")]
+        private string Move(Book book, DateTime newActualTime)
+        {
+            book.ActualBookStartTime = newActualTime;
+            BookDS.Save(book);
+            return ShowBook(book);
+        }
+
+        [ApiPointer("try_prolongate")]
+        private string TryProlongate(Book book)
+        {
+            var vars = BookService.GetProlongationVariants(book);
+            string text = vars.Any()
+                ? $"Варианты продления стола:"
+                : $"Этот стол нельзя продлить";
+            return SendOrEdit(
+                $"{book.GetState()}" +
+                $"\r\n\r\n{text}",
+                new InlineKeyboardConstructor()
+                    .AddHostesProlongationVariantsButtons(book, vars)
+                    .AddButtonDown("Назад", $"/show_book/{book.Id}"));
+        }
+
+        [ApiPointer("pg")]
+        private string Prolongate(Book book, DateTime newEndTime)
+        {
+            book.SetNewBookEndTime(newEndTime);
+            BookDS.Save(book);
+            return ShowBook(book);
+        }
+
+        [ApiPointer("try_start_book")]
+        private string TryStartBook(Book book)
+        {
+            var smena = BookService.GetCurrentSmena();
+            var allReadyOpened = BookService.GetCurrentBooks(book.Table)
+                .FirstOrDefault(x => x != book && x.GetStatus() == Bronya.Enums.BookStatus.Opened);
+            if (allReadyOpened == default)
+            {
+                string text = $"Открыть стол и поставить отметку о вынесенном кальяне?";
+                double diffInMinutes = book.ActualBookStartTime.Subtract(new TimeService().GetNow()).TotalMinutes;
+                if (Math.Abs(diffInMinutes) > smena.Schedule.Buffer.TotalMinutes)
+                {
+                    var trueText = diffInMinutes > 0 ? "рано" : "поздно";
+                    text += $"\r\n*Обратите внимание*, гость пришел слишком {trueText}. Проверьте себя.";
+                }
+                return SendOrEdit(
+                    $"{book.GetState()}" +
+                    $"\r\n\r\n{text}",
+                    new InlineKeyboardConstructor()
+                        .AddButtonDown("✅Кальян вынесен✅", $"/start_book/{book.Id}")
+                        .AddButtonDown("Назад", $"/show_book/{book.Id}"));
+            }
+            else
+            {
+                string text = $"*Предыдущая бронь на имя {allReadyOpened.Account.ToString()} не была закрыта. Проверьте себя.*";
+                double diffInMinutes = book.ActualBookStartTime.Subtract(new TimeService().GetNow()).TotalMinutes;
+                if (Math.Abs(diffInMinutes) > smena.Schedule.Buffer.TotalMinutes)
+                {
+                    var trueText = diffInMinutes > 0 ? "рано" : "поздно";
+                    text += $"\r\n*Обратите внимание*, гость пришел слишком {trueText}. Проверьте себя.";
+                }
+                return SendOrEdit(
+                    $"{book.GetState()}" +
+                    $"\r\n\r\n{text}",
+                    new InlineKeyboardConstructor()
+                        .AddButtonDown("✅Закрыть предыдущий стол и открыть этот✅", $"/start_book/{book.Id}")
+                        .AddButtonDown("Назад", $"/show_book/{book.Id}"));
+            }
+        }
+
+        [ApiPointer("start_book")]
         private string StartBook(Book book)
         {
+            var allReadyOpened = BookService.GetCurrentBooks(book.Table)
+                .FirstOrDefault(x => x != book && x.GetStatus() == Bronya.Enums.BookStatus.Opened);
+            if (allReadyOpened != default)
+            {
+                Close(allReadyOpened);
+            }
             book.TableStarted = DateTime.Now;
             BookDS.Save(book);
             return ShowBook(book);
         }
 
-        [TGPointer("try_cancel_book")]
+        [ApiPointer("try_cancel_book")]
         private string TryCancelBook(Book book)
         {
             if (!new BookService().CanCancel(book))
@@ -160,7 +254,7 @@ namespace vkteams.Services
                     .AddButtonDown("Назад", $"/show_book/{book.Id}"));
         }
 
-        [TGPointer("cancel_book")]
+        [ApiPointer("cancel_book")]
         private string CancelBook(Book book)
         {
             if (!new BookService().Cancel(book))
@@ -175,7 +269,7 @@ namespace vkteams.Services
             return ShowBook(book);
         }
         
-        [TGPointer("try_repair")]
+        [ApiPointer("try_repair")]
         private string TryRepair(Book book)
         {
             if (!new BookService().CanRepair(book))
@@ -194,7 +288,7 @@ namespace vkteams.Services
                     .AddButtonDown("Назад", $"/show_book/{book.Id}"));
         }
 
-        [TGPointer("repair")]
+        [ApiPointer("repair")]
         private string Repair(Book book)
         {
             if (!new BookService().CanRepair(book))
@@ -209,7 +303,7 @@ namespace vkteams.Services
             return ShowBook(book);
         }
         
-        [TGPointer("try_close")]
+        [ApiPointer("try_close")]
         private string TryClose(Book book)
         {
             if (book.TableStarted == default)
@@ -228,7 +322,7 @@ namespace vkteams.Services
                     .AddButtonDown("Назад", $"/show_book/{book.Id}"));
         }
 
-        [TGPointer("close")]
+        [ApiPointer("close")]
         private string Close(Book book)
         {
             book.TableClosed = DateTime.Now;
@@ -236,7 +330,7 @@ namespace vkteams.Services
             return ShowBook(book);
         }
 
-        [TGPointer("disable")]
+        [ApiPointer("disable")]
         private string Disable(Table table)
         {
             table.IsBookAvailable = false;
@@ -244,7 +338,7 @@ namespace vkteams.Services
             return Table(table);
         }
 
-        [TGPointer("enable")]
+        [ApiPointer("enable")]
         private string Enable(Table table)
         {
             table.IsBookAvailable = true;
@@ -252,7 +346,7 @@ namespace vkteams.Services
             return Table(table);
         }
 
-        [TGPointer("book_select_time")]
+        [ApiPointer("book_select_time")]
         private string BookSelectTime(Table table = default)
         {
             if (table != null)
@@ -295,7 +389,7 @@ namespace vkteams.Services
         /// <param name=""></param>
         /// <param name="messageId"></param>
         /// <returns></returns>
-        [TGPointer("reset_time")]
+        [ApiPointer("reset_time")]
         private string ResetTime()
         {
             Package.Account.SelectedTime = default;
@@ -311,7 +405,7 @@ namespace vkteams.Services
         /// <param name=""></param>
         /// <param name="messageId"></param>
         /// <returns></returns>
-        [TGPointer("reset_table")]
+        [ApiPointer("reset_table")]
         private string ResetTable()
         {
             Package.Account.SelectedTable = default;
@@ -327,7 +421,7 @@ namespace vkteams.Services
         /// <param name=""></param>
         /// <param name="messageId"></param>
         /// <returns></returns>
-        [TGPointer("reset_all")]
+        [ApiPointer("reset_all")]
         private string ResetAll()
         {
             Package.Account.SelectedTable = default;
@@ -338,7 +432,7 @@ namespace vkteams.Services
             return Menu();
         }
 
-        [TGPointer("set_time")]
+        [ApiPointer("set_time")]
         private string SetTime(DateTime time)
         {
             Package.Account.SelectedTime = time;
@@ -353,7 +447,7 @@ namespace vkteams.Services
             }
         }
 
-        [TGPointer("select_table")]
+        [ApiPointer("select_table")]
         private string SelectTable()
         {
             var tables = Package.Account.SelectedTime != default
@@ -379,11 +473,13 @@ namespace vkteams.Services
                         .AddHostesTableButtons(tables)
                         .AddButtonDown("🗑", $"/reset_all")
                         .AddButtonRight(Package.Account.SelectedTime != default ? "✏️⏱️" : "✏️⏱️", "/book_select_time")
-                        .AddButtonRightIf(() => Package.Account.SelectedTime != default, "♻️🔲", "/reset_time")
+                        .AddButtonRightIf(() => Package.Account.SelectedTime != default, "♻️🔲", "/reset_time"),
+                    default,
+                    "AgACAgIAAxkBAAOgZ5pWHbT-EVNXc96-Q0oD7LZCnGMAAjzqMRtkA9FI7XDK_OV9DSQBAAMCAAN4AAM2BA"
                     );
         }
 
-        [TGPointer("set_table")]
+        [ApiPointer("set_table")]
         private string SetTable(Table table)
         {
             Package.Account.SelectedTable = table;
@@ -399,7 +495,7 @@ namespace vkteams.Services
             }
         }
 
-        [TGPointer("select_places")]
+        [ApiPointer("select_places")]
         private string SelectPlaces()
         {
             return SendOrEdit(
@@ -413,7 +509,7 @@ namespace vkteams.Services
                 );
         }
 
-        [TGPointer("set_places")]
+        [ApiPointer("set_places")]
         private string SetPlaces(int places)
         {
             Package.Account.SelectedPlaces = places;
@@ -422,7 +518,7 @@ namespace vkteams.Services
             return SelectName();
         }
 
-        [TGPointer("select_name")]
+        [ApiPointer("select_name")]
         private string SelectName()
         {
             Package.Account.Waiting = WaitingText.Name;
@@ -439,13 +535,15 @@ namespace vkteams.Services
                 );
         }
 
-        [TGPointer("set_name")]
+        [ApiPointer("set_name")]
         private string SetName(string name)
         {
+            var smena = BookService.GetCurrentSmena();
             var newBook = new Book()
             {
                 SeatAmount = Package.Account.SelectedPlaces,
                 ActualBookStartTime = Package.Account.SelectedTime,
+                BookLength = smena.Schedule.MinPeriod,
                 Table = Package.Account.SelectedTable,
                 Account = new Account()
                 {

@@ -2,7 +2,7 @@
 
 using Telegram.Bot.Types;
 
-namespace vkteams.Services
+namespace Bronya.Dtos
 {
     public class DataPackage
     {

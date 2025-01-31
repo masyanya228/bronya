@@ -4,13 +4,18 @@ using Bronya.Services;
 using Buratino.DI;
 using Buratino.Helpers;
 
-using FluentNHibernate.Conventions;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace Buratino.Xtensions
 {
     public static class KeyboardConstructorXtensions
     {
         private static BookService bookService = new BookService();
+
+        public static IEnumerable<IEnumerable<InlineKeyboardButton>> ToGrid<T>(this IEnumerable<T> filters, Func<T, string> titleSelector, Func<T, string> callbackSelector, int columnCount = 2)
+        {
+            return filters.Chunk(columnCount).Select(x => x.Select(y => new InlineKeyboardButton(titleSelector(y)) { CallbackData = callbackSelector(y) }));
+        }
 
         public static InlineKeyboardConstructor AddButtonDownIf(this InlineKeyboardConstructor constructor, Func<bool> func, string title, string callbackQuery)
             => func()
@@ -116,11 +121,11 @@ namespace Buratino.Xtensions
             return constructor;
         }
 
-        public static InlineKeyboardConstructor AddAllHostesTableButtons(this InlineKeyboardConstructor constructor)
+        public static InlineKeyboardConstructor AddHostesAllTableButtons(this InlineKeyboardConstructor constructor)
         {
             var tables = Container.GetDomainService<Table>().GetAll().OrderBy(x => x.Number).ToArray();
             int count = 0;
-            int tablesInRow = 3;
+            int tablesInRow = 2;
             foreach (var table in tables)
             {
                 var books = bookService.GetCurrentBooks(table);
@@ -149,10 +154,69 @@ namespace Buratino.Xtensions
             return constructor;
         }
 
+        public static InlineKeyboardConstructor AddHostesNowTableButtons(this InlineKeyboardConstructor constructor)
+        {
+            var now = new TimeService().GetNow();
+            var tables = Container.GetDomainService<Table>().GetAll().OrderBy(x => x.Number).ToArray();
+            var smena = bookService.GetCurrentSmena();
+            int count = 0;
+            int tablesInRow = 2;
+            foreach (var table in tables)
+            {
+                var books = bookService.GetCurrentBooks(table);
+
+                var actualBook = books.FirstOrDefault(x => x.ActualBookStartTime < now && x.BookEndTime > now);
+                var nowOpened = actualBook != default
+                    ? actualBook.TableStarted != default && actualBook.TableClosed == default
+                    : false;
+                var nowNotOpened = actualBook != default
+                    ? actualBook.TableStarted == default
+                    : false;
+                var allowToBookNow = now.Add(smena.Schedule.MinPeriod) < smena.SmenaEnd && books.All(x => !x.IsIntersected(now, now.Add(smena.Schedule.MinPeriod)));
+
+                string btnTitle = string.Empty;
+                string btnCallback = string.Empty;
+                if (!table.IsBookAvailable)
+                    btnTitle += $"🚫";
+                if (nowOpened)
+                {
+                    btnTitle += $"Открыт {table.Name}";
+                    btnCallback = $"/show_book/{actualBook.Id}";
+                }
+                else if (nowNotOpened)
+                {
+                    btnTitle += $"Не открыт {table.Name}";
+                    btnCallback = $"/show_book/{actualBook.Id}";
+                }
+                else if (allowToBookNow)
+                {
+                    btnTitle += $"Свободно {table.Name}";
+                    btnCallback = $"/table/{table.Id}";
+                }
+                else
+                {
+                    btnTitle += $"Нельзя {table.Name}";
+                    btnCallback = $"/table/{table.Id}";
+                }
+
+                if (count == tablesInRow)
+                {
+                    count = 0;
+                    constructor.AddButtonDown(btnTitle, btnCallback);
+                }
+                else
+                {
+                    constructor.AddButtonRight(btnTitle, btnCallback);
+                }
+                count++;
+            }
+            return constructor;
+        }
+
         public static InlineKeyboardConstructor AddHostesTableButtons(this InlineKeyboardConstructor constructor, IEnumerable<Table> tables)
         {
             int count = 0;
-            int tablesInRow = 3;
+            int tablesInRow = 2;
             foreach (var table in tables)
             {
                 var books = bookService.GetCurrentBooks(table);
@@ -190,7 +254,7 @@ namespace Buratino.Xtensions
 
             foreach (var item in books)
             {
-                constructor.AddButtonDown($"{item.ActualBookStartTime:dd.MM HH:mm} {item.Account.ToString()} Гостей:{item.SeatAmount}", $"/show_book/{item.Id}");
+                constructor.AddButtonDown($"{item.ActualBookStartTime:HH:mm} {item.Account.ToString()} 👤:{item.SeatAmount}", $"/show_book/{item.Id}");
             }
             return constructor;
         }
@@ -230,6 +294,44 @@ namespace Buratino.Xtensions
                 }
                 count++;
                 
+            }
+            return constructor;
+        }
+
+        public static InlineKeyboardConstructor AddHostesProlongationVariantsButtons(this InlineKeyboardConstructor constructor, Book book, DateTime[] times)
+        {
+            int count = 0;
+            int tablesInRow = 1;
+            foreach (var time in times)
+            {
+                var diff = time.Subtract(book.BookEndTime);
+                string diffTitle = diff.TotalHours < 1
+                    ? $"{diff.Minutes}мин."
+                    : $"{diff.Hours}ч. {diff.Minutes}мин.";
+                if (count == tablesInRow)
+                {
+                    count = 0;
+                    constructor.AddButtonDown($"+ {diffTitle} до {time:HH:mm}", $"/pg/{book.Id}/{time}");
+                }
+                else
+                {
+                    constructor.AddButtonRight($"+ {diffTitle} до {time:HH:mm}", $"/pg/{book.Id}/{time}");
+                }
+                count++;
+            }
+            return constructor;
+        }
+
+        public static InlineKeyboardConstructor AddHostesMoveVariantsButtons(this InlineKeyboardConstructor constructor, Book book, DateTime[] times)
+        {
+            DateTime prevTime = DateTime.MinValue;
+            foreach (var i in times)
+            {
+                if (i.Minute == 0 || prevTime.Hour != i.Hour)
+                    constructor.AddButtonDown($"{i:HH:mm}", $"/move/{book.Id}/{i}");
+                else
+                    constructor.AddButtonRight($"{i:HH:mm}", $"/move/{book.Id}/{i}");
+                prevTime = i;
             }
             return constructor;
         }

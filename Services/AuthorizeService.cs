@@ -1,10 +1,10 @@
-﻿using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types;
+﻿using Telegram.Bot.Types;
 using Buratino.Models.DomainService.DomainStructure;
 using Buratino.Entities;
 using Buratino.DI;
 using vkteams.Services;
 using Buratino.API;
+using Bronya.Dtos;
 
 namespace Bronya.Services
 {

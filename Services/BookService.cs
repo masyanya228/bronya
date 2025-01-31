@@ -16,7 +16,7 @@ namespace Bronya.Services
 
         public DateTime[] GetAvailableTimesForBook(Table table)
         {
-            return GetAvailableTimesForBook(table, TimeService.GetNow());
+            return GetAvailableTimesForBook(table, null);
         }
 
         public DateTime[] GetAvailableTimesForMove(Table table)
@@ -116,14 +116,16 @@ namespace Bronya.Services
             };
         }
 
-        private DateTime[] GetAvailableTimesForBook(Table table, DateTime now)
+        private DateTime[] GetAvailableTimesForBook(Table table, Book except=default)
         {
             if (!table.IsBookAvailable)
                 return Array.Empty<DateTime>();
             List<DateTime> times = new();
 
+            var now = TimeService.GetNow();
+
             var smena = GetCurrentSmena(now);
-            List<Book> books = GetCurrentBooks(table, smena.SmenaStart, smena.SmenaEnd);
+            List<Book> books = GetCurrentBooks(table, smena.SmenaStart, smena.SmenaEnd).Except([except]).ToList();
 
             for (var i = smena.MinimumTimeToBook; i <= smena.SmenaEnd.Subtract(smena.Schedule.MinPeriod); i = i.Add(smena.Schedule.Step))
             {
@@ -261,6 +263,30 @@ namespace Bronya.Services
         {
             var smena = GetCurrentSmena();
             return smena.MinimumTimeToBook <= book.ActualBookStartTime;
+        }
+
+        public DateTime[] GetProlongationVariants(Book book)
+        {
+            var timesToProlongation = new List<DateTime>();
+            var smena = GetCurrentSmena();
+            var availableTimes = GetAvailableTimesForMove(book.Table);
+            var maxProlongationTime = book.BookEndTime.Add(smena.Schedule.MinPeriod) < smena.SmenaEnd
+                ? book.BookEndTime.Add(smena.Schedule.MinPeriod)
+                : smena.SmenaEnd;
+            for (var i = book.BookEndTime.Add(smena.Schedule.Step); i <= maxProlongationTime; i = i.Add(smena.Schedule.Step))
+            {
+                if (!availableTimes.Contains(i))
+                {
+                    break;
+                }
+                timesToProlongation.Add(i);
+            }
+            return timesToProlongation.ToArray();
+        }
+
+        public DateTime[] GetMoveVariants(Book book)
+        {
+            return GetAvailableTimesForBook(book.Table, book);
         }
     }
 }

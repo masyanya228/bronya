@@ -6,7 +6,7 @@ namespace Buratino.Enums
     {
         None = 0,
      
-        [TGPointer("set_name")]
+        [ApiPointer("set_name")]
         Name,
     }
 }

@@ -1,4 +1,5 @@
-﻿using Bronya.Services;
+﻿using Bronya.Enums;
+using Bronya.Services;
 
 using Buratino.Entities.Abstractions;
 using Buratino.Xtensions;
@@ -69,6 +70,29 @@ namespace Bronya.Entities
                     $"\r\nОсталось: {timeLeft.TotalMinutes.Round()} мин.";
             }
             return state;
+        }
+
+        public virtual bool IsIntersected(DateTime start, DateTime end)
+        {
+            return DataXtensions.IsXcrossing(ActualBookStartTime, BookEndTime, start, end);
+        }
+
+        public virtual void SetNewBookEndTime(DateTime newEndTime)
+        {
+            var diff = newEndTime.Subtract(BookEndTime);
+            BookLength = BookLength.Add(diff);
+        }
+
+        public virtual BookStatus GetStatus()
+        {
+            if (IsCanceled)
+                return BookStatus.Canceled;
+            if (TableClosed != default)
+                return BookStatus.Closed;
+            if (TableStarted != default)
+                return BookStatus.Opened;
+            else
+                return BookStatus.Booked;
         }
     }
 }
