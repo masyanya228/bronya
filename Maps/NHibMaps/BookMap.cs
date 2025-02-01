@@ -12,6 +12,8 @@ public class BookMap : NHSubclassClassMap<Book>
         Map(x => x.SeatAmount);
         Map(x => x.TableStarted);
         Map(x => x.TableClosed);
+        Map(x => x.Comment);
+        Map(x => x.NotifiedAboutEndBook);
 
         References(x => x.Table)
             .Not.LazyLoad();

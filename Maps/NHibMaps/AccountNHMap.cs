@@ -8,6 +8,8 @@ public class AccountNHMap : NHSubclassClassMap<Account>
         Map(x => x.LastName);
         Map(x => x.TGChatId);
         Map(x => x.TGTag);
+        Map(x => x.Phone);
+        Map(x => x.CardNumber);
         Map(x => x.SelectedTime);
         Map(x => x.SelectedPlaces);
         Map(x => x.Waiting);

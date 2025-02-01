@@ -73,8 +73,11 @@ namespace vkteams.Services
             return SendOrEdit(
                 $"{GetContactsForMenu()}",
                 new InlineKeyboardConstructor()
-                    .AddTableButtons()
-                    .AddButtonDown("Назад", $"/mybooklist"));
+                    .AddTableButtons(Package.Account)
+                    .AddButtonDown("Назад", $"/mybooklist"),
+                null,
+                ImageId
+                );
         }
 
         [ApiPointer("table")]
@@ -84,16 +87,19 @@ namespace vkteams.Services
             Package.Account.SelectedTable = table;
             AccountService.AccountDS.Save(Package.Account);
 
-            DateTime[] avalableTimes = new BookService().GetAvailableTimesForBook(table);
+            DateTime[] avalableTimes = new BookService().GetAvailableTimesForBook(table, Package.Account);
             if(!avalableTimes.Any())
             {
                 return SendOrEdit(
-                $"{GetContactsForMenu()}" +
-                $"\r\n\r\n Стол: {table.Name}" +
-                $"\r\n *Посадочных мест: {table.NormalSeatAmount}*" +
-                $"\r\n\r\n К сожалению этот стол уже нельзя забронировать. Выберите пожалуйста другой.",
-                new InlineKeyboardConstructor()
-                    .AddButtonDown("Другой стол", $"/book"));
+                    $"{GetContactsForMenu()}" +
+                    $"\r\n\r\n Стол: {table.Name}" +
+                    $"\r\n *Посадочных мест: {table.NormalSeatAmount}*" +
+                    $"\r\n\r\n К сожалению этот стол уже нельзя забронировать. Выберите пожалуйста другой.",
+                    new InlineKeyboardConstructor()
+                        .AddButtonDown("Другой стол", $"/book"),
+                    null,
+                    ImageId
+                );
             }
 
             return SendOrEdit(
@@ -102,7 +108,10 @@ namespace vkteams.Services
                 $"\r\n *Посадочных мест: {table.NormalSeatAmount}*",
                 new InlineKeyboardConstructor()
                     .AddTimeButtons(avalableTimes)
-                    .AddButtonDown("Назад", $"/book"));
+                    .AddButtonDown("Назад", $"/book"),
+                null,
+                ImageId
+            );
         }
 
         [ApiPointer("set_time")]
@@ -133,7 +142,7 @@ namespace vkteams.Services
                 return Book();
             }
 
-            if (!new BookService().GetAvailableTimesForBook(Package.Account.SelectedTable).Contains(Package.Account.SelectedTime))
+            if (!new BookService().GetAvailableTimesForBook(Package.Account.SelectedTable, Package.Account).Contains(Package.Account.SelectedTime))
             {
                 return SendOrEdit(
                     $"{GetContactsForMenu()}" +
@@ -171,13 +180,13 @@ namespace vkteams.Services
                 $"\r\n *На {book.ActualBookStartTime:dd.MM} в {book.ActualBookStartTime:HH:mm}" +
                 $"\r\n Гостей: {book.SeatAmount}*",
                 new InlineKeyboardConstructor()
-                    .AddButtonDownIf(() => new BookService().CanMove(book), "Перенести на 20 минут", $"/try_move_book/{book.Id}")
-                    .AddButtonDown("Отменить бронь", $"/try_cancel_book/{book.Id}")
+                    .AddButtonDownIf(() => new BookService().CanMove(book, Package.Account), "Перенести на 20 минут", $"/try_move_book/{book.Id}")
+                    .AddButtonDown("Отменить бронь", $"/try_cancel/{book.Id}")
                     .AddButtonDown("Назад", $"/mybooklist"));
         }
 
-        [ApiPointer("try_cancel_book")]
-        private string TryCancelBook(Book book)
+        [ApiPointer("try_cancel")]
+        private string TryCancel(Book book)
         {
             if (book is null)
             {
@@ -196,12 +205,12 @@ namespace vkteams.Services
                 $"{GetContactsForMenu()}" +
                 $"\r\n\r\n *Отменить бронь на {book.ActualBookStartTime:dd.MM HH:mm}?*",
                 new InlineKeyboardConstructor()
-                    .AddButtonDown("Отменить", $"/cancel_book/{book.Id}")
+                    .AddButtonDown("Отменить", $"/cancel/{book.Id}")
                     .AddButtonDown("Назад", $"/mybook/{book.Id}"));
         }
 
-        [ApiPointer("cancel_book")]
-        private string CancelBook(Book book)
+        [ApiPointer("cancel")]
+        private string Cancel(Book book)
         {
             if (book is null)
             {
@@ -230,7 +239,7 @@ namespace vkteams.Services
                 return Menu();
             }
 
-            if (!new BookService().CanMove(book))
+            if (!new BookService().CanMove(book, Package.Account))
             {
                 return SendOrEdit(
                     $"{GetContactsForMenu()}" +
@@ -255,7 +264,7 @@ namespace vkteams.Services
                 return Menu();
             }
 
-            if (new BookService().Move(book))
+            if (new BookService().Move(book, Package.Account))
             {
                 return MyBook(book);
             }
@@ -273,7 +282,7 @@ namespace vkteams.Services
         private string MyBookList()
         {
             var books = new BookService()
-                .GetMyActualBook(Package.Account)
+                .GetMyActualBooks(Package.Account)
                 .OrderBy(x => x.ActualBookStartTime)
                 .ToArray();
             if (!books.Any())

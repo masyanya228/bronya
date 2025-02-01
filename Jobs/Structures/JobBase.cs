@@ -1,6 +1,6 @@
 ﻿using Quartz;
 
-namespace Buratino.Jobs.Structures
+namespace Bronya.Jobs.Structures
 {
     public abstract class JobBase : IJob
     {

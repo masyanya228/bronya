@@ -1,7 +1,9 @@
 ﻿using Bronya.Entities;
+using Bronya.Enums;
 using Bronya.Services;
 
 using Buratino.DI;
+using Buratino.Entities;
 using Buratino.Helpers;
 
 using Telegram.Bot.Types.ReplyMarkups;
@@ -32,14 +34,14 @@ namespace Buratino.Xtensions
         /// </summary>
         /// <param name="constructor"></param>
         /// <returns></returns>
-        public static InlineKeyboardConstructor AddTableButtons(this InlineKeyboardConstructor constructor)
+        public static InlineKeyboardConstructor AddTableButtons(this InlineKeyboardConstructor constructor, Entities.Account acc)
         {
             var tables = Container.GetDomainService<Table>().GetAll().Where(x => x.IsBookAvailable).ToArray();
             int count = 0;
             int tablesInRow = 3;
             foreach (var table in tables)
             {
-                bool isBusy = !bookService.GetAvailableTimesForBook(table).Any();
+                bool isBusy = !bookService.GetAvailableTimesForBook(table, acc).Any();
                 var btnTitle = isBusy
                     ? $"🔒 {table.Name}"
                     : $"{table.Name}";
@@ -121,7 +123,7 @@ namespace Buratino.Xtensions
             return constructor;
         }
 
-        public static InlineKeyboardConstructor AddHostesAllTableButtons(this InlineKeyboardConstructor constructor)
+        public static InlineKeyboardConstructor AddHostesAllTableButtons(this InlineKeyboardConstructor constructor, Entities.Account acc)
         {
             var tables = Container.GetDomainService<Table>().GetAll().OrderBy(x => x.Number).ToArray();
             int count = 0;
@@ -129,7 +131,7 @@ namespace Buratino.Xtensions
             foreach (var table in tables)
             {
                 var books = bookService.GetCurrentBooks(table);
-                bool isBusy = !bookService.GetAvailableTimesForBook(table).Any();
+                bool isBusy = !bookService.GetAvailableTimesForBook(table, acc).Any();
                 var btnTitle = isBusy
                     ? $"🔒 {table.Name}"
                     : $"{table.Name}";
@@ -160,12 +162,12 @@ namespace Buratino.Xtensions
             var tables = Container.GetDomainService<Table>().GetAll().OrderBy(x => x.Number).ToArray();
             var smena = bookService.GetCurrentSmena();
             int count = 0;
-            int tablesInRow = 2;
+            int tablesInRow = 1;
             foreach (var table in tables)
             {
                 var books = bookService.GetCurrentBooks(table);
 
-                var actualBook = books.FirstOrDefault(x => x.ActualBookStartTime < now && x.BookEndTime > now);
+                var actualBook = books.FirstOrDefault(x => x.GetTrueStartBook() < now && x.GetTrueEndBook() > now && x.GetStatus() != BookStatus.Closed);
                 var nowOpened = actualBook != default
                     ? actualBook.TableStarted != default && actualBook.TableClosed == default
                     : false;
@@ -174,11 +176,21 @@ namespace Buratino.Xtensions
                     : false;
                 var allowToBookNow = now.Add(smena.Schedule.MinPeriod) < smena.SmenaEnd && books.All(x => !x.IsIntersected(now, now.Add(smena.Schedule.MinPeriod)));
 
+                var isCloseToEnd = actualBook != default
+                    ? actualBook.NotifiedAboutEndBook != default
+                    : false;
+
                 string btnTitle = string.Empty;
                 string btnCallback = string.Empty;
                 if (!table.IsBookAvailable)
                     btnTitle += $"🚫";
-                if (nowOpened)
+
+                if (isCloseToEnd)
+                {
+                    btnTitle += $"Время подходит к концу {table.Name}";
+                    btnCallback = $"/show_book/{actualBook.Id}";
+                }
+                else if (nowOpened)
                 {
                     btnTitle += $"Открыт {table.Name}";
                     btnCallback = $"/show_book/{actualBook.Id}";
@@ -213,14 +225,14 @@ namespace Buratino.Xtensions
             return constructor;
         }
 
-        public static InlineKeyboardConstructor AddHostesTableButtons(this InlineKeyboardConstructor constructor, IEnumerable<Table> tables)
+        public static InlineKeyboardConstructor AddHostesTableButtons(this InlineKeyboardConstructor constructor, IEnumerable<Table> tables, Entities.Account acc)
         {
             int count = 0;
             int tablesInRow = 2;
             foreach (var table in tables)
             {
                 var books = bookService.GetCurrentBooks(table);
-                bool isBusy = !bookService.GetAvailableTimesForBook(table).Any();
+                bool isBusy = !bookService.GetAvailableTimesForBook(table, acc).Any();
                 var btnTitle = isBusy
                     ? $"🔒 {table.Name}"
                     : $"{table.Name}";
@@ -332,6 +344,46 @@ namespace Buratino.Xtensions
                 else
                     constructor.AddButtonRight($"{i:HH:mm}", $"/move/{book.Id}/{i}");
                 prevTime = i;
+            }
+            return constructor;
+        }
+
+        public static InlineKeyboardConstructor AddHostesSelectAccounts(this InlineKeyboardConstructor constructor, IEnumerable<Account> accounts)
+        {
+            int count = 0;
+            int tablesInRow = 1;
+            foreach (var account in accounts)
+            {
+                if (count == tablesInRow)
+                {
+                    count = 0;
+                    constructor.AddButtonDown($"{account.Name} ({account.CardNumber}) {account.Phone}", $"/set_name_true/{account.Id}");
+                }
+                else
+                {
+                    constructor.AddButtonRight($"{account.Name} ({account.CardNumber}) {account.Phone}", $"/set_name_true/{account.Id}");
+                }
+                count++;
+            }
+            return constructor;
+        }
+
+        public static InlineKeyboardConstructor AddHostesAllAccounts(this InlineKeyboardConstructor constructor, IEnumerable<Account> accounts)
+        {
+            int count = 0;
+            int accountsInRow = 1;
+            foreach (var account in accounts)
+            {
+                if (count == accountsInRow)
+                {
+                    count = 0;
+                    constructor.AddButtonDown($"{account.Name} ({account.CardNumber}) {account.Phone}", $"/account/{account.Id}");
+                }
+                else
+                {
+                    constructor.AddButtonRight($"{account.Name} ({account.CardNumber}) {account.Phone}", $"/account/{account.Id}");
+                }
+                count++;
             }
             return constructor;
         }

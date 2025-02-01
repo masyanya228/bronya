@@ -1,23 +1,20 @@
 ﻿using BannerWebIS.Jobs;
-using BannerWebIS.Models.Xtensions;
-using BannerWebIS.Services;
 
-using PowerManager;
+using Buratino.DI;
+using Buratino.Xtensions;
 
 using Quartz;
 
-using System;
-
-namespace BannerWebIS.Registrators
+namespace Bronya.Jobs.Structures
 {
     public class JobRegistrator
     {
-        public static IQuartzProvider QuartzProvider { get; set; } = Container.Resolve<IQuartzProvider>();
+        public static IQuartzProvider QuartzProvider { get; set; } = Container.Get<IQuartzProvider>();
 
         public static void RegisterJobs()
         {
-            new BackupJob().RegisterJobWithCron();
-            RegisterJobWithCron<ManagerDailyReportJob>($"0 0 16 * * ?");
+            new BookAutoCancelJob().RegisterJobWithCron();
+            new BookEndNotifyJob().RegisterJobWithCron();
         }
 
         public static DateTimeOffset RegisterJobWithCron<T>(string cron)

@@ -13,6 +13,8 @@ using Microsoft.Extensions.FileProviders;
 using vkteams.Services;
 using Bronya.Entities;
 using Bronya.Services;
+using Bronya.Jobs.Structures;
+using Quartz;
 
 public class Program
 {
@@ -21,6 +23,15 @@ public class Program
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        builder.Services.AddQuartz(q =>
+        {
+            q.UseMicrosoftDependencyInjectionJobFactory();
+        });
+        builder.Services.AddQuartzHostedService(opt =>
+        {
+            opt.WaitForJobsToComplete = true;
+        });
 
         // Add services to the container.
         builder.Services.AddControllersWithViews();
@@ -45,6 +56,8 @@ public class Program
                 .Build();
             config.Filters.Add(new AuthorizeFilter(policy));
         });
+
+        builder.Services.AddSingleton(typeof(IQuartzProvider), typeof(QuartzProvider));
 
         var app = builder.Build();
 
@@ -93,6 +106,8 @@ public class Program
     {
         LogService = new LogService();
         new AuthorizeService(LogService, new TGAPI(LogService, "7434892034:AAHZlmmmNZlPdsPU1hye-JcKqYlzayb-VRI"));
+
+        JobRegistrator.RegisterJobs();
 
         Container.GetDomainService<WorkSchedule>().Save(new WorkSchedule()
         {

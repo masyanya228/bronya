@@ -203,13 +203,13 @@ namespace Buratino.Xtensions
 
             if (n >= 0)
             {
-                ot[0] = str.Substring(0, n);
-                ot[1] = str.Substring(n + spliter.Length);
+                ot[0] = str.Substring(0, n).Trim();
+                ot[1] = str.Substring(n + spliter.Length).Trim();
             }
             else
             {
-                ot[0] = str;
-                ot[1] = "";
+                ot[0] = str.Trim();
+                ot[1] = null;
             }
             return ot;
         }

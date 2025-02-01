@@ -11,6 +11,8 @@
     <PackageReference Include="FluentNHibernate" Version="3.4.0" />
     <PackageReference Include="Npgsql" Version="9.0.2" />
     <PackageReference Include="Quartz" Version="3.13.1" />
+    <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.13.1" />
+    <PackageReference Include="Quartz.Extensions.Hosting" Version="3.13.1" />
     <PackageReference Include="Telegram.Bot" Version="18.0.0" />
   </ItemGroup>
 

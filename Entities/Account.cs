@@ -30,6 +30,10 @@ namespace Buratino.Entities
         
         public virtual string TGTag { get; set; }
 
+        public virtual string Phone { get; set; }
+        
+        public virtual string CardNumber { get; set; }
+
         public virtual Table SelectedTable { get; set; }
 
         public virtual DateTime SelectedTime { get; set; }

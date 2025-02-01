@@ -10,6 +10,7 @@ namespace Bronya.Services
 {
     public class AuthorizeService
     {
+        public static AuthorizeService Instance { get; private set; }
         IBronyaServiceBase BronyaService;
         IBronyaServiceBase BronyaHostesService;
         protected AccountService AccountService;
@@ -20,6 +21,7 @@ namespace Bronya.Services
 
         public AuthorizeService(LogService logService, TGAPI tgAPI)
         {
+            Instance = this;
             TgAPI = tgAPI;
             LogService = logService;
 
@@ -37,11 +39,11 @@ namespace Bronya.Services
             var acc = AccountService.GetAccount(update);
             var dataPackage = new DataPackage(acc, update);
             var roles = RoleDS.GetAll().Where(x => x.Account.Id == acc.Id).ToList();
-            if (roles.Any(x=>x.Role.Name=="Administrator"))
+            if (IsAdministrator(acc))
             {
                 throw new NotImplementedException();
             }
-            else if (roles.Any(x => x.Role.Name == "Hostes"))
+            else if (IsHostes(acc))
             {
                 return BronyaHostesService.OnUpdateWrapper(dataPackage);
             }
@@ -49,6 +51,17 @@ namespace Bronya.Services
             {
                 return BronyaService.OnUpdateWrapper(dataPackage);
             }
+        }
+
+        public bool IsHostes(Account account)
+        {
+            var roles = RoleDS.GetAll().Where(x => x.Account.Id == account.Id).ToList();
+            return roles.Any(x => x.Role.Name == "Hostes");
+        }
+        public bool IsAdministrator(Account account)
+        {
+            var roles = RoleDS.GetAll().Where(x => x.Account.Id == account.Id).ToList();
+            return roles.Any(x => x.Role.Name == "Administrator");
         }
     }
 }

@@ -34,13 +34,41 @@ namespace Bronya.Entities
                 return ActualBookStartTime.Add(BookLength);
             }
         }
-        
+
+        public virtual DateTime NotifiedAboutEndBook { get; set; }
+
         /// <summary>
         /// Время расчета стола
         /// </summary>
         public virtual DateTime TableClosed { get; set; }
-        
+
         public virtual Table Table { get; set; }
+
+        /// <summary>
+        /// Комментарии
+        /// </summary>
+        public virtual string Comment { get; set; }
+
+        public virtual DateTime GetTrueStartBook()
+        {
+            if (TableStarted != default)
+                return TableStarted < ActualBookStartTime
+                    ? TableStarted
+                    : ActualBookStartTime;
+            return ActualBookStartTime;
+        }
+
+        /// <summary>
+        /// Возвращает
+        /// </summary>
+        /// <returns></returns>
+        public virtual DateTime GetTrueEndBook()
+        {
+            var smena = new BookService().GetCurrentSmena();
+            if (TableStarted != default)
+                return TableStarted.Add(BookLength);
+            return BookEndTime;
+        }
 
         public virtual string GetState()
         {
@@ -64,17 +92,17 @@ namespace Bronya.Entities
                 var allowedStart = ActualBookStartTime.Add(smena.Schedule.Buffer) < TableStarted
                     ? ActualBookStartTime.Add(smena.Schedule.Buffer)
                     : TableStarted;
-                var timeEnd = allowedStart.Add(smena.Schedule.MinPeriod);
-                var timeLeft = timeEnd.Subtract(DateTime.Now);
-                state += $"\r\n\r\nВынос кальяна: {TableStarted:HH:mm}; Стол до: {timeEnd:HH:mm}" +
-                    $"\r\nОсталось: {timeLeft.TotalMinutes.Round()} мин.";
+                var timeEnd = allowedStart.Add(BookLength);
+                var timeLeft = timeEnd.Subtract(new TimeService().GetNow());
+                state += $"\r\n\r\n*Вынос кальяна: {TableStarted:HH:mm}; Стол до: {timeEnd:HH:mm}" +
+                    $"\r\nОсталось: {timeLeft.TotalMinutes.Round()} мин.*";
             }
             return state;
         }
 
         public virtual bool IsIntersected(DateTime start, DateTime end)
         {
-            return DataXtensions.IsXcrossing(ActualBookStartTime, BookEndTime, start, end);
+            return DataXtensions.IsXcrossing(GetTrueStartBook(), GetTrueEndBook(), start, end);
         }
 
         public virtual void SetNewBookEndTime(DateTime newEndTime)

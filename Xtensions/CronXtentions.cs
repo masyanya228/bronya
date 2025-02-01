@@ -1,6 +1,6 @@
 ﻿using Quartz;
 using Buratino.DI;
-using Buratino.Jobs.Structures;
+using Bronya.Jobs.Structures;
 
 namespace Buratino.Xtensions
 {
@@ -14,6 +14,7 @@ namespace Buratino.Xtensions
             var trigger = TriggerBuilder.Create()
                 .WithCronSchedule(job.CroneTime)
                 .Build();
+            
 
             return Container.Get<IQuartzProvider>().Schedule.ScheduleJob(jobDetail, trigger).GetAwaiter().GetResult();
         }

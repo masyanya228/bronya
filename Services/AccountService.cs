@@ -1,6 +1,7 @@
 ﻿using Buratino.DI;
 using Buratino.Entities;
 using Buratino.Models.DomainService.DomainStructure;
+using Buratino.Xtensions;
 
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -41,6 +42,54 @@ namespace Bronya.Services
                 AccountDS.Save(acc);
             }
             return acc;
+        }
+
+        public IEnumerable<Account> FindAccount(string fullName, bool allowOnlyName)
+        {
+            var args = fullName.TrueSplit(",");
+            if (!allowOnlyName && args[1] == default)
+            {
+                return null;
+            }
+
+            if (args[1] != default)
+            {
+                var byPhone = AccountDS.GetAll().Where(x => x.Phone == args[1]).ToList();
+                var byCardNumber = AccountDS.GetAll().Where(x => x.CardNumber == args[1]).ToList();
+                if (byPhone.Any())
+                {
+                    if (byPhone.Count == 1)
+                    {
+                        return [byPhone.Single()];
+                    }
+                    else
+                    {
+                        var byName = byPhone.SingleOrDefault(x => x.Name.ToLower() == args[0].ToLower());
+                        if (byName != default)
+                            return [byName];
+                        else
+                            return byPhone;
+                    }
+                }
+                else if (byCardNumber.Any())
+                {
+                    if (byCardNumber.Count == 1)
+                    {
+                        return [byCardNumber.Single()];
+                    }
+                    else
+                    {
+                        var byName = byCardNumber.SingleOrDefault(x => x.Name.ToLower() == args[0].ToLower());
+                        if (byName != default)
+                            return [byName];
+                        else
+                            return byCardNumber;
+                    }
+                }
+            }
+            var newAcc = new Account() { Name = args[0] };
+            AccountDS.Save(newAcc);
+            return [newAcc];
         }
     }
 }
