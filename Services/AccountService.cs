@@ -1,5 +1,6 @@
-﻿using Buratino.DI;
-using Buratino.Entities;
+﻿using Bronya.Entities;
+
+using Buratino.DI;
 using Buratino.Models.DomainService.DomainStructure;
 using Buratino.Xtensions;
 
@@ -47,6 +48,7 @@ namespace Bronya.Services
         public IEnumerable<Account> FindAccount(string fullName, bool allowOnlyName)
         {
             var args = fullName.TrueSplit(",");
+            string number = default;
             if (!allowOnlyName && args[1] == default)
             {
                 return null;
@@ -54,8 +56,9 @@ namespace Bronya.Services
 
             if (args[1] != default)
             {
-                var byPhone = AccountDS.GetAll().Where(x => x.Phone == args[1]).ToList();
-                var byCardNumber = AccountDS.GetAll().Where(x => x.CardNumber == args[1]).ToList();
+                number = ParseNumber(args[1]);
+                var byPhone = AccountDS.GetAll().Where(x => x.Phone == number).ToList();
+                var byCardNumber = AccountDS.GetAll().Where(x => x.CardNumber == number).ToList();
                 if (byPhone.Any())
                 {
                     if (byPhone.Count == 1)
@@ -88,8 +91,58 @@ namespace Bronya.Services
                 }
             }
             var newAcc = new Account() { Name = args[0] };
+            if (number != default)
+            {
+                if (number.Length == 4)
+                {
+                    newAcc.CardNumber = number;
+                }
+                else
+                {
+                    newAcc.Phone = number;
+                }
+            }
             AccountDS.Save(newAcc);
             return [newAcc];
+        }
+
+        public string ParseNumber(string source)
+        {
+            var phone = source.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "");
+            if (phone.Length == 4)
+                return phone;
+            if (phone.Length == 10)
+                return "+7" + phone;
+            else if (phone.Length == 11 && phone.StartsWith("8"))
+                return "+7" + phone.Substring(1);
+            else if (phone.Length == 11 && phone.StartsWith("7"))
+                return "+" + phone;
+            else
+                return phone;
+        }
+
+        public IEnumerable<Account> GetAccountsToUnion(Account account)
+        {
+            return AccountDS.GetAll()
+                .Where(x=> account.CardNumber != default && account.CardNumber == x.CardNumber 
+                    || account.Phone != default && account.Phone == x.Phone)
+                //.Where(x => x.CardNumber != default || x.Phone != default)
+                //.Where(x => x.CardNumber == account.CardNumber || x.Phone == account.Phone)
+                .Where(x => x.Id != account.Id && x.TGTag == default)
+                .ToArray();
+        }
+
+        public Account GetTrueAccount(Account account)
+        {
+            return account.TGTag == default
+                ? AccountDS.GetAll()
+                    .Where(x => account.CardNumber != default && account.CardNumber == x.CardNumber
+                        || account.Phone != default && account.Phone == x.Phone)
+                    //.Where(x => x.CardNumber != default || x.Phone != default)
+                    //.Where(x => x.CardNumber == account.CardNumber || x.Phone == account.Phone)
+                    .Where(x => x.Id != account.Id && x.TGTag != default)
+                    .FirstOrDefault()
+                : default;
         }
     }
 }

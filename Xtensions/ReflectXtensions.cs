@@ -85,6 +85,7 @@ namespace Buratino.Xtensions
         public static IEnumerable<KeyValuePair<MethodInfo, T>> GetMethodsWithAttribute<T>(this object obj) where T : Attribute
         {
             List<KeyValuePair<MethodInfo, T>> keyValuePairs = new();
+            var all = obj.GetType().GetMethods();
             foreach (var item in obj.GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public))
             {
                 var valueAttributes = item.GetCustomAttributes<T>(false);

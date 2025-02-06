@@ -64,7 +64,6 @@ namespace Bronya.Entities
         /// <returns></returns>
         public virtual DateTime GetTrueEndBook()
         {
-            var smena = new BookService().GetCurrentSmena();
             if (TableStarted != default)
                 return TableStarted.Add(BookLength);
             return BookEndTime;
@@ -73,11 +72,19 @@ namespace Bronya.Entities
         public virtual string GetState()
         {
             var smena = new BookService().GetCurrentSmena();
+
             string state = "Бронь:";
             state += $"\r\n⏱️Время: {ActualBookStartTime:dd.MM HH:mm}";
             state += $"\r\n🔲Стол: {Table.Name}";
+            if (Table.HasConsole)
+                state += "🎮";
+
             state += $"\r\n👤Гостей: {SeatAmount}";
-            state += $"\r\nИмя: {Account.ToString()}";
+            state += $"\r\nИмя: {Account}";
+            if (Account.TGTag != default)
+                state += $"\r\n@{Account.TGTag}";
+            if (Account.Phone != default)
+                state += $"\r\n{Account.Phone}";
 
             if (IsCanceled)
             {

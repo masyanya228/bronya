@@ -1,28 +1,28 @@
 ﻿namespace Buratino.Models.Attributes
 {
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
-    sealed class TitleDescribeAttribute : Attribute
+    sealed class TitleAttribute : Attribute
     {
         private string title;
         private string describtion;
         private string subject = null;
         private string handler;
 
-        public TitleDescribeAttribute(string title)
+        public TitleAttribute(string title)
         {
             Title = title;
             Description = title;
             Subject = null;
             Handler = null;
         }
-        public TitleDescribeAttribute(string title, string describtion)
+        public TitleAttribute(string title, string describtion)
         {
             Title = title;
             Description = describtion;
             Subject = null;
             Handler = null;
         }
-        public TitleDescribeAttribute(string title, string describtion, string subject, string handler)
+        public TitleAttribute(string title, string describtion, string subject, string handler)
         {
             Title = title;
             Description = describtion;

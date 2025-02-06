@@ -1,9 +1,9 @@
 ﻿using Buratino.Entities.Abstractions;
 
-namespace Buratino.Entities
+namespace Bronya.Entities
 {
     public class Role : NamedEntity
     {
-
+        public virtual string Title { get; set; }
     }
 }

@@ -18,8 +18,7 @@ namespace Buratino.Repositories.Implementations.Postgres
         {
             get
             {
-                if (sessionFactory == null)
-                    sessionFactory = CreateSessionFactory();
+                sessionFactory ??= CreateSessionFactory();
 
                 return sessionFactory;
             }
@@ -38,8 +37,7 @@ namespace Buratino.Repositories.Implementations.Postgres
                             .Database("bronya_thegreenplace")
                             .Username("postgres")
                             .Password("007007Qq"))
-                        .Dialect<PostgreSQL82Dialect>()
-                        .ShowSql());
+                        .Dialect<PostgreSQL82Dialect>());
 
             var mappings = typeof(INHMap).GetImplementations();
             foreach (var item in mappings)

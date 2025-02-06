@@ -1,10 +1,12 @@
-﻿namespace Buratino.Entities.Abstractions
+﻿using Bronya.Entities;
+
+namespace Buratino.Entities.Abstractions
 {
     public abstract class EntityBase : IEquatable<EntityBase>, IEntityBase
     {
         public virtual Guid Id { get; set; }
 
-        public virtual Account Account{ get; set; }
+        public virtual Account Account { get; set; }
 
         public virtual DateTime TimeStamp { get; set; } = DateTime.Now;
 

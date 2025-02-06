@@ -1,4 +1,5 @@
-﻿using Buratino.Entities.Abstractions;
+﻿using Bronya.Entities.Abstractions;
+
 using Buratino.Maps.NHibMaps;
 
 public class PersistentEntityMap : NHSubclassClassMap<PersistentEntity>
@@ -8,7 +9,5 @@ public class PersistentEntityMap : NHSubclassClassMap<PersistentEntity>
         Abstract();
         Map(x => x.DeletedStamp);
         Map(x => x.IsDeleted);
-        References(x => x.Account, "AccountId")
-            .Not.LazyLoad();
     }
 }

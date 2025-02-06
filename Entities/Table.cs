@@ -14,5 +14,12 @@ namespace Bronya.Entities
         /// Порядковый номер стола
         /// </summary>
         public virtual int Number { get; set; }
+
+        public override string ToString()
+        {
+            return HasConsole
+                ? $"{Name}🎮"
+                : $"{Name}";
+        }
     }
 }

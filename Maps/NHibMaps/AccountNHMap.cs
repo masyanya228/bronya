@@ -1,4 +1,5 @@
-﻿using Buratino.Entities;
+﻿using Bronya.Entities;
+
 using Buratino.Maps.NHibMaps;
 
 public class AccountNHMap : NHSubclassClassMap<Account>
@@ -8,13 +9,17 @@ public class AccountNHMap : NHSubclassClassMap<Account>
         Map(x => x.LastName);
         Map(x => x.TGChatId);
         Map(x => x.TGTag);
+        Map(x => x.IsPhoneRequested);
         Map(x => x.Phone);
         Map(x => x.CardNumber);
         Map(x => x.SelectedTime);
         Map(x => x.SelectedPlaces);
         Map(x => x.Waiting);
+        Map(x => x.GetAccountsPage);
 
         References(x => x.SelectedTable)
+            .Not.LazyLoad();
+        References(x => x.SelectedAccount)
             .Not.LazyLoad();
     }
 }

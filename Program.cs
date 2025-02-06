@@ -1,5 +1,4 @@
 using Buratino.DI;
-using Buratino.Entities;
 using Buratino.API;
 using Buratino.Models.DomainService.DomainStructure;
 using Buratino.Models.DomainService;
@@ -18,8 +17,6 @@ using Quartz;
 
 public class Program
 {
-    private static LogService LogService;
-
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -40,6 +37,10 @@ public class Program
 
         builder.Services.AddSingleton(typeof(IDomainService<>), typeof(DefaultDomainService<>));
 
+        builder.Services.AddSingleton(typeof(IDomainService<Account>), typeof(PersistentDomainService<Account>));
+
+        builder.Services.AddSingleton(typeof(LogService), new LogService());
+        
         //for PG
         builder.Services.AddSingleton(typeof(IPGSessionFactory), typeof(PGSessionFactory));
 
@@ -99,13 +100,12 @@ public class Program
 
     private static void OnStop()
     {
-        LogService.Dispose();
+        Container.Get<LogService>().Dispose();
     }
 
     public static void OnStarted()
     {
-        LogService = new LogService();
-        new AuthorizeService(LogService, new TGAPI(LogService, "7434892034:AAHZlmmmNZlPdsPU1hye-JcKqYlzayb-VRI"));
+        new AuthorizeService(Container.Get<LogService>(), new TGAPI(Container.Get<LogService>(), "7434892034:AAHZlmmmNZlPdsPU1hye-JcKqYlzayb-VRI"));
 
         JobRegistrator.RegisterJobs();
 
@@ -117,7 +117,7 @@ public class Program
         var accounts = Container.GetDomainService<Account>();
         if (!accounts.GetAll().Any(x => x.Name == "Root"))
         {
-            Account entity = new Account()
+            Account entity = new()
             {
                 Name = "Root",
             };

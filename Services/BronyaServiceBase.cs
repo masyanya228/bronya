@@ -1,10 +1,14 @@
 ﻿using Bronya.Dtos;
+using Bronya.Entities;
 using Bronya.Services;
 
 using Buratino.API;
 using Buratino.Attributes;
+using Buratino.DI;
 using Buratino.Enums;
 using Buratino.Helpers;
+using Buratino.Models.Attributes;
+using Buratino.Models.DomainService.DomainStructure;
 using Buratino.Xtensions;
 
 using System.Reflection;
@@ -16,32 +20,34 @@ namespace vkteams.Services
 {
     public class BronyaServiceBase : IBronyaServiceBase
     {
-        protected string ImageId = "AgACAgIAAxkBAAIBqGedpO4Tjf56hP0V-rA80MgoUbqIAAIm-TEbTj7xSF53trpDEdOHAQADAgADeQADNgQ";
-        public DataPackage Package {  get; set; }
+        protected string ImageId = Container.GetDomainService<TableSchemaImage>()
+            .GetAll()
+            .OrderByDescending(x => x.TimeStamp)
+            .FirstOrDefault()?.ImageId
+            ?? "AgACAgIAAxkBAAIBqGedpO4Tjf56hP0V-rA80MgoUbqIAAIm-TEbTj7xSF53trpDEdOHAQADAgADeQADNgQ";
+
+        public DataPackage Package { get; set; }
         public LogService LogService { get; }
         public TGAPI TGAPI { get; set; }
+        public IDomainService<TableSchemaImage> TableSchemaImageDS { get; set; } = Container.GetDomainService<TableSchemaImage>();
+        public AccountService AccountService { get; set; }
 
         private IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> _availablePointers = null;
-        public AccountService AccountService {  get; set; }
+        public IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> AvailablePointers
+        {
+            get
+            {
+                _availablePointers ??= this.GetMethodsWithAttribute<ApiPointer>();
+                return _availablePointers;
+            }
+            set => _availablePointers = value;
+        }
 
         public BronyaServiceBase(LogService logService, TGAPI tGAPI)
         {
             LogService = logService;
             AccountService = new AccountService();
             TGAPI = tGAPI;
-        }
-
-        public IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> AvailablePointers
-        {
-            get
-            {
-                if (_availablePointers is null)
-                {
-                    _availablePointers = this.GetMethodsWithAttribute<ApiPointer>();
-                }
-                return _availablePointers;
-            }
-            set => _availablePointers = value;
         }
 
         public Task OnUpdateWrapper(DataPackage dataPackage)
@@ -53,15 +59,8 @@ namespace vkteams.Services
             }
             else if (Package.Update.Type == UpdateType.Message)
             {
-                if (Package.Update.Message.Type == MessageType.Photo)
-                {
-                    var fileId = Package.Update.Message.Photo.Last().FileId;
-                    return Task.CompletedTask;
-                }
-                else
-                {
-                    return ProcessMessage(Package.Update);
-                }
+
+                return ProcessMessage(Package.Update);
             }
             else
             {
@@ -90,14 +89,25 @@ namespace vkteams.Services
         private Task ProcessMessage(Update update)
         {
             Package.ChatId = update.Message.Chat.Id;
-            string text = update.Message.Text;
-            if (!text.StartsWith("/"))
+            if (update.Message.Type == MessageType.Text)
             {
-                return ProcessTextMessage(text);
+                string text = update.Message.Text;
+                if (!text.StartsWith("/"))
+                {
+                    return ProcessTextMessage(text);
+                }
+                else
+                {
+                    return ProcessCommandMessage(text);
+                }
+            }
+            else if (update.Message.Type == MessageType.Contact)
+            {
+                return ProcessCommandMessage($"/set_phone/{update.Message.Contact.PhoneNumber}");
             }
             else
             {
-                return ProcessCommandMessage(text);
+                return ProcessTextMessage(string.Empty);
             }
         }
 
@@ -147,7 +157,7 @@ namespace vkteams.Services
             }
             if (query.StartsWith('/'))
             {
-                query = query.Substring(1);
+                query = query[1..];
                 args = query.Split('/').Skip(1).ToArray();
                 return query.Split('/').First().ToLower();
             }
@@ -207,6 +217,58 @@ namespace vkteams.Services
         protected string SendOrEdit(string text, IReplyConstructor replyConstructor = null, ParseMode? parseMode = ParseMode.Markdown, string imageId = default)
         {
             return TGAPI.SendOrEdit(Package, text, replyConstructor, parseMode, imageId);
+        }
+
+        [ApiPointer("show_role")]
+        private protected string ShowRole()
+        {
+            var curRole = AuthorizeService.Instance.GetRole(Package.Account);
+            var constructor = new InlineKeyboardConstructor();
+            foreach (var item in Enum.GetValues<RoleType>())
+            {
+                if (item != curRole)
+                    constructor.AddButtonDown(item.GetAttribute<TitleAttribute>().Title, $"/switch_role/{item}");
+            }
+
+            return SendOrEdit($"Ваша роль: {curRole.GetAttribute<TitleAttribute>().Title}",
+                constructor
+                    .AddButtonDown("Назад", "/menu")
+            );
+        }
+
+        [ApiPointer("switch_role")]
+        private protected string SwitchRole(RoleType role)
+        {
+            if (Package.Account.Id != new Guid("4be29f89-f887-48a1-a8af-cad15d032758"))
+            {
+                return ShowRole();
+            }
+
+            var ralDS = Container.GetDomainService<RoleAccountLink>();
+            var roleDS = Container.GetDomainService<Role>();
+            var roles = ralDS.GetAll().Where(x => x.Account.Id == Package.Account.Id).Select(ralDS.Delete).ToList();
+            if (role == RoleType.Hostes)
+            {
+                var newRole = roleDS.GetAll().First(x => x.Name == "Hostes");
+
+                ralDS.Save(new RoleAccountLink()
+                {
+                    Account = Package.Account,
+                    Role = newRole,
+                });
+            }
+            else if (role == RoleType.Administrator)
+            {
+                var newRole = roleDS.GetAll().First(x => x.Name == "Administrator");
+
+                ralDS.Save(new RoleAccountLink()
+                {
+                    Account = Package.Account,
+                    Role = newRole,
+                });
+            }
+
+            return ShowRole();
         }
     }
 }

@@ -1,6 +1,7 @@
-﻿using Buratino.Entities.Abstractions;
+﻿using Buratino.Entities;
+using Buratino.Entities.Abstractions;
 
-namespace Buratino.Entities
+namespace Bronya.Entities
 {
     public class PermissionRoleLink : EntityBase
     {

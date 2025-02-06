@@ -100,9 +100,9 @@ namespace Buratino.API
                     return Send(package.ChatId, text, parseMode, replyConstructor);
                 else
                 {
-                    if (package.Update.Type == UpdateType.CallbackQuery)
+                    if (package?.Update?.Type == UpdateType.CallbackQuery)
                     {
-                        if (package.Update.CallbackQuery.Message.Type == MessageType.Photo)
+                        if (package?.Update?.CallbackQuery?.Message?.Type == MessageType.Photo)
                         {
                             Send(package.ChatId, text, parseMode, replyConstructor);
                             return Delete(package.ChatId, package.MessageId);
@@ -122,9 +122,9 @@ namespace Buratino.API
                     return SendFile(package.ChatId, imageId, text, parseMode, replyConstructor);
                 else
                 {
-                    if (package.Update.Type == UpdateType.CallbackQuery)
+                    if (package?.Update?.Type == UpdateType.CallbackQuery)
                     {
-                        if (package.Update.CallbackQuery.Message.Type == MessageType.Photo)
+                        if (package?.Update?.CallbackQuery?.Message?.Type == MessageType.Photo)
                         {
                             return EditFile(package.ChatId, package.MessageId, imageId, text, parseMode, replyConstructor);
                         }
@@ -141,7 +141,7 @@ namespace Buratino.API
 
         private string Send(long chatId, string text, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
         {
-            return client.SendTextMessageAsync(chatId, text, parseMode, null, null, null, null, null, null, replyConstructor?.GetMarkup())
+            return client.SendTextMessageAsync(chatId, text, parseMode, null, null, null, null, null, null, replyConstructor?.GetMarkup() ?? new ReplyKeyboardRemove())
                 .GetAwaiter().GetResult().MessageId.ToString();
         }
 
@@ -162,7 +162,7 @@ namespace Buratino.API
 
         private string SendFile(long chatId, string imageId, string caption, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
         {
-            return client.SendPhotoAsync(chatId, new InputOnlineFile("AgACAgIAAxkBAAOgZ5pWHbT-EVNXc96-Q0oD7LZCnGMAAjzqMRtkA9FI7XDK_OV9DSQBAAMCAAN4AAM2BA"), caption, parseMode, null, null, null, null, null, replyConstructor?.GetMarkup())
+            return client.SendPhotoAsync(chatId, new InputOnlineFile(imageId), caption, parseMode, null, null, null, null, null, replyConstructor?.GetMarkup() ?? new ReplyKeyboardRemove())
                 .GetAwaiter().GetResult().MessageId.ToString();
         }
         
@@ -170,7 +170,7 @@ namespace Buratino.API
         {
             if (!(replyConstructor is InlineKeyboardConstructor inlineKeyboardConstructor))
                 throw new InvalidOperationException("Нельзя передать кнопки сообщения. Нужно передать кнопки клавиатуры");
-            return client.EditMessageMediaAsync(chatId, messageId, new InputMediaPhoto("AgACAgIAAxkBAAOgZ5pWHbT-EVNXc96-Q0oD7LZCnGMAAjzqMRtkA9FI7XDK_OV9DSQBAAMCAAN4AAM2BA") { Caption = caption, ParseMode = parseMode }, inlineKeyboardConstructor?.GetMarkup() as InlineKeyboardMarkup)
+            return client.EditMessageMediaAsync(chatId, messageId, new InputMediaPhoto(imageId) { Caption = caption, ParseMode = parseMode }, inlineKeyboardConstructor?.GetMarkup() as InlineKeyboardMarkup)
                 .GetAwaiter().GetResult().MessageId.ToString();
         }
 

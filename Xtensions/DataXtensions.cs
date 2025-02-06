@@ -279,10 +279,6 @@ namespace Buratino.Xtensions
             {
                 phone = "+7" + phone;
             }
-            else if (phone.Length == 12 && phone.StartsWith("+7"))//prfct
-            {
-                phone = phone;
-            }
             else if (phone.Length == 11)
             {
                 if (phone.StartsWith("8"))

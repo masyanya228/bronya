@@ -1,7 +1,7 @@
 ﻿using Bronya.Entities;
 using Bronya.Services;
 
-using Buratino.Entities;
+using Buratino.Enums;
 
 namespace Bronya.Dtos
 {
@@ -19,7 +19,7 @@ namespace Bronya.Dtos
             {
                 correctTime = correctTime.Add(Schedule.Step);
             }
-            if (AuthorizeService.Instance.IsHostes(account))
+            if (AuthorizeService.Instance.GetRole(account) == RoleType.Hostes)
             {
                 correctTime = correctTime.Add(-Schedule.Step);
             }

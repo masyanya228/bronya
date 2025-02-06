@@ -1,4 +1,6 @@
-﻿using Buratino.Entities;
+﻿using Bronya.Entities;
+
+using Buratino.Xtensions;
 
 using Telegram.Bot.Types;
 
@@ -10,6 +12,12 @@ namespace Bronya.Dtos
         {
             Account = acc;
             Update = update;
+        }
+
+        public DataPackage(Account acc)
+        {
+            Account = acc;
+            ChatId = Account.TGChatId.AsLong();
         }
 
         public Account Account { get; set; }

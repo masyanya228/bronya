@@ -3,7 +3,6 @@ using Bronya.Enums;
 using Bronya.Services;
 
 using Buratino.DI;
-using Buratino.Entities;
 using Buratino.Helpers;
 
 using Telegram.Bot.Types.ReplyMarkups;
@@ -34,17 +33,17 @@ namespace Buratino.Xtensions
         /// </summary>
         /// <param name="constructor"></param>
         /// <returns></returns>
-        public static InlineKeyboardConstructor AddTableButtons(this InlineKeyboardConstructor constructor, Entities.Account acc)
+        public static InlineKeyboardConstructor AddTableButtons(this InlineKeyboardConstructor constructor, Account acc)
         {
-            var tables = Container.GetDomainService<Table>().GetAll().Where(x => x.IsBookAvailable).ToArray();
+            var tables = Container.GetDomainService<Table>().GetAll().Where(x => x.IsBookAvailable).OrderBy(x => x.Number).ToArray();
             int count = 0;
             int tablesInRow = 3;
             foreach (var table in tables)
             {
                 bool isBusy = !bookService.GetAvailableTimesForBook(table, acc).Any();
                 var btnTitle = isBusy
-                    ? $"🔒 {table.Name}"
-                    : $"{table.Name}";
+                    ? $"🔒 {table}"
+                    : $"{table}";
 
                 if (count == tablesInRow)
                 {
@@ -118,12 +117,12 @@ namespace Buratino.Xtensions
 
             foreach (var item in books)
             {
-                constructor.AddButtonDown($"{item.ActualBookStartTime:dd.MM HH:mm} Стол: {item.Table.Name} Гостей:{item.SeatAmount}", $"/mybook/{item.Id}");
+                constructor.AddButtonDown($"{item.ActualBookStartTime:dd.MM HH:mm} Стол: {item.Table} Гостей:{item.SeatAmount}", $"/mybook/{item.Id}");
             }
             return constructor;
         }
 
-        public static InlineKeyboardConstructor AddHostesAllTableButtons(this InlineKeyboardConstructor constructor, Entities.Account acc)
+        public static InlineKeyboardConstructor AddHostesAllTableButtons(this InlineKeyboardConstructor constructor, Account acc)
         {
             var tables = Container.GetDomainService<Table>().GetAll().OrderBy(x => x.Number).ToArray();
             int count = 0;
@@ -136,8 +135,11 @@ namespace Buratino.Xtensions
                     ? $"🔒 {table.Name}"
                     : $"{table.Name}";
 
+                if (table.HasConsole)
+                    btnTitle += $"🎮";
+
                 if (books.Any())
-                    btnTitle += $" \r\n📘{books.Count}";
+                    btnTitle += $" 📘{books.Count}";
 
                 if (!table.IsBookAvailable)
                     btnTitle = $"🚫 {table.Name}";
@@ -162,12 +164,12 @@ namespace Buratino.Xtensions
             var tables = Container.GetDomainService<Table>().GetAll().OrderBy(x => x.Number).ToArray();
             var smena = bookService.GetCurrentSmena();
             int count = 0;
-            int tablesInRow = 1;
+            int tablesInRow = 2;
             foreach (var table in tables)
             {
                 var books = bookService.GetCurrentBooks(table);
 
-                var actualBook = books.FirstOrDefault(x => x.GetTrueStartBook() < now && x.GetTrueEndBook() > now && x.GetStatus() != BookStatus.Closed);
+                var actualBook = books.FirstOrDefault(x => x.GetTrueStartBook() < now /*&& x.GetTrueEndBook() > now*/ && x.GetStatus() != BookStatus.Closed);
                 var nowOpened = actualBook != default
                     ? actualBook.TableStarted != default && actualBook.TableClosed == default
                     : false;
@@ -180,34 +182,36 @@ namespace Buratino.Xtensions
                     ? actualBook.NotifiedAboutEndBook != default
                     : false;
 
-                string btnTitle = string.Empty;
+                string btnTitle = table.Name;
                 string btnCallback = string.Empty;
                 if (!table.IsBookAvailable)
-                    btnTitle += $"🚫";
+                    btnTitle = $"🚫{btnTitle}";
+
+                if (table.HasConsole)
+                    btnTitle += $"🎮";
 
                 if (isCloseToEnd)
                 {
-                    btnTitle += $"Время подходит к концу {table.Name}";
+                    btnTitle += $" Время";
                     btnCallback = $"/show_book/{actualBook.Id}";
                 }
                 else if (nowOpened)
                 {
-                    btnTitle += $"Открыт {table.Name}";
+                    btnTitle += $" Открыт";
                     btnCallback = $"/show_book/{actualBook.Id}";
                 }
                 else if (nowNotOpened)
                 {
-                    btnTitle += $"Не открыт {table.Name}";
+                    btnTitle += $" Не открыт";
                     btnCallback = $"/show_book/{actualBook.Id}";
                 }
                 else if (allowToBookNow)
                 {
-                    btnTitle += $"Свободно {table.Name}";
                     btnCallback = $"/table/{table.Id}";
                 }
                 else
                 {
-                    btnTitle += $"Нельзя {table.Name}";
+                    btnTitle += $" Нельзя";
                     btnCallback = $"/table/{table.Id}";
                 }
 
@@ -225,7 +229,7 @@ namespace Buratino.Xtensions
             return constructor;
         }
 
-        public static InlineKeyboardConstructor AddHostesTableButtons(this InlineKeyboardConstructor constructor, IEnumerable<Table> tables, Entities.Account acc)
+        public static InlineKeyboardConstructor AddHostesTableButtons(this InlineKeyboardConstructor constructor, IEnumerable<Table> tables, Account acc)
         {
             int count = 0;
             int tablesInRow = 2;
@@ -233,15 +237,21 @@ namespace Buratino.Xtensions
             {
                 var books = bookService.GetCurrentBooks(table);
                 bool isBusy = !bookService.GetAvailableTimesForBook(table, acc).Any();
-                var btnTitle = isBusy
-                    ? $"🔒 {table.Name}"
-                    : $"{table.Name}";
 
-                if (books.Any())
-                    btnTitle += $" \r\n📘{books.Count}";
+                string btnTitle = string.Empty;
 
                 if (!table.IsBookAvailable)
-                    btnTitle = $"🚫 {table.Name}";
+                    btnTitle += $"🚫";
+
+                btnTitle += isBusy
+                    ? $"🔒{table.Name}"
+                    : $"{table.Name}";
+
+                if (table.HasConsole)
+                    btnTitle += $"🎮";
+
+                if (books.Any())
+                    btnTitle += $" 📘{books.Count}";
 
                 if (count == tablesInRow)
                 {
@@ -291,7 +301,7 @@ namespace Buratino.Xtensions
                     constructor.AddButtonRight($"✅{i}", $"/set_places/{i}");
                 }
                 count++;
-                
+
             }
             for (var i = table.NormalSeatAmount + 1; i <= 12; i++)
             {
@@ -305,7 +315,7 @@ namespace Buratino.Xtensions
                     constructor.AddButtonRight($"{i}", $"/set_places/{i}");
                 }
                 count++;
-                
+
             }
             return constructor;
         }
@@ -348,40 +358,22 @@ namespace Buratino.Xtensions
             return constructor;
         }
 
-        public static InlineKeyboardConstructor AddHostesSelectAccounts(this InlineKeyboardConstructor constructor, IEnumerable<Account> accounts)
+        public static InlineKeyboardConstructor AddHostesShowAccounts(this InlineKeyboardConstructor constructor, IEnumerable<Account> accounts, string precommand)
         {
             int count = 0;
             int tablesInRow = 1;
             foreach (var account in accounts)
             {
+                string title = account.GetCardTitle();
+
                 if (count == tablesInRow)
                 {
                     count = 0;
-                    constructor.AddButtonDown($"{account.Name} ({account.CardNumber}) {account.Phone}", $"/set_name_true/{account.Id}");
+                    constructor.AddButtonDown(title, $"/{precommand}/{account.Id}");
                 }
                 else
                 {
-                    constructor.AddButtonRight($"{account.Name} ({account.CardNumber}) {account.Phone}", $"/set_name_true/{account.Id}");
-                }
-                count++;
-            }
-            return constructor;
-        }
-
-        public static InlineKeyboardConstructor AddHostesAllAccounts(this InlineKeyboardConstructor constructor, IEnumerable<Account> accounts)
-        {
-            int count = 0;
-            int accountsInRow = 1;
-            foreach (var account in accounts)
-            {
-                if (count == accountsInRow)
-                {
-                    count = 0;
-                    constructor.AddButtonDown($"{account.Name} ({account.CardNumber}) {account.Phone}", $"/account/{account.Id}");
-                }
-                else
-                {
-                    constructor.AddButtonRight($"{account.Name} ({account.CardNumber}) {account.Phone}", $"/account/{account.Id}");
+                    constructor.AddButtonRight(title, $"/{precommand}/{account.Id}");
                 }
                 count++;
             }

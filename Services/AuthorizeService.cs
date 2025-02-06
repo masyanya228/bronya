@@ -1,10 +1,11 @@
 ﻿using Telegram.Bot.Types;
 using Buratino.Models.DomainService.DomainStructure;
-using Buratino.Entities;
 using Buratino.DI;
 using vkteams.Services;
 using Buratino.API;
 using Bronya.Dtos;
+using Buratino.Enums;
+using Bronya.Entities;
 
 namespace Bronya.Services
 {
@@ -13,8 +14,9 @@ namespace Bronya.Services
         public static AuthorizeService Instance { get; private set; }
         IBronyaServiceBase BronyaService;
         IBronyaServiceBase BronyaHostesService;
-        protected AccountService AccountService;
-        protected IDomainService<RoleAccountLink> RoleDS;
+        IBronyaServiceBase BronyaAdministratorService;
+        public AccountService AccountService;
+        protected IDomainService<RoleAccountLink> RalDS;
 
         public LogService LogService { get; }
         public TGAPI TgAPI { get; }
@@ -26,9 +28,10 @@ namespace Bronya.Services
             LogService = logService;
 
             AccountService = new AccountService();
-            RoleDS = Container.GetDomainService<RoleAccountLink>();
+            RalDS = Container.GetDomainService<RoleAccountLink>();
             BronyaService = new BronyaService(logService, TgAPI);
             BronyaHostesService = new BronyaHostesService(logService, TgAPI);
+            BronyaAdministratorService = new BronyaAdministratorService(logService, TgAPI);
             
             TgAPI.UpdateEvent += OnUpdateWrapper;
             tgAPI.Start();
@@ -38,30 +41,24 @@ namespace Bronya.Services
         {
             var acc = AccountService.GetAccount(update);
             var dataPackage = new DataPackage(acc, update);
-            var roles = RoleDS.GetAll().Where(x => x.Account.Id == acc.Id).ToList();
-            if (IsAdministrator(acc))
+            var role = GetRole(acc);
+            return role switch
             {
-                throw new NotImplementedException();
-            }
-            else if (IsHostes(acc))
-            {
-                return BronyaHostesService.OnUpdateWrapper(dataPackage);
-            }
-            else
-            {
-                return BronyaService.OnUpdateWrapper(dataPackage);
-            }
+                RoleType.Administrator => BronyaAdministratorService.OnUpdateWrapper(dataPackage),
+                RoleType.Hostes => BronyaHostesService.OnUpdateWrapper(dataPackage),
+                _ => BronyaService.OnUpdateWrapper(dataPackage)
+            };
         }
 
-        public bool IsHostes(Account account)
+        public RoleType GetRole(Account account)
         {
-            var roles = RoleDS.GetAll().Where(x => x.Account.Id == account.Id).ToList();
-            return roles.Any(x => x.Role.Name == "Hostes");
-        }
-        public bool IsAdministrator(Account account)
-        {
-            var roles = RoleDS.GetAll().Where(x => x.Account.Id == account.Id).ToList();
-            return roles.Any(x => x.Role.Name == "Administrator");
+            var roles = RalDS.GetAll().Where(x => x.Account.Id == account.Id).ToList();
+            if (roles.Any(x => x.Role.Name == "Administrator"))
+                return RoleType.Administrator;
+            else if (roles.Any(x => x.Role.Name == "Hostes"))
+                return RoleType.Hostes;
+            else
+                return RoleType.Costumer;
         }
     }
 }

@@ -23,13 +23,38 @@ namespace vkteams.Services
         [ApiPointer("start", "menu")]
         private string Menu()
         {
+            if (!Package.Account.IsPhoneRequested)
+            {
+                return AskPhone();
+            }
             return SendOrEdit(
                 GetContactsForMenu(),
                 new InlineKeyboardConstructor()
                     .AddButtonDown("Бронь", "/mybooklist")
                     .AddButtonDown("Правила", $"/rules")
                     .AddButtonDown("Меню", $"/barmenu")
-                    .AddButtonDown("Соц. сети", $"/socmedia"));
+                    .AddButtonDown("Соц. сети", $"/socmedia")
+                    .AddButtonDownIf(() => Package.Account.Id == new Guid("4be29f89-f887-48a1-a8af-cad15d032758"), "Роль", "/show_role")
+            );
+        }
+
+        private string AskPhone()
+        {
+            return SendOrEdit(
+                GetContactsForMenu(),
+                new ReplyMarkupConstructor().
+                    AddButtonDown("Поделиться телефоном", true)
+            );
+        }
+
+        [ApiPointer("set_phone")]
+        private string SetPhone(string phone)
+        {
+            Package.Account.Phone = phone;
+            Package.Account.IsPhoneRequested = true;
+            AccountService.AccountDS.Save(Package.Account);
+            SendOrEdit("Спасибо! Теперь вы можете забронировать стол.");
+            return Menu();
         }
 
         [ApiPointer("rules")]
@@ -70,14 +95,27 @@ namespace vkteams.Services
         [ApiPointer("book")]
         private string Book()
         {
+            var books = new BookService()
+                .GetMyActualBooks(Package.Account)
+                .OrderBy(x => x.ActualBookStartTime)
+                .ToArray();
+            if (books.Any())
+            {
+                return SendOrEdit(
+                    $"{GetContactsForMenu()}" +
+                    $"\r\nУ вас уже есть бронь. Чтобы забронировать еще, позвоните по телефону.",
+                    new InlineKeyboardConstructor()
+                        .AddButtonDown("Назад", $"/menu")
+                );
+            }
             return SendOrEdit(
                 $"{GetContactsForMenu()}",
                 new InlineKeyboardConstructor()
                     .AddTableButtons(Package.Account)
-                    .AddButtonDown("Назад", $"/mybooklist"),
+                    .AddButtonDown("Назад", $"/menu"),
                 null,
                 ImageId
-                );
+            );
         }
 
         [ApiPointer("table")]
@@ -92,7 +130,7 @@ namespace vkteams.Services
             {
                 return SendOrEdit(
                     $"{GetContactsForMenu()}" +
-                    $"\r\n\r\n Стол: {table.Name}" +
+                    $"\r\n\r\n Стол: {table}" +
                     $"\r\n *Посадочных мест: {table.NormalSeatAmount}*" +
                     $"\r\n\r\n К сожалению этот стол уже нельзя забронировать. Выберите пожалуйста другой.",
                     new InlineKeyboardConstructor()
@@ -104,7 +142,7 @@ namespace vkteams.Services
 
             return SendOrEdit(
                 $"{GetContactsForMenu()}" +
-                $"\r\n\r\n Стол: {table.Name}" +
+                $"\r\n\r\n Стол: {table}" +
                 $"\r\n *Посадочных мест: {table.NormalSeatAmount}*",
                 new InlineKeyboardConstructor()
                     .AddTimeButtons(avalableTimes)
@@ -126,7 +164,7 @@ namespace vkteams.Services
 
             return SendOrEdit(
                 $"{GetContactsForMenu()}" +
-                $"\r\n\r\n Стол: {Package.Account.SelectedTable.Name}" +
+                $"\r\n\r\n Стол: {Package.Account.SelectedTable}" +
                 $"\r\n *Посадочных мест: {Package.Account.SelectedTable.NormalSeatAmount}*" +
                 $"\r\n На {Package.Account.SelectedTime:dd.MM} в {Package.Account.SelectedTime:HH:mm}",
                 new InlineKeyboardConstructor()
@@ -176,13 +214,16 @@ namespace vkteams.Services
 
             return SendOrEdit(
                 $"{GetContactsForMenu()}" +
-                $"\r\n\r\n Вы забронировали стол: #{book.Table.Name}" +
+                $"\r\n\r\n Вы забронировали стол: #{book.Table}" +
                 $"\r\n *На {book.ActualBookStartTime:dd.MM} в {book.ActualBookStartTime:HH:mm}" +
                 $"\r\n Гостей: {book.SeatAmount}*",
                 new InlineKeyboardConstructor()
                     .AddButtonDownIf(() => new BookService().CanMove(book, Package.Account), "Перенести на 20 минут", $"/try_move_book/{book.Id}")
                     .AddButtonDown("Отменить бронь", $"/try_cancel/{book.Id}")
-                    .AddButtonDown("Назад", $"/mybooklist"));
+                    .AddButtonDown("Назад", $"/mybooklist"),
+                null,
+                ImageId
+            );
         }
 
         [ApiPointer("try_cancel")]
@@ -311,7 +352,7 @@ namespace vkteams.Services
 
         private static string GetContactsForMenu()
         {
-            return "+7(927)4351814";
+            return "+7(992)076-17-47";
         }
     }
 }

@@ -6,7 +6,6 @@ using Buratino.Models.DomainService.DomainStructure;
 using Bronya.Entities;
 using Buratino.DI;
 using Bronya.Services;
-using Buratino.Entities;
 using Buratino.Enums;
 
 namespace vkteams.Services
@@ -33,6 +32,8 @@ namespace vkteams.Services
                     .AddButtonDown("Сейчас", "/now")
                     .AddButtonDown("🔲 Столы", "/tables")
                     .AddButtonDown("➕📋 Новая бронь", "/book_select_time")
+                    .AddButtonDown("👤Гости", "/get_accounts")
+                    .AddButtonDownIf(() => Package.Account.Id == new Guid("4be29f89-f887-48a1-a8af-cad15d032758"), "Роль", "/show_role")
                 );
         }
 
@@ -40,7 +41,7 @@ namespace vkteams.Services
         private string Tables()
         {
             return SendOrEdit(
-                "Меню хостеса:",
+                "Столы:",
                 new InlineKeyboardConstructor()
                     .AddHostesAllTableButtons(Package.Account)
                     .AddButtonDown("Назад", $"/menu"),
@@ -53,7 +54,7 @@ namespace vkteams.Services
         private string Now()
         {
             return SendOrEdit(
-                "Меню хостеса:",
+                "Сейчас:",
                 new InlineKeyboardConstructor()
                     .AddHostesNowTableButtons()
                     .AddButtonDown("Назад", $"/menu"),
@@ -70,7 +71,7 @@ namespace vkteams.Services
                 Package.Account.SelectedTable = default;
                 AccountService.AccountDS.Save(Package.Account);
             }
-            var books = BookService.GetCurrentBooks(table);
+            var books = BookService.GetCurrentBooks(table, true);
             var isAvailable = !table.IsBookAvailable ? "\r\n🚫 Бронь отключена" : string.Empty;
             return SendOrEdit(
                 $"Стол: {table.Name}{isAvailable}",
@@ -83,7 +84,7 @@ namespace vkteams.Services
                     .AddButtonRight("В начало", $"/menu"),
                 default,
                 ImageId
-                );
+            );
         }
 
         [ApiPointer("show_book")]
@@ -104,8 +105,11 @@ namespace vkteams.Services
                 return SendOrEdit(
                     book.GetState(),
                     new InlineKeyboardConstructor()
+                        .AddButtonDownIf(() => book.Account.Phone == default, "Добавить телефон", $"/select_phone/{book.Account.Id}")
+                        .AddButtonDownIf(() => book.Account.CardNumber == default, "Добавить карту", $"/select_card/{book.Account.Id}")
                         .AddButtonDown("↔️", $"/try_prolongate/{book.Id}")
                         .AddButtonRight("🔲", $"/table/{book.Table.Id}")
+                        .AddButtonDown("✏️ Гость", $"/account/{book.Account.Id}")
                         .AddButtonDown("В начало", $"/menu")
                     );
             }
@@ -186,7 +190,8 @@ namespace vkteams.Services
         private string TryStartBook(Book book)
         {
             var smena = BookService.GetCurrentSmena();
-            var allReadyOpened = BookService.GetCurrentBooks(book.Table)
+            var allReadyOpened = BookService
+                .GetCurrentBooks(book.Table)
                 .FirstOrDefault(x => x != book && x.GetStatus() == Bronya.Enums.BookStatus.Opened);
             if (allReadyOpened == default)
             {
@@ -206,7 +211,7 @@ namespace vkteams.Services
             }
             else
             {
-                string text = $"*Предыдущая бронь на имя {allReadyOpened.Account.ToString()} не была закрыта. Проверьте себя.*";
+                string text = $"*Предыдущая бронь на имя {allReadyOpened.Account} не была закрыта. Проверьте себя.*";
                 double diffInMinutes = book.ActualBookStartTime.Subtract(new TimeService().GetNow()).TotalMinutes;
                 if (Math.Abs(diffInMinutes) > smena.Schedule.Buffer.TotalMinutes)
                 {
@@ -476,7 +481,7 @@ namespace vkteams.Services
                         .AddButtonRight(Package.Account.SelectedTime != default ? "✏️⏱️" : "✏️⏱️", "/book_select_time")
                         .AddButtonRightIf(() => Package.Account.SelectedTime != default, "♻️🔲", "/reset_time"),
                     default,
-                    "AgACAgIAAxkBAAOgZ5pWHbT-EVNXc96-Q0oD7LZCnGMAAjzqMRtkA9FI7XDK_OV9DSQBAAMCAAN4AAM2BA"
+                    ImageId
                     );
         }
 
@@ -558,7 +563,7 @@ namespace vkteams.Services
                     $"{Package.Account.GetNewBookState()}" +
                     $"\r\nУточните имя:",
                     new InlineKeyboardConstructor()
-                        .AddHostesSelectAccounts(accs)
+                        .AddHostesShowAccounts(accs, "set_name_true")
                         .AddButtonDown("🗑", $"/reset_all")
                         .AddButtonRight("✏️⏱️", $"/book_select_time")
                         .AddButtonRight("✏️🔲", $"/select_table")
@@ -592,16 +597,244 @@ namespace vkteams.Services
         }
 
         [ApiPointer("get_accounts")]
-        private string GetAccounts()
+        private string GetAccounts(int page = 1)
         {
-            var accs = AccountService.AccountDS.GetAll().Where(x => x.CardNumber != default || x.Phone != default).ToArray();
+            var accs = AccountService.AccountDS.GetAll()
+                .Where(x => x.CardNumber != default || x.Phone != default)
+                .OrderByDescending(x => x.TimeStamp)
+                .ToArray();
+
+            int onPage = 10;
+            int total = accs.Length;
+            int maxPage = (int)Math.Ceiling(total * 1.0 / onPage);
+
+            if (page < 1)
+                page = 1;
+
+            if (page > maxPage)
+                page = maxPage;
+
+            if (page != Package.Account.GetAccountsPage)
+            {
+                Package.Account.GetAccountsPage = page;
+                AccountService.AccountDS.Save(Package.Account);
+            }
             return SendOrEdit(
-                $"{Package.Account.GetNewBookState()}" +
-                $"\r\nГости:",
+                $"Гостей {total}" +
+                $"\r\nСтр. {page}/{maxPage}",
                 new InlineKeyboardConstructor()
-                    .AddHostesAllAccounts(accs)
+                    .AddHostesShowAccounts(accs.Skip((page - 1) * onPage).Take(onPage), "account")
+                    .AddButtonDownIf(() => page > 1, "<", $"/get_accounts/{page - 1}")
+                    .AddButtonDownIf(() => page < maxPage, ">", $"/get_accounts/{page + 1}")
                     .AddButtonDown("Назад", $"/menu")
-                );
+            );
+        }
+
+        [ApiPointer("account")]
+        private string Account(Account mainAccount)
+        {
+            Package.Account.SelectedAccount = default;
+            Package.Account.Waiting = WaitingText.None;
+            AccountService.AccountDS.Save(mainAccount);
+
+            var accs = AccountService.GetAccountsToUnion(mainAccount);
+            var trueAcc = AccountService.GetTrueAccount(mainAccount);
+            var books = BookService.GetBooks(mainAccount);
+
+            return SendOrEdit(
+                $"{mainAccount.GetCard()}",
+                new InlineKeyboardConstructor()
+                    .AddButtonDownIf(() => books.Any(), "📋 Все брони", $"/account_books/{mainAccount.Id}")
+                    .AddButtonDown("✏️ Телефон", $"/select_phone/{mainAccount.Id}")
+                    .AddButtonDown("✏️ Карта", $"/select_card/{mainAccount.Id}")
+                    .AddButtonDown("✏️ Имя", $"/select_acc_name/{mainAccount.Id}")
+                    .AddButtonDownIf(() => trueAcc != default, $"👤 Есть настоящий аккаунт", $"/account/{trueAcc?.Id}")
+                    .AddButtonDownIf(() => trueAcc == default && accs.Any(), $"♻️ Объединить аккаунты ({accs.Count()} шт.)", $"/try_union_accounts/{mainAccount.Id}")
+                    .AddButtonDown("Назад", $"/get_accounts/{Package.Account.GetAccountsPage}")
+            );
+        }
+
+        [ApiPointer("account_books")]
+        private string AccountBooks(Account mainAccount)
+        {
+            var books = BookService.GetBooks(mainAccount).GroupBy(x => x.ActualBookStartTime.Date).ToArray();
+
+            var constructor = new InlineKeyboardConstructor();
+            foreach (var book in books)
+            {
+                if (book.Count() > 1)
+                {
+                    constructor.AddButtonDown($"{book.Key.ToShortDateString()} ({book.Count()} шт.)", $"/account_books_by_date/{book.Key}");
+                }
+                else
+                {
+                    constructor.AddButtonDown($"{book.Key.ToShortDateString()}", $"/show_book/{book.Single().Id}");
+                }
+            }
+
+            return SendOrEdit(
+                $"{mainAccount.GetCard()}" +
+                $"\r\nИстория броней:",
+                constructor
+                    .AddButtonDown("Назад", $"/account/{mainAccount.Id}")
+            );
+        }
+
+        [ApiPointer("account_books_by_date")]
+        private string AccountBooksByDate(Account mainAccount, DateTime date)
+        {
+            var books = BookService.GetBooks(mainAccount).Where(x => x.ActualBookStartTime.Date == date.Date).ToArray();
+
+            return SendOrEdit(
+                $"{mainAccount.GetCard()}" +
+                $"\r\nНесколько броней на {date.ToShortDateString()}",
+                new InlineKeyboardConstructor()
+                    .AddHostesBooksButtons(books)
+                    .AddButtonDown("Назад", $"/account_books/{mainAccount.Id}")
+            );
+        }
+
+        [ApiPointer("try_union_accounts")]
+        private string TryUnionAccounts(Account mainAccount)
+        {
+            var accs = AccountService.GetAccountsToUnion(mainAccount);
+
+            return SendOrEdit(
+                $"{mainAccount.GetCard()}" +
+                $"\r\nОбъединить со следующими гостями?",
+                new InlineKeyboardConstructor()
+                    .AddHostesShowAccounts(accs, "account")
+                    .AddButtonDown("Объединить", $"/union_accounts/{mainAccount.Id}")
+                    .AddButtonDown("Назад", $"/account/{mainAccount.Id}")
+            );
+        }
+
+        [ApiPointer("union_accounts")]
+        private string UnionAccounts(Account mainAccount)
+        {
+            var subAccounts = AccountService.GetAccountsToUnion(mainAccount);
+            if (mainAccount.Phone == default)
+            {
+                mainAccount.Phone = subAccounts.Where(x => x.Phone != default).OrderBy(x => x.TimeStamp).LastOrDefault().Phone;
+            }
+            if (mainAccount.CardNumber == default)
+            {
+                mainAccount.CardNumber = subAccounts.Where(x => x.CardNumber != default).OrderBy(x => x.TimeStamp).LastOrDefault().CardNumber;
+            }
+            AccountService.AccountDS.Save(mainAccount);
+
+            foreach (var subAccount in subAccounts)
+            {
+                var books = BookDS.GetAll().Where(x => x.Account.Id == subAccount.Id).ToList();
+                books.ForEach(x =>
+                {
+                    x.Account = mainAccount;
+                    BookDS.Save(x);
+                });
+                AccountService.AccountDS.Delete(subAccount);
+            }
+
+            return SendOrEdit(
+                $"Аккаунты гостя {mainAccount} успешно объеденены!",
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("Назад", $"/account/{mainAccount.Id}")
+            );
+        }
+
+        [ApiPointer("select_phone")]
+        private string SelectPhone(Account mainAccount)
+        {
+            Package.Account.SelectedAccount = mainAccount;
+            Package.Account.Waiting = WaitingText.PhoneNumber;
+            AccountService.AccountDS.Save(Package.Account);
+
+            return SendOrEdit(
+                $"Укажите номер телефона гостя:" +
+                $"\r\n{mainAccount.GetCard()}",
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("Назад", $"/account/{mainAccount.Id}")
+            );
+        }
+
+        [ApiPointer("set_phone")]
+        private string SetPhone(string phone)
+        {
+            Account selectedAccount = Package.Account.SelectedAccount;
+            if (selectedAccount == default)
+            {
+                return GetAccounts();
+            }
+            Package.Account.Waiting = WaitingText.None;
+            Package.Account.SelectedAccount = default;
+            AccountService.AccountDS.Save(Package.Account);
+
+            selectedAccount.Phone = AccountService.ParseNumber(phone);
+            AccountService.AccountDS.Save(selectedAccount);
+            return Account(selectedAccount);
+        }
+
+        [ApiPointer("select_card")]
+        private string SelectCard(Account mainAccount)
+        {
+            Package.Account.SelectedAccount = mainAccount;
+            Package.Account.Waiting = WaitingText.CardNumber;
+            AccountService.AccountDS.Save(Package.Account);
+
+            return SendOrEdit(
+                $"Укажите номер карты гостя:" +
+                $"\r\n{mainAccount.GetCard()}",
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("Назад", $"/account/{mainAccount.Id}")
+            );
+        }
+
+        [ApiPointer("set_card")]
+        private string SetCard(string card)
+        {
+            Account selectedAccount = Package.Account.SelectedAccount;
+            if (selectedAccount == default)
+            {
+                return GetAccounts();
+            }
+            Package.Account.Waiting = WaitingText.None;
+            Package.Account.SelectedAccount = default;
+            AccountService.AccountDS.Save(Package.Account);
+            
+            selectedAccount.CardNumber = AccountService.ParseNumber(card);
+            AccountService.AccountDS.Save(selectedAccount);
+            return Account(selectedAccount);
+        }
+
+        [ApiPointer("select_acc_name")]
+        private string SelectAccName(Account mainAccount)
+        {
+            Package.Account.SelectedAccount = mainAccount;
+            Package.Account.Waiting = WaitingText.AccName;
+            AccountService.AccountDS.Save(Package.Account);
+
+            return SendOrEdit(
+                $"Укажите имя гостя:" +
+                $"\r\n{mainAccount.GetCard()}",
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("Назад", $"/account/{mainAccount.Id}")
+            );
+        }
+
+        [ApiPointer("set_acc_name")]
+        private string SetAccName(string name)
+        {
+            Account selectedAccount = Package.Account.SelectedAccount;
+            if (selectedAccount == default)
+            {
+                return GetAccounts();
+            }
+            Package.Account.Waiting = WaitingText.None;
+            Package.Account.SelectedAccount = default;
+            AccountService.AccountDS.Save(Package.Account);
+
+            selectedAccount.Name = name;
+            AccountService.AccountDS.Save(selectedAccount);
+            return Account(selectedAccount);
         }
     }
 }

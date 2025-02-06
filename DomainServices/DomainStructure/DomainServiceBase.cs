@@ -7,7 +7,7 @@ using Buratino.Xtensions;
 
 namespace Buratino.Models.DomainService.DomainStructure
 {
-    public abstract class DomainServiceBase<T> : IDomainService<T> where T : IEntityBase
+    public class DomainServiceBase<T> : IDomainService<T> where T : IEntityBase
     {
         public virtual IRepository<T> Repository { get; set; }
 

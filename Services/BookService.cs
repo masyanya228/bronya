@@ -2,7 +2,6 @@
 using Bronya.Entities;
 
 using Buratino.DI;
-using Buratino.Entities;
 using Buratino.Models.DomainService.DomainStructure;
 
 namespace Bronya.Services
@@ -11,8 +10,8 @@ namespace Bronya.Services
     {
         public IDomainService<Book> BookDS = Container.GetDomainService<Book>();
         public IDomainService<Table> TableDS = Container.GetDomainService<Table>();
-        public WorkScheduleService ScheduleService = new WorkScheduleService();
-        public TimeService TimeService = new TimeService();
+        public WorkScheduleService ScheduleService = new();
+        public TimeService TimeService { get; set; } = new TimeService();
 
         public DateTime[] GetAvailableTimesForBook(Table table, Account acc)
         {
@@ -48,7 +47,11 @@ namespace Bronya.Services
         /// <returns></returns>
         public IEnumerable<Book> GetMyActualBooks(Account account)
         {
-            return GetMyActualBooks(account, TimeService.GetNow());
+            var books = GetCurrentBooks()
+                .Where(x => x.Account.Id == account.Id
+                    && x.TableClosed == default)
+                .ToList();
+            return books;
         }
 
         public bool CanCancel(Book book)
@@ -101,8 +104,7 @@ namespace Bronya.Services
         {
             DateTime now = TimeService.GetNow();
             var workSchedule = ScheduleService.GetWorkSchedule(now);
-            DateTime smenaStart, smenaEnd;
-            GetCurrentSmena(now, workSchedule, out smenaStart, out smenaEnd);
+            GetCurrentSmena(now, workSchedule, out DateTime smenaStart, out DateTime smenaEnd);
             return new SmenaDto()
             {
                 Schedule = workSchedule,
@@ -149,14 +151,12 @@ namespace Bronya.Services
         /// Возвращает брони на текущую смену, на указанный стол
         /// </summary>
         /// <param name="table"></param>
-        /// <param name="smenaStart"></param>
-        /// <param name="smenaEnd"></param>
         /// <returns></returns>
-        public List<Book> GetCurrentBooks(Table table)
+        public List<Book> GetCurrentBooks(Table table, bool exceptPast = false)
         {
-            var smena = GetCurrentSmena();
             return GetCurrentBooks()
                 .Where(x => x.Table.Id == table.Id)
+                .Where(x => !exceptPast || x.BookEndTime > TimeService.GetNow())
                 .ToList();
         }
 
@@ -178,14 +178,15 @@ namespace Bronya.Services
                 .OrderBy(x => x.ActualBookStartTime)
                 .ToList();
         }
-        
-        private IEnumerable<Book> GetMyActualBooks(Account account, DateTime now)
+
+        /// <summary>
+        /// Возвращает все брони гостя
+        /// </summary>
+        /// <param name="mainAccount"></param>
+        /// <returns></returns>
+        public IEnumerable<Book> GetBooks(Account mainAccount)
         {
-            var books = GetCurrentBooks()
-                .Where(x => x.Account.Id == account.Id
-                    && x.TableClosed == default)
-                .ToList();
-            return books;
+            return BookDS.GetAll().Where(x => x.Account.Id == mainAccount.Id).ToArray();
         }
 
         /// <summary>
