@@ -21,5 +21,22 @@ public class AccountNHMap : NHSubclassClassMap<Account>
             .Not.LazyLoad();
         References(x => x.SelectedAccount)
             .Not.LazyLoad();
+
+        HasManyToMany<Role>(x => x.Roles)
+            .Access.Property()
+            .AsList()
+            .Cascade.None()
+            .LazyLoad()
+            .Inverse()
+            .Table("RoleRefAccount")
+            .FetchType.Join()
+            .ChildKeyColumns.Add("id", 
+                mapping => mapping.Name("role_id")
+                    .SqlType("uuid")
+                    .Not.Nullable())
+            .ParentKeyColumns.Add("id", 
+                mapping => mapping.Name("account_id")
+                    .SqlType("uuid")
+                    .Not.Nullable());
     }
 }
