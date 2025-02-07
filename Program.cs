@@ -109,11 +109,6 @@ public class Program
 
         JobRegistrator.RegisterJobs();
 
-        Container.GetDomainService<WorkSchedule>().Save(new WorkSchedule()
-        {
-            StartDate = DateTime.Now.AddDays(-5),
-        });
-
         var accounts = Container.GetDomainService<Account>();
         if (!accounts.GetAll().Any(x => x.Name == "Root"))
         {
@@ -126,6 +121,8 @@ public class Program
 
         //Переопределение сравнения сущностей в управляемом коде
         var exist = accounts.GetAll().First();
+        exist.Roles.Clear();
+        accounts.Save(exist);
         var newacc = new Account()
         {
             Id = exist.Id
@@ -134,7 +131,5 @@ public class Program
         {
 
         }
-
-        var list = Container.GetDomainService<RoleAccountLink>().GetAll();
     }
 }

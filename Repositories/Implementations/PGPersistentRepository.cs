@@ -2,6 +2,8 @@
 
 using Buratino.Entities.Abstractions;
 
+using System.Linq.Expressions;
+
 namespace Buratino.Repositories.Implementations
 {
     public class PGPersistentRepository<T> : PGRepository<T> where T : PersistentEntity, IEntityBase
@@ -11,11 +13,12 @@ namespace Buratino.Repositories.Implementations
 
         }
 
-        public override IQueryable<T> GetAll()
+        public override IEnumerable<T> GetAll(Expression<Func<T, bool>> filter)
         {
-            //НЕ остается опции для доступа к удаленным объектам
-            var session = SessionFactory.OpenSession();
-            return session.Query<T>().Where(x => x.IsDeleted == false);
+            Expression<Func<T, bool>> predicate = x => x.IsDeleted == false;
+            var prefix = predicate.Compile();
+            predicate = c => prefix(c) && filter.Compile().Invoke(c);
+            return base.GetAll(predicate);
         }
     }
 }

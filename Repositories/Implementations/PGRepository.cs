@@ -1,4 +1,5 @@
-﻿using Bronya.Entities.Abstractions;
+﻿using Bronya.Dtos;
+using Bronya.Entities.Abstractions;
 
 using Buratino.DI;
 using Buratino.Entities.Abstractions;
@@ -6,6 +7,8 @@ using Buratino.Repositories.Implementations.Postgres;
 using Buratino.Repositories.RepositoryStructure;
 
 using NHibernate;
+
+using System.Linq.Expressions;
 
 namespace Buratino.Repositories.Implementations
 {
@@ -18,11 +21,25 @@ namespace Buratino.Repositories.Implementations
 
         }
 
-        public override IQueryable<T> GetAll()
+        public override IEnumerable<T> GetAll(Expression<Func<T, bool>> filter = null)
         {
             Console.WriteLine($"{DateTime.Now:HH:mm:ss} {nameof(GetAll)}");
+            using (var session = SessionFactory.OpenSession())
+            {
+                return filter == null
+                    ? session.Query<T>().ToList()
+                    : session.Query<T>().Where(filter).ToList();
+            }
+        }
+
+        public override QueryableSession<T> GetAllQuery()
+        {
             var session = SessionFactory.OpenSession();
-            return session.Query<T>();
+            return new QueryableSession<T>()
+            {
+                Session = session,
+                Query = session.Query<T>()
+            };
         }
 
         public override T Get(Guid id)

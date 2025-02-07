@@ -16,7 +16,6 @@ namespace Bronya.Services
         IBronyaServiceBase BronyaHostesService;
         IBronyaServiceBase BronyaAdministratorService;
         public AccountService AccountService;
-        protected IDomainService<RoleAccountLink> RalDS;
 
         public LogService LogService { get; }
         public TGAPI TgAPI { get; }
@@ -28,7 +27,6 @@ namespace Bronya.Services
             LogService = logService;
 
             AccountService = new AccountService();
-            RalDS = Container.GetDomainService<RoleAccountLink>();
             BronyaService = new BronyaService(logService, TgAPI);
             BronyaHostesService = new BronyaHostesService(logService, TgAPI);
             BronyaAdministratorService = new BronyaAdministratorService(logService, TgAPI);
@@ -52,10 +50,9 @@ namespace Bronya.Services
 
         public RoleType GetRole(Account account)
         {
-            var roles = RalDS.GetAll().Where(x => x.Account.Id == account.Id).ToList();
-            if (roles.Any(x => x.Role.Name == "Administrator"))
+            if (account.Roles.Any(x => x.Name == "Administrator"))
                 return RoleType.Administrator;
-            else if (roles.Any(x => x.Role.Name == "Hostes"))
+            else if (account.Roles.Any(x => x.Name == "Hostes"))
                 return RoleType.Hostes;
             else
                 return RoleType.Costumer;

@@ -22,12 +22,11 @@ public class AccountNHMap : NHSubclassClassMap<Account>
         References(x => x.SelectedAccount)
             .Not.LazyLoad();
 
-        HasManyToMany<Role>(x => x.Roles)
+        HasManyToMany(x => x.Roles)
             .Access.Property()
             .AsList()
-            .Cascade.None()
-            .LazyLoad()
-            .Inverse()
+            .Cascade.All()
+            .Not.LazyLoad()
             .Table("RoleRefAccount")
             .FetchType.Join()
             .ChildKeyColumns.Add("id", 

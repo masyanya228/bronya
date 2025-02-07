@@ -244,29 +244,19 @@ namespace vkteams.Services
                 return ShowRole();
             }
 
-            var ralDS = Container.GetDomainService<RoleAccountLink>();
             var roleDS = Container.GetDomainService<Role>();
-            var roles = ralDS.GetAll().Where(x => x.Account.Id == Package.Account.Id).Select(ralDS.Delete).ToList();
+            Package.Account.Roles.Clear();
             if (role == RoleType.Hostes)
             {
                 var newRole = roleDS.GetAll().First(x => x.Name == "Hostes");
-
-                ralDS.Save(new RoleAccountLink()
-                {
-                    Account = Package.Account,
-                    Role = newRole,
-                });
+                Package.Account.Roles.Add(newRole);
             }
             else if (role == RoleType.Administrator)
             {
                 var newRole = roleDS.GetAll().First(x => x.Name == "Administrator");
-
-                ralDS.Save(new RoleAccountLink()
-                {
-                    Account = Package.Account,
-                    Role = newRole,
-                });
+                Package.Account.Roles.Add(newRole);
             }
+            AccountService.AccountDS.Save(Package.Account);
 
             return ShowRole();
         }

@@ -1,7 +1,8 @@
 ﻿using System.Collections.Concurrent;
 using Buratino.Entities.Abstractions;
-using FluentNHibernate.Data;
 using Buratino.Repositories.RepositoryStructure;
+using System.Linq.Expressions;
+using Bronya.Dtos;
 
 namespace Buratino.Repositories.Implementations
 {
@@ -22,7 +23,12 @@ namespace Buratino.Repositories.Implementations
             ? value
             : throw new Exception("Не получилось добавить элемент в репозиторий");
 
-        public override IQueryable<T> GetAll() => Collection.Values.AsQueryable();
+        public override IQueryable<T> GetAll(Expression<Func<T, bool>> filter) => Collection.Values.AsQueryable().Where(filter);
+
+        public override QueryableSession<T> GetAllQuery()
+        {
+            throw new NotImplementedException();
+        }
 
         public override T Insert(T entity)
         {

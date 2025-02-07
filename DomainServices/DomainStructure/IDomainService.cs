@@ -1,10 +1,16 @@
-﻿using Buratino.Entities.Abstractions;
+﻿using Bronya.Dtos;
+
+using Buratino.Entities.Abstractions;
+
+using System.Linq.Expressions;
 
 namespace Buratino.Models.DomainService.DomainStructure
 {
     public interface IDomainService<T> where T : IEntityBase
     {
-        IQueryable<T> GetAll();
+        IEnumerable<T> GetAll(Expression<Func<T, bool>> filter = null);
+        
+        QueryableSession<T> GetAllQuery();
 
         T Get(Guid id);
 

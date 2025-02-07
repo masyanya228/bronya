@@ -1,4 +1,7 @@
-﻿using System.Reflection;
+﻿using System.Linq.Expressions;
+using System.Reflection;
+
+using Bronya.Dtos;
 
 using Buratino.DI;
 using Buratino.Entities.Abstractions;
@@ -17,9 +20,14 @@ namespace Buratino.Models.DomainService.DomainStructure
             //DInject();
         }
 
-        public virtual IQueryable<T> GetAll()
+        public virtual IEnumerable<T> GetAll(Expression<Func<T, bool>> filter = null)
         {
-            return Repository.GetAll();
+            return Repository.GetAll(filter);
+        }
+
+        public virtual QueryableSession<T> GetAllQuery()
+        {
+            return Repository.GetAllQuery();
         }
 
         public virtual T Get(Guid id)
