@@ -51,6 +51,7 @@ namespace Bronya.Entities
         public virtual int GetAccountsPage { get; set; }
         
         public virtual IList<Role> Roles { get; set; }
+        public virtual WorkSchedule SelectedSchedule { get; set; }
 
         public virtual string GetNewBookState()
         {

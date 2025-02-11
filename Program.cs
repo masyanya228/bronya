@@ -14,6 +14,7 @@ using Bronya.Entities;
 using Bronya.Services;
 using Bronya.Jobs.Structures;
 using Quartz;
+using Bronya.Enums;
 
 public class Program
 {
@@ -38,6 +39,7 @@ public class Program
         builder.Services.AddSingleton(typeof(IDomainService<>), typeof(DefaultDomainService<>));
 
         builder.Services.AddSingleton(typeof(IDomainService<Account>), typeof(PersistentDomainService<Account>));
+        builder.Services.AddSingleton(typeof(IDomainService<WorkSchedule>), typeof(PersistentDomainService<WorkSchedule>));
 
         builder.Services.AddSingleton(typeof(LogService), new LogService());
         
@@ -121,8 +123,6 @@ public class Program
 
         //Переопределение сравнения сущностей в управляемом коде
         var exist = accounts.GetAll().First();
-        exist.Roles.Clear();
-        accounts.Save(exist);
         var newacc = new Account()
         {
             Id = exist.Id

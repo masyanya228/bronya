@@ -5,7 +5,7 @@ namespace Buratino.Enums
     public enum WaitingText
     {
         None = 0,
-     
+
         /// <summary>
         /// Хостес указывает имя брони
         /// </summary>
@@ -35,5 +35,35 @@ namespace Buratino.Enums
         /// </summary>
         [ApiPointer("set_table_schema")]
         TableSchemaImage,
+
+        /// <summary>
+        /// Администратор устанавливает дату начала графика
+        /// </summary>
+        [ApiPointer("set_schedule_start_date")]
+        ScheduleStartDate,
+
+        /// <summary>
+        /// Администратор устанавливает начало смены
+        /// </summary>
+        [ApiPointer("set_schedule_start")]
+        ScheduleStart,
+
+        /// <summary>
+        /// Администратор устанавливает конец смены
+        /// </summary>
+        [ApiPointer("set_schedule_end")]
+        ScheduleEnd,
+
+        /// <summary>
+        /// Администратор устанавливает время уведомления до закрытия стола
+        /// </summary>
+        [ApiPointer("set_schedule_notify")]
+        ScheduleNotify,
+
+        /// <summary>
+        /// Администратор устанавливает время, когда бронь будет автоматически отменена
+        /// </summary>
+        [ApiPointer("set_schedule_autocancel")]
+        AutoCancel,
     }
 }

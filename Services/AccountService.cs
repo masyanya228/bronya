@@ -1,6 +1,7 @@
 ﻿using Bronya.Entities;
 
 using Buratino.DI;
+using Buratino.Enums;
 using Buratino.Models.DomainService.DomainStructure;
 using Buratino.Xtensions;
 
@@ -143,6 +144,20 @@ namespace Bronya.Services
                     .Where(x => x.Id != account.Id && x.TGTag != default)
                     .FirstOrDefault()
                 : default;
+        }
+
+        public bool ResetWaiting(Account account)
+        {
+            account.Waiting = WaitingText.None;
+            AccountDS.Save(account);
+            return true;
+        }
+
+        public bool SetWaiting(Account account, WaitingText waitingText)
+        {
+            account.Waiting = waitingText;
+            AccountDS.Save(account);
+            return true;
         }
     }
 }

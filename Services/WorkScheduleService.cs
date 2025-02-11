@@ -1,4 +1,7 @@
 ﻿using Bronya.Entities;
+using Bronya.Enums;
+using Bronya.Xtensions;
+
 using Buratino.DI;
 using Buratino.Models.DomainService.DomainStructure;
 using Buratino.Xtensions;
@@ -10,26 +13,40 @@ namespace Bronya.Services
     {
         public IDomainService<WorkSchedule> WorkScheduleDS = Container.GetDomainService<WorkSchedule>();
 
-        public WorkSchedule GetWorkSchedule(DateTime dateTime)
+        public WorkSchedule GetWorkSchedule(DateTime dateTime = default)
         {
-            var allSchedules = WorkScheduleDS.GetAll().OrderByDescending(x => x.StartDate).ToArray();
-            
-            var oneTimeSchedules = allSchedules.Where(x => x.IsOneTimeSchedule).ToArray();
-            for (int i = 0; i < oneTimeSchedules.Length; i++)
+            if (dateTime == default)
             {
-                var workSchedule = allSchedules[i];
-                if (workSchedule.IsOneTimeSchedule
-                    && dateTime.Between_LTE_GTE(workSchedule.StartDate.Add(workSchedule.Start), workSchedule.StartDate.Add(workSchedule.Start).Add(workSchedule.Length)))
-                {
-                    return workSchedule;
-                }
+                dateTime = new TimeService().GetNow();
             }
 
-            var standartSchedules = allSchedules.Where(x => !x.IsOneTimeSchedule).ToArray();
+            var oneTimeSchedule = GetOneTimeSchedule(dateTime);
+            if (oneTimeSchedule != default)
+                return oneTimeSchedule;
+            
+            var standartSchedule = GetStandartSchedule(dateTime);
+            if (standartSchedule != default)
+                return standartSchedule;
+            
+            throw new ArgumentOutOfRangeException($"Для {dateTime:f} нет графика работы");
+        }
+
+        public WorkSchedule GetStandartSchedule(DateTime dateTime = default)
+        {
+            if (dateTime == default)
+            {
+                dateTime = new TimeService().GetNow();
+            }
+
+            var dayOfWeeks = dateTime.DayOfWeek.ToDayOfWeeks();
+            var standartSchedules = WorkScheduleDS.GetAll(x => !x.IsOneTimeSchedule)
+                .Where(x => x.DayOfWeeks.HasFlag(dayOfWeeks))
+                .OrderByDescending(x => x.StartDate)
+                .ToArray();
             for (var i = 0; i < standartSchedules.Length; i++)
             {
                 var workSchedule = standartSchedules[i];
-                var prev = i < standartSchedules.Length
+                var prev = i + 1 < standartSchedules.Length
                     ? standartSchedules[i + 1]
                     : null;
 
@@ -40,7 +57,7 @@ namespace Bronya.Services
 
                 if (prev != null)
                 {
-                    if (dateTime.Date.AddDays(-1).Add(prev.Start).Add(prev.Length) > dateTime)
+                    if (dateTime.Date == workSchedule.StartDate && dateTime.Date.AddDays(-1).Add(prev.Start).Add(prev.Length) > dateTime)
                     {
                         return prev;
                     }
@@ -54,7 +71,27 @@ namespace Bronya.Services
                     return workSchedule;
                 }
             }
-            throw new ArgumentOutOfRangeException($"Для {dateTime:f} нет графика работы");
+            return null;
+        }
+
+        public WorkSchedule GetOneTimeSchedule(DateTime dateTime = default)
+        {
+            if (dateTime == default)
+            {
+                dateTime = new TimeService().GetNow();
+            }
+
+            var oneTimeSchedules = WorkScheduleDS.GetAll(x => x.IsOneTimeSchedule).OrderByDescending(x => x.StartDate).ToArray();
+            for (int i = 0; i < oneTimeSchedules.Length; i++)
+            {
+                var workSchedule = oneTimeSchedules[i];
+                if (workSchedule.IsOneTimeSchedule
+                    && dateTime.Between_LTE_GTE(workSchedule.StartDate.Add(workSchedule.Start), workSchedule.StartDate.Add(workSchedule.Start).Add(workSchedule.Length)))
+                {
+                    return workSchedule;
+                }
+            }
+            return null;
         }
     }
 }

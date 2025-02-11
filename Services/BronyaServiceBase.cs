@@ -20,12 +20,6 @@ namespace vkteams.Services
 {
     public class BronyaServiceBase : IBronyaServiceBase
     {
-        protected string ImageId = Container.GetDomainService<TableSchemaImage>()
-            .GetAll()
-            .OrderByDescending(x => x.TimeStamp)
-            .FirstOrDefault()?.ImageId
-            ?? "AgACAgIAAxkBAAIBqGedpO4Tjf56hP0V-rA80MgoUbqIAAIm-TEbTj7xSF53trpDEdOHAQADAgADeQADNgQ";
-
         public DataPackage Package { get; set; }
         public LogService LogService { get; }
         public TGAPI TGAPI { get; set; }
@@ -43,11 +37,18 @@ namespace vkteams.Services
             set => _availablePointers = value;
         }
 
+        protected string ImageId;
+
         public BronyaServiceBase(LogService logService, TGAPI tGAPI)
         {
             LogService = logService;
             AccountService = new AccountService();
             TGAPI = tGAPI;
+            ImageId = TableSchemaImageDS
+                .GetAll()
+                .OrderByDescending(x => x.TimeStamp)
+                .FirstOrDefault()?.ImageId
+                ?? "AgACAgIAAxkBAAIBqGedpO4Tjf56hP0V-rA80MgoUbqIAAIm-TEbTj7xSF53trpDEdOHAQADAgADeQADNgQ";
         }
 
         public Task OnUpdateWrapper(DataPackage dataPackage)
