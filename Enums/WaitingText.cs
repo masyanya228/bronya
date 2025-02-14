@@ -65,5 +65,11 @@ namespace Buratino.Enums
         /// </summary>
         [ApiPointer("set_schedule_autocancel")]
         AutoCancel,
+
+        /// <summary>
+        /// Администратор устанавливает название стола
+        /// </summary>
+        [ApiPointer("set_table_name")]
+        TableName,
     }
 }

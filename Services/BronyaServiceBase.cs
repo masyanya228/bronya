@@ -1,5 +1,6 @@
 ﻿using Bronya.Dtos;
 using Bronya.Entities;
+using Bronya.Helpers;
 using Bronya.Services;
 
 using Buratino.API;
@@ -20,10 +21,11 @@ namespace vkteams.Services
 {
     public class BronyaServiceBase : IBronyaServiceBase
     {
+        public BookService BookService { get; set; }
         public DataPackage Package { get; set; }
         public LogService LogService { get; }
         public TGAPI TGAPI { get; set; }
-        public IDomainService<TableSchemaImage> TableSchemaImageDS { get; set; } = Container.GetDomainService<TableSchemaImage>();
+        public IDomainService<TableSchemaImage> TableSchemaImageDS { get; set; }
         public AccountService AccountService { get; set; }
 
         private IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> _availablePointers = null;
@@ -37,12 +39,15 @@ namespace vkteams.Services
             set => _availablePointers = value;
         }
 
+
         protected string ImageId;
 
-        public BronyaServiceBase(LogService logService, TGAPI tGAPI)
+        public BronyaServiceBase(LogService logService, TGAPI tGAPI, Account account)
         {
             LogService = logService;
-            AccountService = new AccountService();
+            AccountService = new AccountService(account);
+            BookService = new BookService(account);
+            TableSchemaImageDS = Container.GetDomainService<TableSchemaImage>(account);
             TGAPI = tGAPI;
             ImageId = TableSchemaImageDS
                 .GetAll()
@@ -215,9 +220,9 @@ namespace vkteams.Services
             return method.Key.Invoke(this, arguments).ToString();
         }
 
-        protected string SendOrEdit(string text, IReplyConstructor replyConstructor = null, ParseMode? parseMode = ParseMode.Markdown, string imageId = default)
+        protected string SendOrEdit(string text, IReplyConstructor replyConstructor = null, ParseMode? parseMode = ParseMode.Markdown, TGInputImplict file = default)
         {
-            return TGAPI.SendOrEdit(Package, text, replyConstructor, parseMode, imageId);
+            return TGAPI.SendOrEdit(Package, text, replyConstructor, parseMode, file);
         }
 
         [ApiPointer("show_role")]
@@ -245,7 +250,7 @@ namespace vkteams.Services
                 return ShowRole();
             }
 
-            var roleDS = Container.GetDomainService<Role>();
+            var roleDS = Container.GetDomainService<Role>(Package.Account);
             Package.Account.Roles.Clear();
             if (role == RoleType.Hostes)
             {

@@ -2,9 +2,7 @@
 using Buratino.Attributes;
 using Buratino.Xtensions;
 using Buratino.Helpers;
-using Buratino.Models.DomainService.DomainStructure;
 using Bronya.Entities;
-using Buratino.DI;
 using Bronya.Services;
 
 namespace vkteams.Services
@@ -14,9 +12,7 @@ namespace vkteams.Services
     /// </summary>
     public class BronyaService : BronyaServiceBase
     {
-        public IDomainService<Table> TableDS { get; set; } = Container.GetDomainService<Table>();
-        public IDomainService<Book> BookDS { get; set; } = Container.GetDomainService<Book>();
-        public BronyaService(LogService logService, TGAPI tGAPI) : base(logService, tGAPI)
+        public BronyaService(LogService logService, TGAPI tGAPI, Account account) : base(logService, tGAPI, account)
         {
         }
 
@@ -50,7 +46,7 @@ namespace vkteams.Services
         [ApiPointer("set_phone")]
         private string SetPhone(string phone)
         {
-            Package.Account.Phone = phone;
+            Package.Account.Phone = AccountService.ParseNumber(phone);
             Package.Account.IsPhoneRequested = true;
             AccountService.AccountDS.Save(Package.Account);
             SendOrEdit("Спасибо! Теперь вы можете забронировать стол.");
@@ -95,7 +91,7 @@ namespace vkteams.Services
         [ApiPointer("book")]
         private string Book()
         {
-            var books = new BookService()
+            var books = BookService
                 .GetMyActualBooks(Package.Account)
                 .OrderBy(x => x.ActualBookStartTime)
                 .ToArray();
@@ -121,11 +117,11 @@ namespace vkteams.Services
         [ApiPointer("table")]
         private string Table(string tableName)
         {
-            var table = TableDS.GetAll().Where(x => x.Name == tableName).Single();
+            var table = BookService.TableDS.GetAll().Where(x => x.Name == tableName).Single();
             Package.Account.SelectedTable = table;
             AccountService.AccountDS.Save(Package.Account);
 
-            DateTime[] avalableTimes = new BookService().GetAvailableTimesForBook(table, Package.Account);
+            DateTime[] avalableTimes = BookService.GetAvailableTimesForBook(table, Package.Account);
             if(!avalableTimes.Any())
             {
                 return SendOrEdit(
@@ -180,7 +176,7 @@ namespace vkteams.Services
                 return Book();
             }
 
-            if (!new BookService().GetAvailableTimesForBook(Package.Account.SelectedTable, Package.Account).Contains(Package.Account.SelectedTime))
+            if (!BookService.GetAvailableTimesForBook(Package.Account.SelectedTable, Package.Account).Contains(Package.Account.SelectedTime))
             {
                 return SendOrEdit(
                     $"{GetContactsForMenu()}" +
@@ -196,10 +192,10 @@ namespace vkteams.Services
                 Account = Package.Account,
                 ActualBookStartTime = Package.Account.SelectedTime,
                 Table = Package.Account.SelectedTable,
-                BookLength = new BookService().GetCurrentSmena().Schedule.MinPeriod,
+                BookLength = BookService.GetCurrentSmena().Schedule.MinPeriod,
                 SeatAmount = places,
             };
-            BookDS.Save(newBook);
+            BookService.BookDS.Save(newBook);
 
             return MyBook(newBook);
         }
@@ -218,7 +214,7 @@ namespace vkteams.Services
                 $"\r\n *На {book.ActualBookStartTime:dd.MM} в {book.ActualBookStartTime:HH:mm}" +
                 $"\r\n Гостей: {book.SeatAmount}*",
                 new InlineKeyboardConstructor()
-                    .AddButtonDownIf(() => new BookService().CanMove(book, Package.Account), "Перенести на 20 минут", $"/try_move_book/{book.Id}")
+                    .AddButtonDownIf(() => BookService.CanMove(book, Package.Account), "Перенести на 20 минут", $"/try_move_book/{book.Id}")
                     .AddButtonDown("Отменить бронь", $"/try_cancel/{book.Id}")
                     .AddButtonDown("Назад", $"/mybooklist"),
                 null,
@@ -234,7 +230,7 @@ namespace vkteams.Services
                 return Menu();
             }
 
-            if (!new BookService().CanCancel(book))
+            if (!BookService.CanCancel(book))
             {
                 return SendOrEdit(
                     $"{GetContactsForMenu()}" +
@@ -258,7 +254,7 @@ namespace vkteams.Services
                 return Menu();
             }
 
-            if (new BookService().Cancel(book))
+            if (BookService.Cancel(book))
             {
                 return MyBookList();
             }
@@ -280,7 +276,7 @@ namespace vkteams.Services
                 return Menu();
             }
 
-            if (!new BookService().CanMove(book, Package.Account))
+            if (!BookService.CanMove(book, Package.Account))
             {
                 return SendOrEdit(
                     $"{GetContactsForMenu()}" +
@@ -288,7 +284,7 @@ namespace vkteams.Services
                     new InlineKeyboardConstructor()
                         .AddButtonDown("Назад", $"/mybook/{book.Id}"));
             }
-            var newTime = new BookService().GetTimeAfterMove(book);
+            var newTime = BookService.GetTimeAfterMove(book);
             return SendOrEdit(
                 $"{GetContactsForMenu()}" +
                 $"\r\n\r\n Перенести бронь на {newTime:dd.MM HH:mm}?",
@@ -305,7 +301,7 @@ namespace vkteams.Services
                 return Menu();
             }
 
-            if (new BookService().Move(book, Package.Account))
+            if (BookService.Move(book, Package.Account))
             {
                 return MyBook(book);
             }
@@ -322,7 +318,7 @@ namespace vkteams.Services
         [ApiPointer("mybooklist")]
         private string MyBookList()
         {
-            var books = new BookService()
+            var books = BookService
                 .GetMyActualBooks(Package.Account)
                 .OrderBy(x => x.ActualBookStartTime)
                 .ToArray();

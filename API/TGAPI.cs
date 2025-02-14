@@ -1,4 +1,5 @@
 ﻿using Bronya.Dtos;
+using Bronya.Helpers;
 using Bronya.Xtensions;
 
 using Buratino.Helpers;
@@ -79,7 +80,7 @@ namespace Buratino.API
             return Task.CompletedTask;
         }
 
-        public string SendOrEdit(DataPackage package, string text, IReplyConstructor replyConstructor = null, ParseMode? parseMode = ParseMode.Markdown, string imageId = default)
+        public string SendOrEdit(DataPackage package, string text, IReplyConstructor replyConstructor = null, ParseMode? parseMode = ParseMode.Markdown, TGInputImplict file = null)
         {
             if (parseMode == default)
                 parseMode = ParseMode.Markdown;
@@ -94,7 +95,7 @@ namespace Buratino.API
                 }));
             }
 
-            if (imageId == default)
+            if (file == default)
             {
                 if (package.MessageId == default)
                     return Send(package.ChatId, text, parseMode, replyConstructor);
@@ -119,22 +120,22 @@ namespace Buratino.API
             else
             {
                 if (package.MessageId == default)
-                    return SendFile(package.ChatId, imageId, text, parseMode, replyConstructor);
+                    return SendFile(package.ChatId, file.GetInputOnlineFile(), text, parseMode, replyConstructor);
                 else
                 {
                     if (package?.Update?.Type == UpdateType.CallbackQuery)
                     {
                         if (package?.Update?.CallbackQuery?.Message?.Type == MessageType.Photo)
                         {
-                            return EditFile(package.ChatId, package.MessageId, imageId, text, parseMode, replyConstructor);
+                            return EditFile(package.ChatId, package.MessageId, file.GetInputMedia(), text, parseMode, replyConstructor);
                         }
                         else
                         {
-                            SendFile(package.ChatId, imageId, text, parseMode, replyConstructor);
+                            SendFile(package.ChatId, file.GetInputOnlineFile(), text, parseMode, replyConstructor);
                             return Delete(package.ChatId, package.MessageId);
                         }
                     }
-                    return EditFile(package.ChatId, package.MessageId, imageId, text, parseMode, replyConstructor);
+                    return EditFile(package.ChatId, package.MessageId, file.GetInputMedia(), text, parseMode, replyConstructor);
                 }
             }
         }
@@ -160,17 +161,18 @@ namespace Buratino.API
             return string.Empty;
         }
 
-        private string SendFile(long chatId, string imageId, string caption, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
+        private string SendFile(long chatId, InputOnlineFile image, string caption, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
         {
-            return client.SendPhotoAsync(chatId, new InputOnlineFile(imageId), caption, parseMode, null, null, null, null, null, replyConstructor?.GetMarkup() ?? new ReplyKeyboardRemove())
+            return client.SendPhotoAsync(chatId, image, caption, parseMode, null, null, null, null, null, replyConstructor?.GetMarkup() ?? new ReplyKeyboardRemove())
                 .GetAwaiter().GetResult().MessageId.ToString();
         }
         
-        private string EditFile(long chatId, int messageId, string imageId, string caption, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
+        private string EditFile(long chatId, int messageId, InputMedia image, string caption, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
         {
             if (!(replyConstructor is InlineKeyboardConstructor inlineKeyboardConstructor))
                 throw new InvalidOperationException("Нельзя передать кнопки сообщения. Нужно передать кнопки клавиатуры");
-            return client.EditMessageMediaAsync(chatId, messageId, new InputMediaPhoto(imageId) { Caption = caption, ParseMode = parseMode }, inlineKeyboardConstructor?.GetMarkup() as InlineKeyboardMarkup)
+
+            return client.EditMessageMediaAsync(chatId, messageId, new InputMediaPhoto(image) { Caption = caption, ParseMode = parseMode }, inlineKeyboardConstructor?.GetMarkup() as InlineKeyboardMarkup)
                 .GetAwaiter().GetResult().MessageId.ToString();
         }
 

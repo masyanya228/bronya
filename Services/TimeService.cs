@@ -4,7 +4,7 @@
     {
         public static bool IsDebug = false;
         public DateTime GetNow() => IsDebug
-            ? new DateTime(2025, 1, 26, 12, 0, 0)
+            ? new DateTime(2025, 2, 12, 15, 0, 0)
             : DateTime.Now;
     }
 }

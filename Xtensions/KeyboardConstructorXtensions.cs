@@ -11,8 +11,6 @@ namespace Buratino.Xtensions
 {
     public static class KeyboardConstructorXtensions
     {
-        private static BookService bookService = new BookService();
-
         public static IEnumerable<IEnumerable<InlineKeyboardButton>> ToGrid<T>(this IEnumerable<T> filters, Func<T, string> titleSelector, Func<T, string> callbackSelector, int columnCount = 2)
         {
             return filters.Chunk(columnCount).Select(x => x.Select(y => new InlineKeyboardButton(titleSelector(y)) { CallbackData = callbackSelector(y) }));
@@ -35,7 +33,8 @@ namespace Buratino.Xtensions
         /// <returns></returns>
         public static InlineKeyboardConstructor AddTableButtons(this InlineKeyboardConstructor constructor, Account acc)
         {
-            var tables = Container.GetDomainService<Table>().GetAll().Where(x => x.IsBookAvailable).OrderBy(x => x.Number).ToArray();
+            var bookService = new BookService(acc);
+            var tables = Container.GetDomainService<Table>(acc).GetAll().Where(x => x.IsBookAvailable).OrderBy(x => x.Number).ToArray();
             int count = 0;
             int tablesInRow = 3;
             foreach (var table in tables)
@@ -124,7 +123,8 @@ namespace Buratino.Xtensions
 
         public static InlineKeyboardConstructor AddHostesAllTableButtons(this InlineKeyboardConstructor constructor, Account acc)
         {
-            var tables = Container.GetDomainService<Table>().GetAll().OrderBy(x => x.Number).ToArray();
+            var bookService = new BookService(acc);
+            var tables = bookService.TableDS.GetAll().OrderBy(x => x.Number).ToArray();
             int count = 0;
             int tablesInRow = 2;
             foreach (var table in tables)
@@ -158,10 +158,11 @@ namespace Buratino.Xtensions
             return constructor;
         }
 
-        public static InlineKeyboardConstructor AddHostesNowTableButtons(this InlineKeyboardConstructor constructor)
+        public static InlineKeyboardConstructor AddHostesNowTableButtons(this InlineKeyboardConstructor constructor, Account acc)
         {
+            var bookService = new BookService(acc);
             var now = new TimeService().GetNow();
-            var tables = Container.GetDomainService<Table>().GetAll().OrderBy(x => x.Number).ToArray();
+            var tables = bookService.TableDS.GetAll().OrderBy(x => x.Number).ToArray();
             var smena = bookService.GetCurrentSmena();
             int count = 0;
             int tablesInRow = 2;
@@ -231,6 +232,7 @@ namespace Buratino.Xtensions
 
         public static InlineKeyboardConstructor AddHostesTableButtons(this InlineKeyboardConstructor constructor, IEnumerable<Table> tables, Account acc)
         {
+            var bookService = new BookService(acc);
             int count = 0;
             int tablesInRow = 2;
             foreach (var table in tables)
@@ -276,7 +278,8 @@ namespace Buratino.Xtensions
 
             foreach (var item in books)
             {
-                constructor.AddButtonDown($"{item.ActualBookStartTime:HH:mm} {item.Account.ToString()} 👤:{item.SeatAmount}", $"/show_book/{item.Id}");
+                var closedTitle = item.TableClosed != default ? "⛔️" : "";
+                constructor.AddButtonDown($"{closedTitle}{item.ActualBookStartTime:HH:mm} {item.Account.ToString()} 👤:{item.SeatAmount}", $"/show_book/{item.Id}");
             }
             return constructor;
         }

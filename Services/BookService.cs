@@ -8,9 +8,17 @@ namespace Bronya.Services
 {
     public class BookService
     {
-        public IDomainService<Book> BookDS = Container.GetDomainService<Book>();
-        public IDomainService<Table> TableDS = Container.GetDomainService<Table>();
-        public WorkScheduleService ScheduleService = new();
+        public IDomainService<Book> BookDS { get; set; }
+        public IDomainService<Table> TableDS {  get; set; }
+        public WorkScheduleService ScheduleService {  get; set; }
+
+        public BookService(Account account)
+        {
+            BookDS = Container.GetDomainService<Book>(account);
+            TableDS = Container.GetDomainService<Table>(account);
+            ScheduleService = new(account);
+        }
+
         public TimeService TimeService { get; set; } = new TimeService();
 
         public DateTime[] GetAvailableTimesForBook(Table table, Account acc)
@@ -212,11 +220,11 @@ namespace Bronya.Services
             List<DateTime> times = new();
 
             var smena = GetCurrentSmena();
-            List<Book> books = GetCurrentBooks(table).Except([except]).ToList();
+            List<Book> books = GetCurrentBooks(table).Except([except]).Where(x => x.TableClosed == default).ToList();
 
             for (var i = smena.GetMinimumTimeToBook(acc); i <= smena.SmenaEnd.Subtract(smena.Schedule.MinPeriod); i = i.Add(smena.Schedule.Step))
             {
-                if (books.Any(x => i > x.ActualBookStartTime.Add(-smena.Schedule.MinPeriod).Add(-smena.Schedule.Buffer) && i < x.GetTrueEndBook().Add(smena.Schedule.Buffer)))
+                if (books.Any(x => i > x.ActualBookStartTime.Add(-smena.Schedule.MinPeriod).Add(-smena.Schedule.Buffer) && i < x.BookEndTime.Add(smena.Schedule.Buffer)))
                 {
                     continue;
                 }

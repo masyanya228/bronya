@@ -4,6 +4,7 @@ using Bronya.Xtensions;
 
 using Buratino.API;
 using Buratino.Attributes;
+using Buratino.DI;
 using Buratino.Enums;
 using Buratino.Helpers;
 using Buratino.Models.Attributes;
@@ -17,9 +18,7 @@ namespace Bronya.Services
 {
     public class BronyaAdministratorService : BronyaServiceBase
     {
-        public BookService BookService { get; set; } = new();
-
-        public BronyaAdministratorService(LogService logService, TGAPI tGAPI) : base(logService, tGAPI)
+        public BronyaAdministratorService(LogService logService, TGAPI tGAPI, Account account) : base(logService, tGAPI, account)
         {
         }
 
@@ -37,6 +36,7 @@ namespace Bronya.Services
                 );
         }
 
+        #region schema
         [ApiPointer("cancel_select_table_schema")]
         private string CancelSelectTableSchema()
         {
@@ -81,7 +81,9 @@ namespace Bronya.Services
                 ImageId
             );
         }
+        #endregion
 
+        #region workschedule
         [ApiPointer("work_schedule")]
         private string WorkSchedule()
         {
@@ -215,8 +217,7 @@ namespace Bronya.Services
         private string SelectScheduleStartDate()
         {
             WorkSchedule workSchedule = Package.Account.SelectedSchedule;
-            Package.Account.Waiting = WaitingText.ScheduleStartDate;
-            AccountService.AccountDS.Save(Package.Account);
+            AccountService.SetWaiting(Package.Account, WaitingText.ScheduleStartDate);
 
             return SendOrEdit(
                 "Напишите с какого дня начинает действовать график:" +
@@ -505,6 +506,274 @@ namespace Bronya.Services
             BookService.ScheduleService.WorkScheduleDS.Save(workSchedule);
             return SelectScheduleDayOfWeeks();
         }
+        #endregion
+
+        #region tables
+        [ApiPointer("tables")]
+        private string Tables()
+        {
+            var constructor = new InlineKeyboardConstructor();
+            var tables = Container.GetDomainService<Table>(Package.Account).GetAll().OrderBy(x => x.Number).ToArray();
+            foreach (var table in tables)
+            {
+                constructor.AddButtonDown(table.GetTitle(), $"/show_table/{table.Id}");
+            }
+            constructor.AddButtonDown("Отключить все столы", $"/disable_all_tables");
+
+            return SendOrEdit(
+                "Столы:",
+                constructor
+                    .AddButtonDown("Архив", "/archive")
+                    .AddButtonRight("Порядок столов", "/table_order")
+                    .AddButtonDown("Назад", "/menu")
+                    .AddButtonRight("+Добавить стол", "/new_table"),
+                null,
+                ImageId
+            );
+        }
+
+        [ApiPointer("archive")]
+        private string Archive()
+        {
+            var constructor = new InlineKeyboardConstructor();
+            var tables = Container.GetRepository<Table>().GetAll(x => x.IsDeleted).OrderBy(x => x.Number).ToArray();
+            foreach (var table in tables)
+            {
+                constructor.AddButtonDown(table.GetTitle(), $"/show_table/{table.Id}");
+            }
+
+            return SendOrEdit(
+                "Архив столов:",
+                constructor
+                    .AddButtonDown("Назад", "/tables")
+            );
+        }
+
+        [ApiPointer("show_table")]
+        private string ShowTable(Table table)
+        {
+            return SendOrEdit(
+                $"{table.GetState()}",
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("Редактировать", $"/edit_table/{table.Id}")
+                    .AddButtonDown(table.IsBookAvailable ? "Отключить бронирование" : "Включить бронирование", $"/disable_table/{table.Id}")
+                    .AddButtonDown("Назад", "/tables")
+            );
+        }
+
+        [ApiPointer("disable_table")]
+        private string DisableTable(Table table)
+        {
+            table.IsBookAvailable = !table.IsBookAvailable;
+            BookService.TableDS.Save(table);
+            return ShowTable(table);
+        }
+
+        [ApiPointer("disable_all_tables")]
+        private string DisableAllTables()
+        {
+            var tableDS = Container.GetDomainService<Table>(Package.Account);
+            var tables = tableDS.GetAll().ToArray();
+            if (tables.All(x => !x.IsBookAvailable))
+            {
+                tables.Select(x =>
+                    {
+                        x.IsBookAvailable = true;
+                        tableDS.Save(x);
+                        return x;
+                    })
+                    .ToArray();
+            }
+            else
+            {
+                tables.Select(x =>
+                    {
+                        x.IsBookAvailable = false;
+                        tableDS.Save(x);
+                        return x;
+                    })
+                    .ToArray();
+            }
+            return Tables();
+        }
+
+        [ApiPointer("edit_table")]
+        private string EditTable(Table table)
+        {
+            AccountService.SelectTable(Package.Account, table);
+            return SendOrEdit(
+                $"{table.GetState()}",
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("Название стола", $"/select_table_name")
+                    .AddButtonDown("Посадочных мест", $"/select_table_seats")
+                    .AddButtonDown(table.HasConsole ? "С приставкой" : "Без приставки", $"/switch_table_console")
+                    .AddButtonDown(table.IsDeleted ? "Восстановить из архива" : "Убрать в архив", $"/switch_table_delete")
+                    .AddButtonDown("Назад", "/tables")
+            );
+        }
+
+        [ApiPointer("switch_table_console")]
+        private string SwitchTableConsole()
+        {
+            var table = Package.Account.SelectedTable;
+            table.HasConsole = !table.HasConsole;
+            BookService.TableDS.Save(table);
+            return EditTable(table);
+        }
+
+        [ApiPointer("switch_table_delete")]
+        private string SwitchTableDelete()
+        {
+            var table = Package.Account.SelectedTable;
+            table.IsDeleted = !table.IsDeleted;
+            BookService.TableDS.Save(table);
+            return EditTable(table);
+        }
+
+        [ApiPointer("select_table_seats")]
+        private string SelectTableSeats()
+        {
+            var constructor = new InlineKeyboardConstructor();
+            int count = 0;
+            int tablesInRow = 3;
+            for (int i = 1; i <= 12; i++)
+            {
+                if (count == tablesInRow)
+                {
+                    count = 0;
+                    constructor.AddButtonDown(i.ToString(), $"/set_table_seats/{i}");
+                }
+                else
+                {
+                    constructor.AddButtonRight(i.ToString(), $"/set_table_seats/{i}");
+                }
+                count++;
+            }
+
+            return SendOrEdit(
+                "Выберите сколько помещяется человек за столом:",
+                constructor
+                    .AddButtonDown("Отмена", $"/edit_table/{Package.Account.SelectedTable.Id}")
+            );
+        }
+
+        [ApiPointer("set_table_seats")]
+        private string SelectTableSeats(int seats)
+        {
+            Package.Account.SelectedTable.NormalSeatAmount = seats;
+            BookService.TableDS.Save(Package.Account.SelectedTable);
+            return EditTable(Package.Account.SelectedTable);
+        }
+
+        [ApiPointer("select_table_name")]
+        private string SelectTableName()
+        {
+            AccountService.SetWaiting(Package.Account, WaitingText.TableName);
+            return SendOrEdit(
+                "Напишите название стола:",
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("Отмена", $"/edit_table/{Package.Account.SelectedTable.Id}")
+            );
+        }
+
+        [ApiPointer("set_table_name")]
+        private string SelectTableName(string name)
+        {
+            AccountService.ResetWaiting(Package.Account);
+            Package.Account.SelectedTable.Name = name;
+            BookService.TableDS.Save(Package.Account.SelectedTable);
+            return EditTable(Package.Account.SelectedTable);
+        }
+
+        [ApiPointer("table_order")]
+        private string TableOrder()
+        {
+            var tables = BookService.TableDS.GetAll().OrderBy(x => x.Number).ToList();
+            var constructor = new InlineKeyboardConstructor();
+            foreach (var table in tables)
+            {
+                if (table == tables.First())
+                {
+                    constructor.AddButtonDown($"{table.Name}🔻", $"/table_order_down/{table.Id}");
+                }
+                else if (table == tables.Last())
+                {
+                    constructor.AddButtonDown($"{table.Name}🔺", $"/table_order_up/{table.Id}");
+                }
+                else
+                {
+                    constructor.AddButtonDown($"{table.Name}🔺", $"/table_order_up/{table.Id}");
+                    constructor.AddButtonRight($"{table.Name}🔻", $"/table_order_down/{table.Id}");
+                }
+            }
+            return SendOrEdit("Порядок столов:",
+                constructor
+                    .AddButtonDown("Готово", $"/tables")
+                );
+        }
+
+        [ApiPointer("table_order_down")]
+        private string TableOrderDown(Table table)
+        {
+            var tables = BookService.TableDS.GetAll().OrderBy(x => x.Number).ToList();
+            var constructor = new InlineKeyboardConstructor();
+            for (var i = 0; i < tables.Count; i++)
+            {
+                tables[i].Number = i;
+                if (tables[i] == table)
+                {
+                    if (i < tables.Count - 1)
+                    {
+                        tables[i].Number = i + 1;
+                        tables[i + 1].Number = i;
+                        i++;
+                        continue;
+                    }
+                }
+            }
+            tables.Select(x =>
+            {
+                BookService.TableDS.Save(x);
+                return x;
+            }).ToArray();
+            return TableOrder();
+        }
+
+        [ApiPointer("table_order_up")]
+        private string TableOrderUp(Table table)
+        {
+            var tables = BookService.TableDS.GetAll().OrderBy(x => x.Number).ToList();
+            var constructor = new InlineKeyboardConstructor();
+            for (var i = 0; i < tables.Count; i++)
+            {
+                tables[i].Number = i;
+                if (tables[i] == table)
+                {
+                    if (i > 0)
+                    {
+                        tables[i].Number = i - 1;
+                        tables[i - 1].Number = i;
+                        i++;
+                        continue;
+                    }
+                }
+            }
+            tables.Select(x =>
+            {
+                BookService.TableDS.Save(x);
+                return x;
+            }).ToArray();
+            return TableOrder();
+        }
+
+        [ApiPointer("new_table")]
+        private string NewTable()
+        {
+            var table = BookService.TableDS.Save(new Table());
+
+            return EditTable(table);
+        }
+        #endregion
 
         private DateTime ParseDate(string date)
         {

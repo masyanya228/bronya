@@ -1,4 +1,5 @@
 ﻿using Bronya.Dtos;
+using Bronya.Entities;
 using Bronya.Enums;
 
 using Buratino.Enums;
@@ -10,7 +11,7 @@ namespace Bronya.Services
     {
         public void Notify()
         {
-            BookService bookService = new BookService();
+            BookService bookService = new BookService(new Account { Id = new Guid("da8c13be-6d97-4287-b47e-34caada8d315") });
             var smena = bookService.GetCurrentSmena();
             var now = new TimeService().GetNow();
             var booksToNotify = bookService.GetCurrentBooks()

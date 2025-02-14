@@ -9,5 +9,9 @@ public class PersistentEntityMap : NHSubclassClassMap<PersistentEntity>
         Abstract();
         Map(x => x.DeletedStamp);
         Map(x => x.IsDeleted);
+        Map(x => x.UpdatedStamp);
+
+        References(x => x.WhoDeleted);
+        References(x => x.WhoUpdated);
     }
 }

@@ -23,6 +23,17 @@ namespace Bronya.Entities
         /// Продолжительность брони
         /// </summary>
         public virtual TimeSpan BookLength { get; set; }
+        
+        public virtual TimeSpan FactBookLength
+        {
+            get
+            {
+                if (TableClosed != default)
+                    return TableClosed.Subtract(TableStarted);
+                else
+                    return BookLength;
+            }
+        }
 
         /// <summary>
         /// Бронь кончается
@@ -71,7 +82,7 @@ namespace Bronya.Entities
 
         public virtual string GetState()
         {
-            var smena = new BookService().GetCurrentSmena();
+            var smena = new BookService(null).GetCurrentSmena();
 
             string state = "Бронь:";
             state += $"\r\n⏱️Время: {ActualBookStartTime:dd.MM HH:mm}";
@@ -88,7 +99,7 @@ namespace Bronya.Entities
 
             if (IsCanceled)
             {
-                state += $"*🚫Отменена🚫*";
+                state += $"\r\n*🚫Отменена🚫*";
             }
             if (TableClosed != default)
             {

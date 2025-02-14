@@ -11,7 +11,12 @@ namespace Bronya.Services
 {
     public class WorkScheduleService
     {
-        public IDomainService<WorkSchedule> WorkScheduleDS = Container.GetDomainService<WorkSchedule>();
+        public IDomainService<WorkSchedule> WorkScheduleDS {  get; set; }
+
+        public WorkScheduleService(Account account)
+        {
+            WorkScheduleDS = Container.GetDomainService<WorkSchedule>(account);
+        }
 
         public WorkSchedule GetWorkSchedule(DateTime dateTime = default)
         {

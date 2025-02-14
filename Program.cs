@@ -15,6 +15,11 @@ using Bronya.Services;
 using Bronya.Jobs.Structures;
 using Quartz;
 using Bronya.Enums;
+using System.Drawing.Imaging;
+using System.Drawing;
+using Remotion.Linq.Clauses.ResultOperators;
+using System.Security.Principal;
+using System.Drawing.Drawing2D;
 
 public class Program
 {
@@ -36,10 +41,11 @@ public class Program
 
         builder.Services.AddSingleton(typeof(IRepository<>), typeof(PGRepository<>));
 
-        builder.Services.AddSingleton(typeof(IDomainService<>), typeof(DefaultDomainService<>));
+        builder.Services.AddTransient(typeof(IDomainService<>), typeof(DefaultDomainService<>));
 
-        builder.Services.AddSingleton(typeof(IDomainService<Account>), typeof(PersistentDomainService<Account>));
-        builder.Services.AddSingleton(typeof(IDomainService<WorkSchedule>), typeof(PersistentDomainService<WorkSchedule>));
+        builder.Services.AddTransient(typeof(IDomainService<Account>), typeof(PersistentDomainService<Account>));
+        builder.Services.AddTransient(typeof(IDomainService<WorkSchedule>), typeof(PersistentDomainService<WorkSchedule>));
+        builder.Services.AddTransient(typeof(IDomainService<Table>), typeof(PersistentDomainService<Table>));
 
         builder.Services.AddSingleton(typeof(LogService), new LogService());
         
@@ -111,25 +117,15 @@ public class Program
 
         JobRegistrator.RegisterJobs();
 
-        var accounts = Container.GetDomainService<Account>();
-        if (!accounts.GetAll().Any(x => x.Name == "Root"))
+        var accountDS = Container.GetDomainService<Account>(null);
+        var account = accountDS.GetAll(x => x.TGTag == "morsw").Single();
+        if (account == default)
         {
             Account entity = new()
             {
                 Name = "Root",
             };
-            accounts.Save(entity);
-        }
-
-        //Переопределение сравнения сущностей в управляемом коде
-        var exist = accounts.GetAll().First();
-        var newacc = new Account()
-        {
-            Id = exist.Id
-        };
-        if (exist == newacc)
-        {
-
+            accountDS.Save(entity);
         }
     }
 }

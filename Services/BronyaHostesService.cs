@@ -2,9 +2,7 @@
 using Buratino.Attributes;
 using Buratino.Xtensions;
 using Buratino.Helpers;
-using Buratino.Models.DomainService.DomainStructure;
 using Bronya.Entities;
-using Buratino.DI;
 using Bronya.Services;
 using Buratino.Enums;
 
@@ -15,11 +13,7 @@ namespace vkteams.Services
     /// </summary>
     public class BronyaHostesService : BronyaServiceBase
     {
-        public IDomainService<Table> TableDS { get; set; } = Container.GetDomainService<Table>();
-        public IDomainService<Book> BookDS { get; set; } = Container.GetDomainService<Book>();
-        public BookService BookService { get; set; } = new BookService();
-
-        public BronyaHostesService(LogService logService, TGAPI tGAPI) : base(logService, tGAPI)
+        public BronyaHostesService(LogService logService, TGAPI tGAPI, Account account) : base(logService, tGAPI, account)
         {
         }
 
@@ -56,7 +50,7 @@ namespace vkteams.Services
             return SendOrEdit(
                 "Сейчас:",
                 new InlineKeyboardConstructor()
-                    .AddHostesNowTableButtons()
+                    .AddHostesNowTableButtons(Package.Account)
                     .AddButtonDown("Назад", $"/menu"),
                 default,
                 ImageId
@@ -71,6 +65,7 @@ namespace vkteams.Services
                 Package.Account.SelectedTable = default;
                 AccountService.AccountDS.Save(Package.Account);
             }
+            var stream = new CalendarDrawService().Draw(table);
             var books = BookService.GetCurrentBooks(table, true);
             var isAvailable = !table.IsBookAvailable ? "\r\n🚫 Бронь отключена" : string.Empty;
             return SendOrEdit(
@@ -83,7 +78,7 @@ namespace vkteams.Services
                     .AddButtonDown("🔲 Столы", $"/tables")
                     .AddButtonRight("В начало", $"/menu"),
                 default,
-                ImageId
+                stream
             );
         }
 
@@ -157,7 +152,7 @@ namespace vkteams.Services
         private string Move(Book book, DateTime newActualTime)
         {
             book.ActualBookStartTime = newActualTime;
-            BookDS.Save(book);
+            BookService.BookDS.Save(book);
             return ShowBook(book);
         }
 
@@ -182,7 +177,7 @@ namespace vkteams.Services
             book.SetNewBookEndTime(newEndTime);
             book.NotifiedAboutEndBook = default;
             book.TableClosed = default;
-            BookDS.Save(book);
+            BookService.BookDS.Save(book);
             return ShowBook(book);
         }
 
@@ -237,14 +232,14 @@ namespace vkteams.Services
                 Close(allReadyOpened);
             }
             book.TableStarted = new TimeService().GetNow();
-            BookDS.Save(book);
+            BookService.BookDS.Save(book);
             return ShowBook(book);
         }
 
         [ApiPointer("try_cancel")]
         private string TryCancel(Book book)
         {
-            if (!new BookService().CanCancel(book))
+            if (!BookService.CanCancel(book))
             {
                 return SendOrEdit(
                     $"{book.GetState()}" +
@@ -263,7 +258,7 @@ namespace vkteams.Services
         [ApiPointer("cancel")]
         private string Cancel(Book book)
         {
-            if (!new BookService().Cancel(book))
+            if (!BookService.Cancel(book))
             {
                 return SendOrEdit(
                     $"*Бронь не получилось отменить*",
@@ -271,14 +266,14 @@ namespace vkteams.Services
                         .AddButtonDown("Назад", $"/show_book/{book.Id}"));
             }
             book.IsCanceled = true;
-            BookDS.Save(book);
+            BookService.BookDS.Save(book);
             return ShowBook(book);
         }
 
         [ApiPointer("try_repair")]
         private string TryRepair(Book book)
         {
-            if (!new BookService().CanRepair(book, Package.Account))
+            if (!BookService.CanRepair(book, Package.Account))
             {
                 return SendOrEdit(
                     $"{book.GetState()}" +
@@ -297,7 +292,7 @@ namespace vkteams.Services
         [ApiPointer("repair")]
         private string Repair(Book book)
         {
-            if (!new BookService().CanRepair(book, Package.Account))
+            if (!BookService.CanRepair(book, Package.Account))
             {
                 return SendOrEdit(
                     $"*Бронь не получилось восстановить*",
@@ -305,7 +300,7 @@ namespace vkteams.Services
                         .AddButtonDown("Назад", $"/show_book/{book.Id}"));
             }
             book.IsCanceled = false;
-            BookDS.Save(book);
+            BookService.BookDS.Save(book);
             return ShowBook(book);
         }
 
@@ -332,7 +327,7 @@ namespace vkteams.Services
         private string Close(Book book)
         {
             book.TableClosed = new TimeService().GetNow();
-            BookDS.Save(book);
+            BookService.BookDS.Save(book);
             return ShowBook(book);
         }
 
@@ -340,7 +335,7 @@ namespace vkteams.Services
         private string Disable(Table table)
         {
             table.IsBookAvailable = false;
-            TableDS.Save(table);
+            BookService.TableDS.Save(table);
             return Table(table);
         }
 
@@ -348,7 +343,7 @@ namespace vkteams.Services
         private string Enable(Table table)
         {
             table.IsBookAvailable = true;
-            TableDS.Save(table);
+            BookService.TableDS.Save(table);
             return Table(table);
         }
 
@@ -457,14 +452,14 @@ namespace vkteams.Services
         private string SelectTable()
         {
             var tables = Package.Account.SelectedTime != default
-                ? TableDS.GetAll().Where(x => x.IsBookAvailable).OrderBy(x => x.Number)
+                ? BookService.TableDS.GetAll().Where(x => x.IsBookAvailable).OrderBy(x => x.Number)
                     .ToArray()
                     .Where(table =>
                     {
                         var times = BookService.GetAvailableTimesForBook(table, Package.Account);
                         return times.Contains(Package.Account.SelectedTime);//Поиск по конкретному времени
                     }).ToArray()
-                : TableDS.GetAll().Where(x => x.IsBookAvailable).OrderBy(x => x.Number)
+                : BookService.TableDS.GetAll().Where(x => x.IsBookAvailable).OrderBy(x => x.Number)
                     .ToArray()
                     .Where(table =>
                     {
@@ -561,7 +556,7 @@ namespace vkteams.Services
             {
                 return SendOrEdit(
                     $"{Package.Account.GetNewBookState()}" +
-                    $"\r\nУточните имя:",
+                    $"\r\n\r\n*Уточните имя:*",
                     new InlineKeyboardConstructor()
                         .AddHostesShowAccounts(accs, "set_name_true")
                         .AddButtonDown("🗑", $"/reset_all")
@@ -585,7 +580,7 @@ namespace vkteams.Services
                 Account = account
             };
 
-            BookDS.Save(newBook);
+            BookService.BookDS.Save(newBook);
 
             Package.Account.Waiting = default;
             Package.Account.SelectedPlaces = default;
@@ -664,7 +659,7 @@ namespace vkteams.Services
             {
                 if (book.Count() > 1)
                 {
-                    constructor.AddButtonDown($"{book.Key.ToShortDateString()} ({book.Count()} шт.)", $"/account_books_by_date/{book.Key}");
+                    constructor.AddButtonDown($"{book.Key.ToShortDateString()} ({book.Count()} шт.)", $"/abbd/{mainAccount.Id}/{book.Key.Date}");
                 }
                 else
                 {
@@ -680,7 +675,7 @@ namespace vkteams.Services
             );
         }
 
-        [ApiPointer("account_books_by_date")]
+        [ApiPointer("abbd")]
         private string AccountBooksByDate(Account mainAccount, DateTime date)
         {
             var books = BookService.GetBooks(mainAccount).Where(x => x.ActualBookStartTime.Date == date.Date).ToArray();
@@ -725,11 +720,11 @@ namespace vkteams.Services
 
             foreach (var subAccount in subAccounts)
             {
-                var books = BookDS.GetAll().Where(x => x.Account.Id == subAccount.Id).ToList();
+                var books = BookService.BookDS.GetAll().Where(x => x.Account.Id == subAccount.Id).ToList();
                 books.ForEach(x =>
                 {
                     x.Account = mainAccount;
-                    BookDS.Save(x);
+                    BookService.BookDS.Save(x);
                 });
                 AccountService.AccountDS.Delete(subAccount);
             }

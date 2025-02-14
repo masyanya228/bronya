@@ -2,6 +2,7 @@
 
 using Buratino.Enums;
 using Buratino.Models.Attributes;
+using Buratino.Xtensions;
 
 namespace Bronya.Entities
 {
@@ -49,8 +50,8 @@ namespace Bronya.Entities
         /// Номер просматриваемой страницы в реестре гостей
         /// </summary>
         public virtual int GetAccountsPage { get; set; }
-        
-        public virtual IList<Role> Roles { get; set; }
+
+        public virtual IList<Role> Roles { get; set; } = [];
         public virtual WorkSchedule SelectedSchedule { get; set; }
 
         public virtual string GetNewBookState()

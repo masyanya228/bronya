@@ -1,6 +1,4 @@
 ﻿using Telegram.Bot.Types;
-using Buratino.Models.DomainService.DomainStructure;
-using Buratino.DI;
 using vkteams.Services;
 using Buratino.API;
 using Bronya.Dtos;
@@ -12,9 +10,6 @@ namespace Bronya.Services
     public class AuthorizeService
     {
         public static AuthorizeService Instance { get; private set; }
-        IBronyaServiceBase BronyaService;
-        IBronyaServiceBase BronyaHostesService;
-        IBronyaServiceBase BronyaAdministratorService;
         public AccountService AccountService;
 
         public LogService LogService { get; }
@@ -26,10 +21,7 @@ namespace Bronya.Services
             TgAPI = tgAPI;
             LogService = logService;
 
-            AccountService = new AccountService();
-            BronyaService = new BronyaService(logService, TgAPI);
-            BronyaHostesService = new BronyaHostesService(logService, TgAPI);
-            BronyaAdministratorService = new BronyaAdministratorService(logService, TgAPI);
+            AccountService = new AccountService(null);
             
             TgAPI.UpdateEvent += OnUpdateWrapper;
             tgAPI.Start();
@@ -42,9 +34,9 @@ namespace Bronya.Services
             var role = GetRole(acc);
             return role switch
             {
-                RoleType.Administrator => BronyaAdministratorService.OnUpdateWrapper(dataPackage),
-                RoleType.Hostes => BronyaHostesService.OnUpdateWrapper(dataPackage),
-                _ => BronyaService.OnUpdateWrapper(dataPackage)
+                RoleType.Administrator => new BronyaAdministratorService(LogService, TgAPI, acc).OnUpdateWrapper(dataPackage),
+                RoleType.Hostes => new BronyaHostesService(LogService, TgAPI, acc).OnUpdateWrapper(dataPackage),
+                _ => new BronyaService(LogService, TgAPI, acc).OnUpdateWrapper(dataPackage)
             };
         }
 

@@ -12,7 +12,12 @@ namespace Bronya.Services
 {
     public class AccountService
     {
-        public IDomainService<Account> AccountDS { get; set; } = Container.GetDomainService<Account>();
+        public IDomainService<Account> AccountDS { get; set; }
+
+        public AccountService(Account account)
+        {
+            AccountDS = Container.GetDomainService<Account>(account);
+        }
 
         public Account GetAccount(Update update)
         {
@@ -127,8 +132,8 @@ namespace Bronya.Services
             return AccountDS.GetAll()
                 .Where(x=> account.CardNumber != default && account.CardNumber == x.CardNumber 
                     || account.Phone != default && account.Phone == x.Phone)
-                //.Where(x => x.CardNumber != default || x.Phone != default)
-                //.Where(x => x.CardNumber == account.CardNumber || x.Phone == account.Phone)
+                //.Where(x => x.GetCardNumber != default || x.GetPhone != default)
+                //.Where(x => x.GetCardNumber == account.GetCardNumber || x.GetPhone == account.GetPhone)
                 .Where(x => x.Id != account.Id && x.TGTag == default)
                 .ToArray();
         }
@@ -139,8 +144,8 @@ namespace Bronya.Services
                 ? AccountDS.GetAll()
                     .Where(x => account.CardNumber != default && account.CardNumber == x.CardNumber
                         || account.Phone != default && account.Phone == x.Phone)
-                    //.Where(x => x.CardNumber != default || x.Phone != default)
-                    //.Where(x => x.CardNumber == account.CardNumber || x.Phone == account.Phone)
+                    //.Where(x => x.GetCardNumber != default || x.GetPhone != default)
+                    //.Where(x => x.GetCardNumber == account.GetCardNumber || x.GetPhone == account.GetPhone)
                     .Where(x => x.Id != account.Id && x.TGTag != default)
                     .FirstOrDefault()
                 : default;
@@ -156,6 +161,13 @@ namespace Bronya.Services
         public bool SetWaiting(Account account, WaitingText waitingText)
         {
             account.Waiting = waitingText;
+            AccountDS.Save(account);
+            return true;
+        }
+
+        public bool SelectTable(Account account, Table table)
+        {
+            account.SelectedTable = table;
             AccountDS.Save(account);
             return true;
         }

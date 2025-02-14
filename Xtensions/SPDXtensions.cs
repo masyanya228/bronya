@@ -30,7 +30,7 @@ namespace Buratino.Xtensions
             }
             else if (target.IsAssignableTo(typeof(EntityBase)))
             {
-                return Container.GetObjectDomainService(target).Get((Guid)str.StringValueCast(typeof(Guid)));
+                return Container.GetObjectDomainService(target, null).Get((Guid)str.StringValueCast(typeof(Guid)));
             }
             else if (target.IsEnum)
             {

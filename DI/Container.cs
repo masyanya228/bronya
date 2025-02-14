@@ -1,4 +1,6 @@
-﻿using Buratino.Entities.Abstractions;
+﻿using Bronya.Entities;
+
+using Buratino.Entities.Abstractions;
 using Buratino.Models.DomainService;
 using Buratino.Models.DomainService.DomainStructure;
 using Buratino.Repositories.RepositoryStructure;
@@ -60,20 +62,24 @@ namespace Buratino.DI
             return Get<IRepository<T>>(key);
         }
 
-        public static IDomainService<T> GetDomainService<T>(string key = null) where T : IEntityBase
+        public static IDomainService<T> GetDomainService<T>(Account account, string key = null) where T : IEntityBase
         {
-            return Get<IDomainService<T>>(key);
+            var ds = Get<IDomainService<T>>(key);
+            ds.Account = account;
+            return ds;
         }
 
-        public static object GetDomainService(Type type, string key = null)
+        public static object GetDomainService(Type type, Account account, string key = null)
         {
             var genericType = typeof(IDomainService<>).MakeGenericType(type);
-            return Get(genericType, key);
+            var ds = Get(genericType, key);
+            ds.SetProp("Account", account);
+            return ds;
         }
 
-        public static ObjectDomainService GetObjectDomainService(Type type)
+        public static ObjectDomainService GetObjectDomainService(Type type, Account account)
         {
-            return new ObjectDomainService(GetDomainService(type));
+            return new ObjectDomainService(GetDomainService(type, account));
         }
     }
 }

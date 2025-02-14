@@ -1,8 +1,8 @@
-﻿using Buratino.Entities.Abstractions;
+﻿using Bronya.Entities.Abstractions;
 
 namespace Bronya.Entities
 {
-    public class Table : NamedEntity
+    public class Table : PersistentEntity
     {
         public virtual int NormalSeatAmount { get; set; }
 
@@ -20,6 +20,29 @@ namespace Bronya.Entities
             return HasConsole
                 ? $"{Name}🎮"
                 : $"{Name}";
+        }
+
+        public virtual string GetState()
+        {
+            var state = $"Название: {Name}" +
+                $"\r\nМест: {NormalSeatAmount}";
+            if (HasConsole)
+                state += $"\r\nЕсть приставка 🎮";
+            if (!IsBookAvailable)
+                state += $"\r\n🚫Онлайн бронирование не доступно!";
+            return state ;
+        }
+
+        public virtual string GetTitle()
+        {
+            var state = string.Empty;
+            if (!IsBookAvailable)
+                state += $"🚫";
+            if (HasConsole)
+                state += $"🎮";
+             state += $"Стол: {Name}" +
+                $" 👤{NormalSeatAmount}";
+            return state;
         }
     }
 }

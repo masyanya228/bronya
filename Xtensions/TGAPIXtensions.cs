@@ -16,5 +16,12 @@ namespace Buratino.Xtensions
                 return client.SendTextMessageAsync(chatId, text, null, null, null, null, null, null, null, inlineKeyboardMarkup);
             }
         }
+
+        public static string EscapeMarkdown1(this string source)
+        {
+            if (source == null)
+                return null;
+            return source.Replace("_", "\\_").Replace("*", "\\*").Replace("`", "\\`").Replace("[", "\\[");
+        }
     }
 }

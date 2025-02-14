@@ -2,6 +2,7 @@
 using System.Reflection;
 
 using Bronya.Dtos;
+using Bronya.Entities;
 
 using Buratino.DI;
 using Buratino.Entities.Abstractions;
@@ -13,6 +14,7 @@ namespace Buratino.Models.DomainService.DomainStructure
     public class DomainServiceBase<T> : IDomainService<T> where T : IEntityBase
     {
         public virtual IRepository<T> Repository { get; set; }
+        public virtual Account Account { get; set; }
 
         protected DomainServiceBase()
         {
@@ -54,7 +56,7 @@ namespace Buratino.Models.DomainService.DomainStructure
                         continue;
                     }
 
-                    var subDomain = Container.GetDomainService(item.PropertyType);
+                    var subDomain = Container.GetDomainService(item.PropertyType, Account);
                     subDomain.InvokeMethod("Save", new object[] { value });
                 }
             }

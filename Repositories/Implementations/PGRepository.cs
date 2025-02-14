@@ -81,6 +81,7 @@ namespace Buratino.Repositories.Implementations
 
         public override bool Delete(T entity)
         {
+            //Защита от дурака
             if (entity is PersistentEntity persistent)
             {
                 persistent.IsDeleted = true;
