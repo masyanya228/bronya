@@ -3,6 +3,7 @@ using System.Reflection;
 
 using Bronya.Dtos;
 using Bronya.Entities;
+using Bronya.Services;
 
 using Buratino.DI;
 using Buratino.Entities.Abstractions;
@@ -39,6 +40,11 @@ namespace Buratino.Models.DomainService.DomainStructure
 
         public virtual T Save(T entity)
         {
+            if (entity.Id == Guid.Empty)
+            {
+                entity.Account = Account;
+                entity.TimeStamp = new TimeService().GetNow();
+            }
             return entity.Id != Guid.Empty
                 ? Repository.Update(entity)
                 : Repository.Insert(entity);

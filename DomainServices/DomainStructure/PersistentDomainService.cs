@@ -1,5 +1,4 @@
-﻿using Bronya.Entities;
-using Bronya.Entities.Abstractions;
+﻿using Bronya.Entities.Abstractions;
 using Bronya.Services;
 
 using System.Linq.Expressions;
@@ -59,14 +58,8 @@ namespace Buratino.Models.DomainService.DomainStructure
             {
                 entity.WhoUpdated = Account;
                 entity.UpdatedStamp = new TimeService().GetNow();
-                return base.Save(entity);
             }
-            else
-            {
-                entity.Account = Account;
-                entity.TimeStamp = new TimeService().GetNow();
-                return base.Save(entity);
-            }
+            return base.Save(entity);
         }
     }
 }
