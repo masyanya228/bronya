@@ -42,7 +42,7 @@ public class Program
         builder.Services.AddTransient(typeof(IDomainService<Table>), typeof(PersistentDomainService<Table>));
         builder.Services.AddTransient(typeof(IDomainService<Book>), typeof(PersistentDomainService<Book>));
 
-        builder.Services.AddSingleton(typeof(LogService), new LogService());
+        builder.Services.AddSingleton(typeof(LogToFileService), new LogToFileService());
         
         //for PG
         builder.Services.AddSingleton(typeof(IPGSessionFactory), typeof(PGSessionFactory));
@@ -103,12 +103,12 @@ public class Program
 
     private static void OnStop()
     {
-        Container.Get<LogService>().Dispose();
+        Container.Get<LogToFileService>().Dispose();
     }
 
     public static void OnStarted()
     {
-        new AuthorizeService(Container.Get<LogService>(), new TGAPI(Container.Get<LogService>(), "7434892034:AAHZlmmmNZlPdsPU1hye-JcKqYlzayb-VRI"));
+        new AuthorizeService(Container.Get<LogToFileService>(), new TGAPI(Container.Get<LogToFileService>(), "7434892034:AAHZlmmmNZlPdsPU1hye-JcKqYlzayb-VRI"));
 
         JobRegistrator.RegisterJobs();
 

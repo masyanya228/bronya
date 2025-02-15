@@ -23,9 +23,10 @@ namespace vkteams.Services
     {
         public BookService BookService { get; set; }
         public DataPackage Package { get; set; }
-        public LogService LogService { get; }
+        public LogToFileService LogToFileService { get; }
         public TGAPI TGAPI { get; set; }
         public IDomainService<TableSchemaImage> TableSchemaImageDS { get; set; }
+        public LogService LogService { get; set; }
         public AccountService AccountService { get; set; }
 
         private IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> _availablePointers = null;
@@ -39,15 +40,15 @@ namespace vkteams.Services
             set => _availablePointers = value;
         }
 
-
         protected string ImageId;
 
-        public BronyaServiceBase(LogService logService, TGAPI tGAPI, Account account)
+        public BronyaServiceBase(LogToFileService logService, TGAPI tGAPI, Account account)
         {
-            LogService = logService;
-            AccountService = new AccountService(account);
-            BookService = new BookService(account);
+            LogToFileService = logService;
+            AccountService = new(account);
+            BookService = new(account);
             TableSchemaImageDS = Container.GetDomainService<TableSchemaImage>(account);
+            LogService = new(account);
             TGAPI = tGAPI;
             ImageId = TableSchemaImageDS
                 .GetAll()

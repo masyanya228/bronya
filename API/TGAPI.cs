@@ -18,7 +18,7 @@ namespace Buratino.API
     public class TGAPI
     {
         public TelegramBotClient client;
-        private LogService logService;
+        private LogToFileService logService;
 
         public bool IsWorking { get; private set; }
 
@@ -26,7 +26,7 @@ namespace Buratino.API
 
         public event APIUpdateEventHandler UpdateEvent;
 
-        public TGAPI(LogService logService, string token)
+        public TGAPI(LogToFileService logService, string token)
         {
             client = new TelegramBotClient(token, new HttpClient());
             this.logService = logService;

@@ -12,7 +12,7 @@ namespace vkteams.Services
     /// </summary>
     public class BronyaService : BronyaServiceBase
     {
-        public BronyaService(LogService logService, TGAPI tGAPI, Account account) : base(logService, tGAPI, account)
+        public BronyaService(LogToFileService logService, TGAPI tGAPI, Account account) : base(logService, tGAPI, account)
         {
         }
 

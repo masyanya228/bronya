@@ -12,10 +12,10 @@ namespace Bronya.Services
         public static AuthorizeService Instance { get; private set; }
         public AccountService AccountService;
 
-        public LogService LogService { get; }
+        public LogToFileService LogService { get; }
         public TGAPI TgAPI { get; }
 
-        public AuthorizeService(LogService logService, TGAPI tgAPI)
+        public AuthorizeService(LogToFileService logService, TGAPI tgAPI)
         {
             Instance = this;
             TgAPI = tgAPI;

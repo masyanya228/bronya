@@ -18,7 +18,7 @@ namespace Bronya.Services
 {
     public class BronyaAdministratorService : BronyaServiceBase
     {
-        public BronyaAdministratorService(LogService logService, TGAPI tGAPI, Account account) : base(logService, tGAPI, account)
+        public BronyaAdministratorService(LogToFileService logService, TGAPI tGAPI, Account account) : base(logService, tGAPI, account)
         {
         }
 
