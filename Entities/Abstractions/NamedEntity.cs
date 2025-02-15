@@ -1,6 +1,4 @@
-﻿using Buratino.Xtensions;
-
-namespace Buratino.Entities.Abstractions
+﻿namespace Buratino.Entities.Abstractions
 {
     public abstract class NamedEntity : EntityBase
     {

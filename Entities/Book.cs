@@ -6,7 +6,7 @@ using Buratino.Xtensions;
 
 namespace Bronya.Entities
 {
-    public class Book : EntityBase
+    public class Book : PersistentEntity
     {
         public virtual int SeatAmount { get; set; }
 

@@ -14,12 +14,6 @@ using Bronya.Entities;
 using Bronya.Services;
 using Bronya.Jobs.Structures;
 using Quartz;
-using Bronya.Enums;
-using System.Drawing.Imaging;
-using System.Drawing;
-using Remotion.Linq.Clauses.ResultOperators;
-using System.Security.Principal;
-using System.Drawing.Drawing2D;
 
 public class Program
 {
@@ -41,11 +35,12 @@ public class Program
 
         builder.Services.AddSingleton(typeof(IRepository<>), typeof(PGRepository<>));
 
-        builder.Services.AddTransient(typeof(IDomainService<>), typeof(DefaultDomainService<>));
+        builder.Services.AddTransient(typeof(IDomainService<>), typeof(DomainService<>));
 
         builder.Services.AddTransient(typeof(IDomainService<Account>), typeof(PersistentDomainService<Account>));
         builder.Services.AddTransient(typeof(IDomainService<WorkSchedule>), typeof(PersistentDomainService<WorkSchedule>));
         builder.Services.AddTransient(typeof(IDomainService<Table>), typeof(PersistentDomainService<Table>));
+        builder.Services.AddTransient(typeof(IDomainService<Book>), typeof(PersistentDomainService<Book>));
 
         builder.Services.AddSingleton(typeof(LogService), new LogService());
         
