@@ -1,5 +1,7 @@
 ﻿using Bronya.Entities.Abstractions;
 
+using Buratino.Xtensions;
+
 namespace Bronya.Entities
 {
     public class Table : PersistentEntity
@@ -18,13 +20,13 @@ namespace Bronya.Entities
         public override string ToString()
         {
             return HasConsole
-                ? $"{Name}🎮"
-                : $"{Name}";
+                ? $"{Name.EscapeMarkdown1()}🎮"
+                : $"{Name.EscapeMarkdown1()}";
         }
 
         public virtual string GetState()
         {
-            var state = $"Название: {Name}" +
+            var state = $"Название: {Name.EscapeMarkdown1()}" +
                 $"\r\nМест: {NormalSeatAmount}";
             if (HasConsole)
                 state += $"\r\nЕсть приставка 🎮";
@@ -40,7 +42,7 @@ namespace Bronya.Entities
                 state += $"🚫";
             if (HasConsole)
                 state += $"🎮";
-             state += $"Стол: {Name}" +
+             state += $"Стол: {Name.EscapeMarkdown1()}" +
                 $" 👤{NormalSeatAmount}";
             return state;
         }

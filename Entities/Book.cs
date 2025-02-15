@@ -1,7 +1,7 @@
-﻿using Bronya.Enums;
+﻿using Bronya.Entities.Abstractions;
+using Bronya.Enums;
 using Bronya.Services;
 
-using Buratino.Entities.Abstractions;
 using Buratino.Xtensions;
 
 namespace Bronya.Entities
@@ -18,6 +18,8 @@ namespace Bronya.Entities
         /// Время выноса кальяна
         /// </summary>
         public virtual DateTime TableStarted { get; set; }
+
+        public virtual DateTime TableAllowedStarted { get; set; }
 
         /// <summary>
         /// Продолжительность брони
@@ -86,16 +88,16 @@ namespace Bronya.Entities
 
             string state = "Бронь:";
             state += $"\r\n⏱️Время: {ActualBookStartTime:dd.MM HH:mm}";
-            state += $"\r\n🔲Стол: {Table.Name}";
+            state += $"\r\n🔲Стол: {Table.Name.EscapeMarkdown1()}";
             if (Table.HasConsole)
                 state += "🎮";
 
             state += $"\r\n👤Гостей: {SeatAmount}";
             state += $"\r\nИмя: {Account}";
             if (Account.TGTag != default)
-                state += $"\r\n@{Account.TGTag}";
+                state += $"\r\n@{Account.TGTag.EscapeMarkdown1()}";
             if (Account.Phone != default)
-                state += $"\r\n{Account.Phone}";
+                state += $"\r\n{Account.Phone.EscapeMarkdown1()}";
 
             if (IsCanceled)
             {
@@ -107,10 +109,7 @@ namespace Bronya.Entities
             }
             else if (TableStarted != default)
             {
-                var allowedStart = ActualBookStartTime.Add(smena.Schedule.Buffer) < TableStarted
-                    ? ActualBookStartTime.Add(smena.Schedule.Buffer)
-                    : TableStarted;
-                var timeEnd = allowedStart.Add(BookLength);
+                var timeEnd = BookEndTime.Add(smena.Schedule.Buffer);
                 var timeLeft = timeEnd.Subtract(new TimeService().GetNow());
                 state += $"\r\n\r\n*Вынос кальяна: {TableStarted:HH:mm}; Стол до: {timeEnd:HH:mm}" +
                     $"\r\nОсталось: {timeLeft.TotalMinutes.Round()} мин.*";

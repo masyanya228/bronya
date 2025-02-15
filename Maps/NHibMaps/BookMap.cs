@@ -11,6 +11,7 @@ public class BookMap : NHSubclassClassMap<Book>
         Map(x => x.IsCanceled);
         Map(x => x.SeatAmount);
         Map(x => x.TableStarted);
+        Map(x => x.TableAllowedStarted);
         Map(x => x.TableClosed);
         Map(x => x.Comment);
         Map(x => x.NotifiedAboutEndBook);

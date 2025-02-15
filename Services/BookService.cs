@@ -99,7 +99,7 @@ namespace Bronya.Services
         public bool CanRepair(Book book, Account acc)
         {
             var smena = GetCurrentSmena();
-            return smena.GetMinimumTimeToBook(acc) <= book.ActualBookStartTime;
+            return smena.GetMinimumTimeToBook(acc) <= book.BookEndTime;
         }
 
         public DateTime GetTimeAfterMove(Book book)

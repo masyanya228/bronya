@@ -63,7 +63,7 @@ namespace Bronya.Entities
             }
             if (SelectedTable != default)
             {
-                state += $"\r\n🔲Стол: {SelectedTable.Name}";
+                state += $"\r\n🔲Стол: {SelectedTable.Name.EscapeMarkdown1()}";
                 if (SelectedTable.HasConsole)
                     state += "🎮";
             }
@@ -81,12 +81,12 @@ namespace Bronya.Entities
 
         public override string ToString()
         {
-            return $"{Name}";
+            return $"{Name.EscapeMarkdown1()}";
         }
 
         public virtual string GetCardTitle()
         {
-            string title = $"{Name} {Phone} ({CardNumber})";
+            string title = $"{Name.EscapeMarkdown1()} {Phone.EscapeMarkdown1()} ({CardNumber.EscapeMarkdown1()})";
             if (TGTag != default)
                 title = "✅" + title;
             return title;
@@ -94,18 +94,18 @@ namespace Bronya.Entities
 
         public virtual string GetCard()
         {
-            string state = $"{Name}";
+            string state = $"{Name.EscapeMarkdown1()}";
             if (CardNumber != default)
             {
-                state += $"\r\nКарта: {CardNumber}";
+                state += $"\r\nКарта: {CardNumber.EscapeMarkdown1()}";
             }
             if (TGTag != default)
             {
-                state += $"\r\n@{TGTag}";
+                state += $"\r\n@{TGTag.EscapeMarkdown1()}";
             }
             if (Phone != default)
             {
-                state += $"\r\n{Phone}";
+                state += $"\r\n{Phone.EscapeMarkdown1()}";
             }
             return state;
         }

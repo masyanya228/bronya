@@ -69,7 +69,7 @@ namespace vkteams.Services
             var books = BookService.GetCurrentBooks(table, true);
             var isAvailable = !table.IsBookAvailable ? "\r\n🚫 Бронь отключена" : string.Empty;
             return SendOrEdit(
-                $"Стол: {table.Name}{isAvailable}",
+                $"Стол: {table.Name.EscapeMarkdown1()}{isAvailable}",
                 new InlineKeyboardConstructor()
                     .AddHostesBooksButtons(books)
                     .AddButtonDownIf(() => table.IsBookAvailable, "🚫 Отключить бронирование", $"/disable/{table.Id}")
@@ -225,6 +225,7 @@ namespace vkteams.Services
         [ApiPointer("start_book")]
         private string StartBook(Book book)
         {
+            var smena = BookService.GetCurrentSmena();
             var allReadyOpened = BookService.GetCurrentBooks(book.Table)
                 .FirstOrDefault(x => x != book && x.GetStatus() == Bronya.Enums.BookStatus.Opened);
             if (allReadyOpened != default)
@@ -232,6 +233,9 @@ namespace vkteams.Services
                 Close(allReadyOpened);
             }
             book.TableStarted = new TimeService().GetNow();
+            book.TableAllowedStarted = book.ActualBookStartTime.Add(smena.Schedule.Buffer) < book.TableStarted
+                    ? book.ActualBookStartTime.Add(smena.Schedule.Buffer)
+                    : book.TableStarted;
             BookService.BookDS.Save(book);
             return ShowBook(book);
         }
@@ -527,7 +531,8 @@ namespace vkteams.Services
 
             return SendOrEdit(
                 $"{Package.Account.GetNewBookState()}" +
-                $"\r\n*Имя брони:*",
+                $"\r\n*Имя брони:*" +
+                $"\r\n_Пример: Иван, 1111_",
                 new InlineKeyboardConstructor()
                     .AddButtonDown("🗑", $"/reset_all")
                     .AddButtonRight("✏️⏱️", $"/book_select_time")
