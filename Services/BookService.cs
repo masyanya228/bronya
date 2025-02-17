@@ -56,7 +56,7 @@ namespace Bronya.Services
         public IEnumerable<Book> GetMyActualBooks(Account account)
         {
             var books = GetCurrentBooks()
-                .Where(x => x.Account.Id == account.Id
+                .Where(x => x.Guest.Id == account.Id
                     && x.TableClosed == default)
                 .ToList();
             return books;
@@ -194,7 +194,7 @@ namespace Bronya.Services
         /// <returns></returns>
         public IEnumerable<Book> GetBooks(Account mainAccount)
         {
-            return BookDS.GetAll().Where(x => x.Account.Id == mainAccount.Id).ToArray();
+            return BookDS.GetAll().Where(x => x.Guest.Id == mainAccount.Id).ToArray();
         }
 
         /// <summary>

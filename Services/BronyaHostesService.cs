@@ -210,7 +210,7 @@ namespace vkteams.Services
             }
             else
             {
-                string text = $"*Предыдущая бронь на имя {allReadyOpened.Account} не была закрыта. Проверьте себя.*";
+                string text = $"*Предыдущая бронь на имя {allReadyOpened.Guest} не была закрыта. Проверьте себя.*";
                 double diffInMinutes = book.ActualBookStartTime.Subtract(new TimeService().GetNow()).TotalMinutes;
                 if (Math.Abs(diffInMinutes) > smena.Schedule.Buffer.TotalMinutes)
                 {
@@ -605,7 +605,7 @@ namespace vkteams.Services
                 ActualBookStartTime = Package.Account.SelectedTime,
                 BookLength = smena.Schedule.MinPeriod,
                 Table = Package.Account.SelectedTable,
-                Account = account
+                Guest = account
             };
 
             BookService.BookDS.Save(newBook);
@@ -746,10 +746,10 @@ namespace vkteams.Services
 
             foreach (var subAccount in subAccounts)
             {
-                var books = BookService.BookDS.GetAll().Where(x => x.Account.Id == subAccount.Id).ToList();
+                var books = BookService.BookDS.GetAll().Where(x => x.Guest.Id == subAccount.Id).ToList();
                 books.ForEach(x =>
                 {
-                    x.Account = mainAccount;
+                    x.Guest = mainAccount;
                     BookService.BookDS.Save(x);
                 });
                 AccountService.AccountDS.Delete(subAccount);

@@ -2,12 +2,15 @@
 using Bronya.Enums;
 using Bronya.Services;
 
+using Buratino.Helpers;
 using Buratino.Xtensions;
 
 namespace Bronya.Entities
 {
     public class Book : PersistentEntity
     {
+        public virtual Account Guest { get; set; }
+
         public virtual int SeatAmount { get; set; }
 
         public virtual bool IsCanceled { get; set; }
@@ -93,11 +96,11 @@ namespace Bronya.Entities
                 state += "🎮";
 
             state += $"\r\n👤Гостей: {SeatAmount}";
-            state += $"\r\nИмя: {Account}";
-            if (Account.TGTag != default)
-                state += $"\r\n@{Account.TGTag.EscapeMarkdown1()}";
-            if (Account.Phone != default)
-                state += $"\r\n{Account.Phone.EscapeMarkdown1()}";
+            state += $"\r\nИмя: {Guest}";
+            if (Guest.TGTag != default)
+                state += $"\r\n@{Guest.TGTag.EscapeMarkdown1()}";
+            if (Guest.Phone != default)
+                state += $"\r\n{Guest.Phone.EscapeMarkdown1()}";
 
             if (IsCanceled)
             {

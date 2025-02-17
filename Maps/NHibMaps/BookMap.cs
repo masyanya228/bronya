@@ -16,6 +16,8 @@ public class BookMap : NHSubclassClassMap<Book>
         Map(x => x.Comment);
         Map(x => x.NotifiedAboutEndBook);
 
+        References(x => x.Guest)
+            .Not.LazyLoad();
         References(x => x.Table)
             .Not.LazyLoad();
     }

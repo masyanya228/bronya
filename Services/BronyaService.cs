@@ -189,7 +189,7 @@ namespace vkteams.Services
 
             Book newBook = new Book()
             {
-                Account = Package.Account,
+                Guest = Package.Account,
                 ActualBookStartTime = Package.Account.SelectedTime,
                 Table = Package.Account.SelectedTable,
                 BookLength = BookService.GetCurrentSmena().Schedule.MinPeriod,
