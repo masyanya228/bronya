@@ -1,6 +1,6 @@
 ﻿using Buratino.Models.Attributes;
 
-namespace Buratino.Enums
+namespace Bronya.Enums
 {
     /// <summary>
     /// Для переключения ролей в режиме отладки
@@ -9,10 +9,10 @@ namespace Buratino.Enums
     {
         [Title("Гость")]
         Costumer = 0,
-        
+
         [Title("Хостес")]
         Hostes,
-        
+
         [Title("Администратор")]
         Administrator,
     }

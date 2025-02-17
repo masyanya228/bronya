@@ -1,7 +1,6 @@
 ﻿using Bronya.Dtos;
-using Bronya.Services;
 
-namespace vkteams.Services
+namespace Bronya.Services
 {
     public interface IBronyaServiceBase
     {

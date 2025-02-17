@@ -3,9 +3,8 @@ using Buratino.Attributes;
 using Buratino.Xtensions;
 using Buratino.Helpers;
 using Bronya.Entities;
-using Bronya.Services;
 
-namespace vkteams.Services
+namespace Bronya.Services
 {
     /// <summary>
     /// Сервис взаимодействия с пользователем через telegram
@@ -122,7 +121,7 @@ namespace vkteams.Services
             AccountService.AccountDS.Save(Package.Account);
 
             DateTime[] avalableTimes = BookService.GetAvailableTimesForBook(table, Package.Account);
-            if(!avalableTimes.Any())
+            if (!avalableTimes.Any())
             {
                 return SendOrEdit(
                     $"{GetContactsForMenu()}" +
@@ -267,7 +266,7 @@ namespace vkteams.Services
                         .AddButtonDown("Назад", $"/mybook/{book.Id}"));
             }
         }
-        
+
         [ApiPointer("try_move_book")]
         private string TryMoveBook(Book book)
         {

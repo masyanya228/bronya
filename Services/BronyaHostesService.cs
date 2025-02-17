@@ -3,10 +3,9 @@ using Buratino.Attributes;
 using Buratino.Xtensions;
 using Buratino.Helpers;
 using Bronya.Entities;
-using Bronya.Services;
-using Buratino.Enums;
+using Bronya.Enums;
 
-namespace vkteams.Services
+namespace Bronya.Services
 {
     /// <summary>
     /// Сервис взаимодействия с пользователем через telegram
@@ -91,7 +90,7 @@ namespace vkteams.Services
                 ImageId
             );
         }
-        
+
         [ApiPointer("now_table")]
         private string NowTable(Table table)
         {
@@ -185,7 +184,7 @@ namespace vkteams.Services
             var smena = BookService.GetCurrentSmena();
             var allReadyOpened = BookService
                 .GetCurrentBooks(book.Table)
-                .FirstOrDefault(x => x != book && x.GetStatus() == Bronya.Enums.BookStatus.Opened);
+                .FirstOrDefault(x => x != book && x.GetStatus() == BookStatus.Opened);
             if (allReadyOpened == default)
             {
                 string text = $"Открыть стол и поставить отметку о вынесенном кальяне?";
@@ -226,7 +225,7 @@ namespace vkteams.Services
             LogService.LogEvent(nameof(StartBook) + ":" + book?.Id);
             var smena = BookService.GetCurrentSmena();
             var allReadyOpened = BookService.GetCurrentBooks(book.Table)
-                .FirstOrDefault(x => x != book && x.GetStatus() == Bronya.Enums.BookStatus.Opened);
+                .FirstOrDefault(x => x != book && x.GetStatus() == BookStatus.Opened);
             if (allReadyOpened != default)
             {
                 Close(allReadyOpened);
@@ -852,7 +851,7 @@ namespace vkteams.Services
             Package.Account.Waiting = WaitingText.None;
             Package.Account.SelectedAccount = default;
             AccountService.AccountDS.Save(Package.Account);
-            
+
             selectedAccount.CardNumber = AccountService.ParseNumber(card);
             AccountService.AccountDS.Save(selectedAccount);
             return Account(selectedAccount);

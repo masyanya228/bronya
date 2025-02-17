@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.FileProviders;
-using vkteams.Services;
 using Bronya.Entities;
 using Bronya.Services;
 using Bronya.Jobs.Structures;

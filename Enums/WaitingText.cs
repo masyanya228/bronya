@@ -1,6 +1,6 @@
 ﻿using Buratino.Attributes;
 
-namespace Buratino.Enums
+namespace Bronya.Enums
 {
     public enum WaitingText
     {

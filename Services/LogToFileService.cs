@@ -2,7 +2,7 @@
 
 using System.Text;
 
-namespace vkteams.Services
+namespace Bronya.Services
 {
     /// <summary>
     /// Логирование ошибок в файл

@@ -1,12 +1,11 @@
 ﻿using Bronya.Dtos;
 using Bronya.Entities;
+using Bronya.Enums;
 using Bronya.Helpers;
-using Bronya.Services;
 
 using Buratino.API;
 using Buratino.Attributes;
 using Buratino.DI;
-using Buratino.Enums;
 using Buratino.Helpers;
 using Buratino.Models.Attributes;
 using Buratino.Models.DomainService.DomainStructure;
@@ -17,7 +16,7 @@ using System.Reflection;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
-namespace vkteams.Services
+namespace Bronya.Services
 {
     public class BronyaServiceBase : IBronyaServiceBase
     {

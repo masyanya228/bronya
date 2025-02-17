@@ -1,7 +1,7 @@
 ﻿using Bronya.Entities;
+using Bronya.Enums;
 
 using Buratino.DI;
-using Buratino.Enums;
 using Buratino.Models.DomainService.DomainStructure;
 using Buratino.Xtensions;
 
