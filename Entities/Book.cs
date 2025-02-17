@@ -120,6 +120,46 @@ namespace Bronya.Entities
             return state;
         }
 
+        public virtual string GetTitle()
+        {
+            var closedTitle = TableClosed != default ? "⛔️" : "";
+            return $"{closedTitle}{ActualBookStartTime:HH:mm} {Guest.ToString()} 👤:{SeatAmount}";
+        }
+
+        public virtual InlineKeyboardConstructor GetButtons()
+        {
+            if (IsCanceled)
+            {
+                return new InlineKeyboardConstructor()
+                    .AddButtonDown("🟢", $"/try_repair/{Id}")
+                    .AddButtonRight("🔲", $"/table/{Table.Id}");
+            }
+            else if (TableClosed != default)
+            {
+                return new InlineKeyboardConstructor()
+                    .AddButtonDownIf(() => Guest.Phone == default, "Добавить телефон", $"/select_phone/{Guest.Id}")
+                    .AddButtonDownIf(() => Guest.CardNumber == default, "Добавить карту", $"/select_card/{Guest.Id}")
+                    .AddButtonDown("↔️", $"/try_prolongate/{Id}")
+                    .AddButtonRight("🔲", $"/table/{Table.Id}")
+                    .AddButtonDown("✏️ Гость", $"/account/{Guest.Id}");
+            }
+            else if (TableStarted != default)
+            {
+                return new InlineKeyboardConstructor()
+                    .AddButtonDown("⛔️", $"/try_close/{Id}")
+                    .AddButtonRight("↔️", $"/try_prolongate/{Id}")
+                    .AddButtonRight("🔲", $"/table/{Table.Id}");
+            }
+            else
+            {
+                return new InlineKeyboardConstructor()
+                    .AddButtonRight("✅", $"/try_start_book/{Id}")
+                    .AddButtonDown("🔴", $"/try_cancel/{Id}")
+                    .AddButtonRight("⤵️", $"/try_move/{Id}")
+                    .AddButtonRight("🔲", $"/table/{Table.Id}");
+            }
+        }
+
         public virtual bool IsIntersected(DateTime start, DateTime end)
         {
             return DataXtensions.IsXcrossing(GetTrueStartBook(), GetTrueEndBook(), start, end);

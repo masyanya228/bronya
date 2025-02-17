@@ -44,19 +44,6 @@ namespace vkteams.Services
             );
         }
 
-        [ApiPointer("now")]
-        private string Now()
-        {
-            return SendOrEdit(
-                "Сейчас:",
-                new InlineKeyboardConstructor()
-                    .AddHostesNowTableButtons(Package.Account)
-                    .AddButtonDown("Назад", $"/menu"),
-                default,
-                ImageId
-            );
-        }
-
         [ApiPointer("table")]
         private string Table(Table table)
         {
@@ -71,7 +58,7 @@ namespace vkteams.Services
             return SendOrEdit(
                 $"Стол: {table.Name.EscapeMarkdown1()}{isAvailable}",
                 new InlineKeyboardConstructor()
-                    .AddHostesBooksButtons(books)
+                    .AddHostesBooksButtons(books, "/show_book")
                     .AddButtonDownIf(() => table.IsBookAvailable, "🚫 Отключить бронирование", $"/disable/{table.Id}")
                     .AddButtonDownIf(() => !table.IsBookAvailable, "✅ Включить бронирование", $"/enable/{table.Id}")
                     .AddButtonRight("➕📋", $"/book_select_time/{table.Id}")
@@ -85,54 +72,61 @@ namespace vkteams.Services
         [ApiPointer("show_book")]
         private string ShowBook(Book book)
         {
-            if (book.IsCanceled)
-            {
-                return SendOrEdit(
-                    book.GetState(),
-                    new InlineKeyboardConstructor()
-                        .AddButtonDown("🟢", $"/try_repair/{book.Id}")
-                        .AddButtonRight("🔲", $"/table/{book.Table.Id}")
-                        .AddButtonDown("В начало", $"/menu")
-                    );
-            }
-            else if (book.TableClosed != default)
-            {
-                return SendOrEdit(
-                    book.GetState(),
-                    new InlineKeyboardConstructor()
-                        .AddButtonDownIf(() => book.Account.Phone == default, "Добавить телефон", $"/select_phone/{book.Account.Id}")
-                        .AddButtonDownIf(() => book.Account.CardNumber == default, "Добавить карту", $"/select_card/{book.Account.Id}")
-                        .AddButtonDown("↔️", $"/try_prolongate/{book.Id}")
-                        .AddButtonRight("🔲", $"/table/{book.Table.Id}")
-                        .AddButtonDown("✏️ Гость", $"/account/{book.Account.Id}")
-                        .AddButtonDown("В начало", $"/menu")
-                    );
-            }
-            else if (book.TableStarted != default)
-            {
-                return SendOrEdit(
-                    book.GetState(),
-                    new InlineKeyboardConstructor()
-                        .AddButtonDown("⛔️", $"/try_close/{book.Id}")
-                        .AddButtonRight("↔️", $"/try_prolongate/{book.Id}")
-                        .AddButtonRight("🔲", $"/table/{book.Table.Id}")
-                        .AddButtonDown("В начало", $"/menu")
-                    );
-            }
-            else
-            {
-                return SendOrEdit(
-                    book.GetState(),
-                    new InlineKeyboardConstructor()
-                        .AddButtonRight("✅", $"/try_start_book/{book.Id}")
-                        .AddButtonDown("🔴", $"/try_cancel/{book.Id}")
-                        .AddButtonRight("⤵️", $"/try_move/{book.Id}")
-                        .AddButtonRight("🔲", $"/table/{book.Table.Id}")
-                        .AddButtonDown("В начало", $"/menu")
-                    );
-            }
+            return SendOrEdit(
+                book.GetState(),
+                book.GetButtons()
+                    .AddButtonDown("В начало", $"/menu")
+            );
         }
 
+        [ApiPointer("now")]
+        private string Now()
+        {
+            return SendOrEdit(
+                "Сейчас:",
+                new InlineKeyboardConstructor()
+                    .AddHostesNowTableButtons(Package.Account)
+                    .AddButtonDown("Назад", $"/menu"),
+                default,
+                ImageId
+            );
+        }
+        
+        [ApiPointer("now_table")]
+        private string NowTable(Table table)
+        {
+            if (Package.Account.SelectedTable != default)
+            {
+                Package.Account.SelectedTable = default;
+                AccountService.AccountDS.Save(Package.Account);
+            }
+            var stream = new CalendarDrawService().Draw(table);
+            var books = BookService.GetCurrentBooks(table, true);
+            var isAvailable = !table.IsBookAvailable ? "\r\n🚫 Бронь отключена" : string.Empty;
+            return SendOrEdit(
+                $"Стол: {table.Name.EscapeMarkdown1()}{isAvailable}",
+                new InlineKeyboardConstructor()
+                    .AddHostesBooksButtons(books, "/show_book")
+                    .AddButtonDownIf(() => table.IsBookAvailable, "🚫 Отключить бронирование", $"/disable/{table.Id}")
+                    .AddButtonDownIf(() => !table.IsBookAvailable, "✅ Включить бронирование", $"/enable/{table.Id}")
+                    .AddButtonRight("➕📋", $"/book_select_time/{table.Id}")
+                    .AddButtonRight("Сейчас", $"/now"),
+                default,
+                stream
+            );
+        }
+
+        [ApiPointer("now_show_book")]
+        private string NowShowBook(Book book)
+        {
+            return SendOrEdit(
+                book.GetState(),
+                book.GetButtons()
+                    .AddButtonDown("Сейчас", $"/now")
+            );
+        }
+
+        #region book manage
         [ApiPointer("try_move")]
         private string TryMove(Book book)
         {
@@ -346,7 +340,9 @@ namespace vkteams.Services
             BookService.BookDS.Save(book);
             return ShowBook(book);
         }
+        #endregion
 
+        #region table manage
         [ApiPointer("disable")]
         private string Disable(Table table)
         {
@@ -364,7 +360,9 @@ namespace vkteams.Services
             BookService.TableDS.Save(table);
             return Table(table);
         }
+        #endregion
 
+        #region book creation
         [ApiPointer("book_select_time")]
         private string BookSelectTime(Table table = default)
         {
@@ -618,7 +616,9 @@ namespace vkteams.Services
 
             return ShowBook(newBook);
         }
+        #endregion
 
+        #region guest management
         [ApiPointer("get_accounts")]
         private string GetAccounts(int page = 1)
         {
@@ -690,7 +690,7 @@ namespace vkteams.Services
                 }
                 else
                 {
-                    constructor.AddButtonDown($"{book.Key.ToShortDateString()}", $"/show_book/{book.Single().Id}");
+                    constructor.AddButtonDown($"{book.Key.ToShortDateString()} {book.Single().GetTitle()}", $"/ab_show_book/{book.Single().Id}");
                 }
             }
 
@@ -702,6 +702,21 @@ namespace vkteams.Services
             );
         }
 
+        /// <summary>
+        /// Карточка брони для просмотра истории
+        /// </summary>
+        /// <param name="book"></param>
+        /// <returns></returns>
+        [ApiPointer("ab_show_book")]
+        private string AccountBooksShowBook(Book book)
+        {
+            return SendOrEdit(
+                book.GetState(),
+                book.GetButtons()
+                    .AddButtonDown("Назад", $"/account_books/{book.Guest.Id}")
+            );
+        }
+
         [ApiPointer("abbd")]
         private string AccountBooksByDate(Account mainAccount, DateTime date)
         {
@@ -710,8 +725,23 @@ namespace vkteams.Services
                 $"{mainAccount.GetCard()}" +
                 $"\r\nНесколько броней на {date.ToShortDateString()}",
                 new InlineKeyboardConstructor()
-                    .AddHostesBooksButtons(books)
+                    .AddHostesBooksButtons(books, "/abbd_show_book")
                     .AddButtonDown("Назад", $"/account_books/{mainAccount.Id}")
+            );
+        }
+
+        /// <summary>
+        /// Карточка брони, для просмотра истории, когда за день было несколько броней
+        /// </summary>
+        /// <param name="book"></param>
+        /// <returns></returns>
+        [ApiPointer("abbd_show_book")]
+        private string ABBD_ShowBook(Book book)
+        {
+            return SendOrEdit(
+                book.GetState(),
+                book.GetButtons()
+                    .AddButtonDown("Назад", $"/abbd/{book.Guest.Id}/{book.ActualBookStartTime.Date}")
             );
         }
 
@@ -860,5 +890,6 @@ namespace vkteams.Services
             AccountService.AccountDS.Save(selectedAccount);
             return Account(selectedAccount);
         }
+        #endregion
     }
 }

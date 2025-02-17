@@ -194,26 +194,26 @@ namespace Buratino.Xtensions
                 if (isCloseToEnd)
                 {
                     btnTitle += $" Время";
-                    btnCallback = $"/show_book/{actualBook.Id}";
+                    btnCallback = $"/now_show_book/{actualBook.Id}";
                 }
                 else if (nowOpened)
                 {
                     btnTitle += $" Открыт";
-                    btnCallback = $"/show_book/{actualBook.Id}";
+                    btnCallback = $"/now_show_book/{actualBook.Id}";
                 }
                 else if (nowNotOpened)
                 {
                     btnTitle += $" Не открыт";
-                    btnCallback = $"/show_book/{actualBook.Id}";
+                    btnCallback = $"/now_show_book/{actualBook.Id}";
                 }
                 else if (allowToBookNow)
                 {
-                    btnCallback = $"/table/{table.Id}";
+                    btnCallback = $"/now_table/{table.Id}";
                 }
                 else
                 {
                     btnTitle += $" Нельзя";
-                    btnCallback = $"/table/{table.Id}";
+                    btnCallback = $"/now_table/{table.Id}";
                 }
 
                 if (count == tablesInRow)
@@ -269,17 +269,12 @@ namespace Buratino.Xtensions
             return constructor;
         }
 
-        public static InlineKeyboardConstructor AddHostesBooksButtons(this InlineKeyboardConstructor constructor, IEnumerable<Book> books)
+        public static InlineKeyboardConstructor AddHostesBooksButtons(this InlineKeyboardConstructor constructor, IEnumerable<Book> books, string precommand)
         {
-            if (books is null)
-            {
-                throw new ArgumentNullException(nameof(books));
-            }
-
             foreach (var item in books)
             {
                 var closedTitle = item.TableClosed != default ? "⛔️" : "";
-                constructor.AddButtonDown($"{closedTitle}{item.ActualBookStartTime:HH:mm} {item.Account.ToString()} 👤:{item.SeatAmount}", $"/show_book/{item.Id}");
+                constructor.AddButtonDown($"{item.GetTitle()}", $"{precommand}/{item.Id}");
             }
             return constructor;
         }
