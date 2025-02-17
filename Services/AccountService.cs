@@ -12,6 +12,7 @@ namespace Bronya.Services
 {
     public class AccountService
     {
+        public static Account RootAccount = new Account { Id = new Guid("da8c13be-6d97-4287-b47e-34caada8d315") };
         public IDomainService<Account> AccountDS { get; set; }
 
         public AccountService(Account account)

@@ -5,6 +5,9 @@ using Buratino.Models.DomainService.DomainStructure;
 
 namespace Bronya.Services
 {
+    /// <summary>
+    /// История изменений в БД, инициированных пользователем
+    /// </summary>
     public class LogService
     {
         public IDomainService<Log> LogDS { get; set; }

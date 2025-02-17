@@ -11,7 +11,8 @@ namespace Bronya.Services
     {
         public void Notify()
         {
-            BookService bookService = new BookService(new Account { Id = new Guid("da8c13be-6d97-4287-b47e-34caada8d315") });
+            LogService logService = new LogService(AccountService.RootAccount);
+            BookService bookService = new BookService(AccountService.RootAccount);
             var smena = bookService.GetCurrentSmena();
             var now = new TimeService().GetNow();
             var booksToNotify = bookService.GetCurrentBooks()
@@ -27,6 +28,7 @@ namespace Bronya.Services
             {
                 book.NotifiedAboutEndBook = now;
                 bookService.BookDS.Save(book);
+                logService.LogEvent(nameof(Notify) + ":" + book?.Id);
                 foreach (var item in hostesies)
                 {
                     authorizeService.TgAPI.SendOrEdit(

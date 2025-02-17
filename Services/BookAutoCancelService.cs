@@ -7,8 +7,9 @@ namespace Bronya.Services
     {
         public void CancelBooks()
         {
+            LogService logService = new LogService(AccountService.RootAccount);
+            BookService bookService = new BookService(AccountService.RootAccount);
             var now = new TimeService().GetNow();
-            BookService bookService = new BookService(new Account { Id = new Guid("da8c13be-6d97-4287-b47e-34caada8d315") });
             var smena = bookService.GetCurrentSmena();
             var booksToCancel = bookService.GetCurrentBooks()
                 .Where(x => x.GetStatus() == BookStatus.Booked)
@@ -19,6 +20,7 @@ namespace Bronya.Services
                 book.IsCanceled = true;
                 book.Comment += $"Бронь автоматически отмена, так как прошло больше {smena.Schedule.AutoCancelBook}";
                 bookService.BookDS.Save(book);
+                logService.LogEvent(nameof(CancelBooks) + ":" + book?.Id);
             }
         }
     }

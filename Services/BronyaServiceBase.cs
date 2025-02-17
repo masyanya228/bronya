@@ -27,6 +27,7 @@ namespace vkteams.Services
         public TGAPI TGAPI { get; set; }
         public IDomainService<TableSchemaImage> TableSchemaImageDS { get; set; }
         public LogService LogService { get; set; }
+        public ConversationLogService ConversationLogService { get; set; }
         public AccountService AccountService { get; set; }
 
         private IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> _availablePointers = null;
@@ -49,6 +50,7 @@ namespace vkteams.Services
             BookService = new(account);
             TableSchemaImageDS = Container.GetDomainService<TableSchemaImage>(account);
             LogService = new(account);
+            ConversationLogService = new(account);
             TGAPI = tGAPI;
             ImageId = TableSchemaImageDS
                 .GetAll()
@@ -77,6 +79,7 @@ namespace vkteams.Services
 
         private Task ProcessCallbackQuery(Update update)
         {
+            ConversationLogService.LogEvent(update.CallbackQuery.Data);
             var com = ParseCommand(update.CallbackQuery.Data, out string[] args);
             Package.ChatId = update.CallbackQuery.Message.Chat.Id;
             Package.MessageId = update.CallbackQuery.Message.MessageId;
@@ -120,6 +123,7 @@ namespace vkteams.Services
 
         private Task ProcessCommandMessage(string text)
         {
+            ConversationLogService.LogEvent(text);
             var com = ParseCommand(text, out string[] args);
             var method = GetMethod(com);
             if (method.Key is not null)
@@ -135,6 +139,7 @@ namespace vkteams.Services
 
         private Task ProcessTextMessage(string text)
         {
+            ConversationLogService.LogEvent(text);
             var lines = text.Split("\n", StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim('\r', ' ', '\t')).ToArray();
             var acc = Package.Account;
             if (acc.Waiting == WaitingText.None)
