@@ -17,7 +17,7 @@ namespace Bronya.Services
             var booksToNotify = bookService.GetCurrentBooks()
                 .Where(x => x.GetStatus() == BookStatus.Opened)
                 .Where(x => x.NotifiedAboutEndBook == default)
-                .Where(x => now.Subtract(x.BookEndTime.Add(smena.Schedule.Buffer).Add(-smena.Schedule.NotificationBeforeBookEnd)) > TimeSpan.Zero)
+                .Where(x => now.Subtract(x.TableAllowedStarted.Add(x.BookLength).Add(-smena.Schedule.NotificationBeforeBookEnd)) > TimeSpan.Zero)
                 .ToList();
 
             AuthorizeService authorizeService = AuthorizeService.Instance;

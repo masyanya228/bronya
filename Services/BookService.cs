@@ -162,9 +162,10 @@ namespace Bronya.Services
         /// <returns></returns>
         public List<Book> GetCurrentBooks(Table table, bool exceptPast = false)
         {
+            var smena = GetCurrentSmena();
             return GetCurrentBooks()
                 .Where(x => x.Table.Id == table.Id)
-                .Where(x => !exceptPast || x.BookEndTime > TimeService.GetNow())
+                .Where(x => !exceptPast || x.GetTrueEndBook().Add(smena.Schedule.MinPeriod) > TimeService.GetNow())
                 .ToList();
         }
 

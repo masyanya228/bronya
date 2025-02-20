@@ -433,7 +433,7 @@ namespace Bronya.Services
         {
             WorkSchedule workSchedule = Package.Account.SelectedSchedule;
 
-            workSchedule.NotificationBeforeBookEnd = new TimeSpan(minutes * 60 * 1000 * 1000 * 100);
+            workSchedule.NotificationBeforeBookEnd = new TimeSpan(0, minutes, 0);
             BookService.ScheduleService.WorkScheduleDS.Save(workSchedule);
 
             AccountService.ResetWaiting(Package.Account);
@@ -462,7 +462,7 @@ namespace Bronya.Services
         {
             WorkSchedule workSchedule = Package.Account.SelectedSchedule;
 
-            workSchedule.AutoCancelBook = new TimeSpan(minutes * 60 * 1000 * 1000 * 100);
+            workSchedule.AutoCancelBook = new TimeSpan(0, minutes, 0);
             BookService.ScheduleService.WorkScheduleDS.Save(workSchedule);
 
             AccountService.ResetWaiting(Package.Account);

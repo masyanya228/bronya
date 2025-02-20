@@ -11,8 +11,10 @@ using Buratino.Models.Attributes;
 using Buratino.Models.DomainService.DomainStructure;
 using Buratino.Xtensions;
 
+using System.Collections.Concurrent;
 using System.Reflection;
 
+using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -41,6 +43,8 @@ namespace Bronya.Services
         }
 
         protected string ImageId;
+
+        public static ConcurrentQueue<QueryCommand> QueryCommands = new ();
 
         public BronyaServiceBase(LogToFileService logService, TGAPI tGAPI, Account account)
         {
@@ -78,10 +82,26 @@ namespace Bronya.Services
 
         private Task ProcessCallbackQuery(Update update)
         {
-            ConversationLogService.LogEvent(update.CallbackQuery.Data);
-            var com = ParseCommand(update.CallbackQuery.Data, out string[] args);
-            Package.ChatId = update.CallbackQuery.Message.Chat.Id;
-            Package.MessageId = update.CallbackQuery.Message.MessageId;
+            CallbackQuery callbackQuery = update.CallbackQuery;
+            ConversationLogService.LogEvent(callbackQuery.Data);
+            var com = ParseCommand(callbackQuery.Data, out string[] args);
+            Package.ChatId = callbackQuery.Message.Chat.Id;
+            Package.MessageId = callbackQuery.Message.MessageId;
+
+            var queryCommand = new QueryCommand() { Account = Package.Account, Command = callbackQuery.Data, UpdateDate = callbackQuery.Message.EditDate ?? callbackQuery.Message.Date };
+            if (!QueryCommands.Contains(queryCommand))
+            {
+                QueryCommands.Enqueue(queryCommand);
+                if (QueryCommands.Count > 100)
+                {
+                    QueryCommands.TryDequeue(out QueryCommand old);
+                }
+            }
+            else
+            {
+                var cqId = update.CallbackQuery.Id;
+                return TGAPI.client.AnswerCallbackQueryAsync(cqId, "Помедленнее");
+            }
 
             var method = GetMethod(com);
             if (method.Key is not null)

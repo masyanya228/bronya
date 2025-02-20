@@ -9,10 +9,10 @@ namespace Bronya.Services
     public class AuthorizeService
     {
         public static AuthorizeService Instance { get; private set; }
-        public AccountService AccountService;
-
+        public AccountService AccountService { get; set; }
         public LogToFileService LogService { get; }
         public TGAPI TgAPI { get; }
+        public ExceptionLogService ExceptionLogService { get; set; }
 
         public AuthorizeService(LogToFileService logService, TGAPI tgAPI)
         {
@@ -21,22 +21,32 @@ namespace Bronya.Services
             LogService = logService;
 
             AccountService = new AccountService(null);
-            
+            ExceptionLogService = new ExceptionLogService();
+
             TgAPI.UpdateEvent += OnUpdateWrapper;
             tgAPI.Start();
         }
 
         private Task OnUpdateWrapper(object sender, Update update)
         {
-            var acc = AccountService.GetAccount(update);
-            var dataPackage = new DataPackage(acc, update);
-            var role = GetRole(acc);
-            return role switch
+            Account acc = null;
+            try
             {
-                RoleType.Administrator => new BronyaAdministratorService(LogService, TgAPI, acc).OnUpdateWrapper(dataPackage),
-                RoleType.Hostes => new BronyaHostesService(LogService, TgAPI, acc).OnUpdateWrapper(dataPackage),
-                _ => new BronyaService(LogService, TgAPI, acc).OnUpdateWrapper(dataPackage)
-            };
+                acc = AccountService.GetAccount(update);
+                var dataPackage = new DataPackage(acc, update);
+                var role = GetRole(acc);
+                return role switch
+                {
+                    RoleType.Administrator => new BronyaAdministratorService(LogService, TgAPI, acc).OnUpdateWrapper(dataPackage),
+                    RoleType.Hostes => new BronyaHostesService(LogService, TgAPI, acc).OnUpdateWrapper(dataPackage),
+                    _ => new BronyaService(LogService, TgAPI, acc).OnUpdateWrapper(dataPackage)
+                };
+            }
+            catch (Exception e)
+            {
+                ExceptionLogService.LogEvent(acc, e);
+                throw;
+            }
         }
 
         public RoleType GetRole(Account account)

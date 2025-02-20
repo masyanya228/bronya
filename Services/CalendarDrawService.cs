@@ -56,24 +56,24 @@ namespace Bronya.Services
                     }
                     else if (book.GetStatus() == BookStatus.Opened)
                     {
-                        int yBook = (int)(book.TableStarted.Subtract(smena.SmenaStart).TotalHours * oneHourHeight);
+                        int yBook = (int)(book.TableAllowedStarted.Subtract(smena.SmenaStart).TotalHours * oneHourHeight);
                         int hBook = (int)(book.BookLength.TotalHours * oneHourHeight);
                         g.FillRectangle(Brushes.Purple,
                             new Rectangle(hourSpace, yBook, bmp.Width, hBook));
 
-                        g.DrawString($"{book.TableStarted:HH:mm}-{book.TableStarted.Add(book.BookLength):HH:mm}",
+                        g.DrawString($"{book.TableAllowedStarted:HH:mm}-{book.TableAllowedStarted.Add(book.BookLength):HH:mm}",
                             new Font("Tahoma", bookStringSize),
                             Brushes.White,
                             new Point(hourSpace + 5, yBook + 5));
                     }
                     else if (book.GetStatus() == BookStatus.Closed)
                     {
-                        int yBook = (int)(book.TableStarted.Subtract(smena.SmenaStart).TotalHours * oneHourHeight);
-                        int hBook = (int)(book.TableClosed.Subtract(book.TableStarted).TotalHours * oneHourHeight);
+                        int yBook = (int)(book.TableAllowedStarted.Subtract(smena.SmenaStart).TotalHours * oneHourHeight);
+                        int hBook = (int)(book.TableClosed.Subtract(book.TableAllowedStarted).TotalHours * oneHourHeight);
                         g.FillRectangle(Brushes.DarkBlue,
                             new Rectangle(hourSpace, yBook, bmp.Width, hBook));
 
-                        g.DrawString($"{book.TableStarted:HH:mm}-{book.TableClosed:HH:mm}",
+                        g.DrawString($"{book.TableAllowedStarted:HH:mm}-{book.TableClosed:HH:mm}",
                             new Font("Tahoma", bookStringSize),
                             Brushes.White,
                             new Point(hourSpace + 5, yBook + 5));

@@ -14,6 +14,7 @@ public class WorkScheduleMap : NHSubclassClassMap<WorkSchedule>
         Map(x => x.StartDate);
         Map(x => x.IsOneTimeSchedule);
         Map(x => x.AutoCancelBook);
+        Map(x => x.NotificationBeforeBookEnd);
         Map(x => x.IsDayOff);
         Map(x => x.DayOfWeeks);
     }

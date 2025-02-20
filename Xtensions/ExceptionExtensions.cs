@@ -7,7 +7,17 @@
             if (exception.InnerException is null)
                 return $"{exception.GetType().Name}: {exception.Message}";
             else
-                return $"{exception.GetType().Name}: {exception.Message}\r\n\r\n" + CollectMessagesFromException(exception.InnerException);
+                return $"{CollectMessagesFromException(exception.InnerException)}" +
+                    $"\r\n\r\n{exception.GetType().Name}: {exception.Message}";
+        }
+
+        public static string CollectStackTracesFromException(this Exception exception)
+        {
+            if (exception.InnerException is null)
+                return $"{exception.GetType().Name}: {exception.StackTrace}";
+            else
+                return $"{CollectStackTracesFromException(exception.InnerException)}" +
+                    $"\r\n\r\n{exception.GetType().Name}: {exception.StackTrace}";
         }
     }
 }

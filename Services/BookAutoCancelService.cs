@@ -1,5 +1,4 @@
-﻿using Bronya.Entities;
-using Bronya.Enums;
+﻿using Bronya.Enums;
 
 namespace Bronya.Services
 {
@@ -13,6 +12,7 @@ namespace Bronya.Services
             var smena = bookService.GetCurrentSmena();
             var booksToCancel = bookService.GetCurrentBooks()
                 .Where(x => x.GetStatus() == BookStatus.Booked)
+                .Where(x => x.Comment == default)
                 .Where(x => now.Subtract(x.ActualBookStartTime) > smena.Schedule.AutoCancelBook)
                 .ToList();
             foreach (var book in booksToCancel)

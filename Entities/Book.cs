@@ -80,6 +80,8 @@ namespace Bronya.Entities
         /// <returns></returns>
         public virtual DateTime GetTrueEndBook()
         {
+            if (TableClosed != default)
+                return TableClosed;
             if (TableStarted != default)
                 return TableStarted.Add(BookLength);
             return BookEndTime;
