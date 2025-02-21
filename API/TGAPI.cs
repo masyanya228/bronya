@@ -27,6 +27,7 @@ namespace Buratino.API
 
         public TGAPI(LogToFileService logService, string token)
         {
+            Console.WriteLine(token);
             client = new TelegramBotClient(token, new HttpClient());
             this.logService = logService;
             IsWorking = true;
