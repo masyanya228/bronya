@@ -27,5 +27,7 @@ namespace Bronya.Dtos
         public long ChatId { get; set; }
 
         public int MessageId { get; set; }
+
+        public string Command { get; set; }
     }
 }

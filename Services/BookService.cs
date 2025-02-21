@@ -8,9 +8,23 @@ namespace Bronya.Services
 {
     public class BookService
     {
+
         public IDomainService<Book> BookDS { get; set; }
         public IDomainService<Table> TableDS {  get; set; }
         public WorkScheduleService ScheduleService {  get; set; }
+        
+        private SmenaDto smena;
+        public SmenaDto Smena
+        {
+            get
+            {
+                if (smena == null)
+                {
+                    smena = GetCurrentSmena();
+                }
+                return smena;
+            }
+        }
 
         public BookService(Account account)
         {
@@ -21,21 +35,15 @@ namespace Bronya.Services
 
         public TimeService TimeService { get; set; } = new TimeService();
 
-        public DateTime[] GetAvailableTimesForBook(Table table, Account acc)
-        {
-            return GetAvailableTimesForBook(table, acc, null);
-        }
-
         public DateTime[] GetAvailableTimesForMove(Table table, Account acc)
         {
             List<DateTime> times = new();
 
-            var smena = GetCurrentSmena();
             List<Book> books = GetCurrentBooks(table);
 
-            for (var i = smena.GetMinimumTimeToBook(acc); i <= smena.SmenaEnd; i = i.Add(smena.Schedule.Step))
+            for (var i = Smena.GetMinimumTimeToBook(acc); i <= Smena.SmenaEnd; i = i.Add(Smena.Schedule.Step))
             {
-                if (books.Any(x => i > x.ActualBookStartTime.Add(-smena.Schedule.Buffer) && i < x.BookEndTime.Add(smena.Schedule.Buffer)))
+                if (books.Any(x => i > x.ActualBookStartTime.Add(-Smena.Schedule.Buffer) && i < x.BookEndTime.Add(Smena.Schedule.Buffer)))
                 {
                     continue;
                 }
@@ -81,8 +89,7 @@ namespace Bronya.Services
         public bool CanMove(Book book, Account acc)
         {
             var times = GetAvailableTimesForMove(book.Table, acc);
-            var smena = GetCurrentSmena();
-            return times.Contains(book.BookEndTime.Add(smena.Schedule.Step));
+            return times.Contains(book.BookEndTime.Add(Smena.Schedule.Step));
         }
 
         public bool Move(Book book, Account acc)
@@ -98,17 +105,15 @@ namespace Bronya.Services
 
         public bool CanRepair(Book book, Account acc)
         {
-            var smena = GetCurrentSmena();
-            return smena.GetMinimumTimeToBook(acc) <= book.BookEndTime;
+            return Smena.GetMinimumTimeToBook(acc) <= book.BookEndTime;
         }
 
         public DateTime GetTimeAfterMove(Book book)
         {
-            var smena = GetCurrentSmena();
-            return book.ActualBookStartTime.Add(smena.Schedule.Step);
+            return book.ActualBookStartTime.Add(Smena.Schedule.Step);
         }
 
-        public SmenaDto GetCurrentSmena()
+        private SmenaDto GetCurrentSmena()
         {
             DateTime now = TimeService.GetNow();
             var workSchedule = ScheduleService.GetWorkSchedule(now);
@@ -134,12 +139,11 @@ namespace Bronya.Services
         public DateTime[] GetProlongationVariants(Book book, Account acc)
         {
             var timesToProlongation = new List<DateTime>();
-            var smena = GetCurrentSmena();
             var availableTimes = GetAvailableTimesForMove(book.Table, acc);
-            var maxProlongationTime = book.GetTrueEndBook().Add(smena.Schedule.MinPeriod) < smena.SmenaEnd
-                ? book.GetTrueEndBook().Add(smena.Schedule.MinPeriod)
-                : smena.SmenaEnd;
-            for (var i = book.BookEndTime.Add(smena.Schedule.Step); i <= maxProlongationTime; i = i.Add(smena.Schedule.Step))
+            var maxProlongationTime = book.GetTrueEndBook().Add(Smena.Schedule.MinPeriod) < Smena.SmenaEnd
+                ? book.GetTrueEndBook().Add(Smena.Schedule.MinPeriod)
+                : Smena.SmenaEnd;
+            for (var i = book.BookEndTime.Add(Smena.Schedule.Step); i <= maxProlongationTime; i = i.Add(Smena.Schedule.Step))
             {
                 if (!availableTimes.Contains(i))
                 {
@@ -162,10 +166,9 @@ namespace Bronya.Services
         /// <returns></returns>
         public List<Book> GetCurrentBooks(Table table, bool exceptPast = false)
         {
-            var smena = GetCurrentSmena();
             return GetCurrentBooks()
                 .Where(x => x.Table.Id == table.Id)
-                .Where(x => !exceptPast || x.GetTrueEndBook().Add(smena.Schedule.MinPeriod) > TimeService.GetNow())
+                .Where(x => !exceptPast || x.GetTrueEndBook().Add(Smena.Schedule.MinPeriod) > TimeService.GetNow())
                 .ToList();
         }
 
@@ -178,12 +181,11 @@ namespace Bronya.Services
         /// <returns></returns>
         public List<Book> GetCurrentBooks()
         {
-            var smena = GetCurrentSmena();
             return BookDS.GetAll()
-                .Where(x => x.ActualBookStartTime >= smena.SmenaStart
+                .Where(x => x.ActualBookStartTime >= Smena.SmenaStart
                     && !x.IsCanceled)
                 .ToList()
-                .Where(x => x.BookEndTime <= smena.SmenaEnd)
+                .Where(x => x.BookEndTime <= Smena.SmenaEnd)
                 .OrderBy(x => x.ActualBookStartTime)
                 .ToList();
         }
@@ -214,18 +216,21 @@ namespace Bronya.Services
             smenaEnd = smenaStart.Add(workSchedule.Length);
         }
 
-        private DateTime[] GetAvailableTimesForBook(Table table, Account acc, Book except = default)
+        public DateTime[] GetAvailableTimesForBook(Table table, Account acc, Book except = default, List<Book> tableBooks = default)
         {
             if (!table.IsBookAvailable)
                 return Array.Empty<DateTime>();
             List<DateTime> times = new();
 
-            var smena = GetCurrentSmena();
-            List<Book> books = GetCurrentBooks(table).Except([except]).Where(x => x.TableClosed == default).ToList();
-
-            for (var i = smena.GetMinimumTimeToBook(acc); i <= smena.SmenaEnd.Subtract(smena.Schedule.MinPeriod); i = i.Add(smena.Schedule.Step))
+            if (tableBooks == default)
             {
-                if (books.Any(x => i > x.ActualBookStartTime.Add(-smena.Schedule.MinPeriod).Add(-smena.Schedule.Buffer) && i < x.BookEndTime.Add(smena.Schedule.Buffer)))
+                tableBooks = GetCurrentBooks(table);
+            }
+            List<Book> books = tableBooks.Except([except]).Where(x => x.TableClosed == default).ToList();
+
+            for (var i = Smena.GetMinimumTimeToBook(acc); i <= Smena.SmenaEnd.Subtract(Smena.Schedule.MinPeriod); i = i.Add(Smena.Schedule.Step))
+            {
+                if (books.Any(x => i > x.ActualBookStartTime.Add(-Smena.Schedule.MinPeriod).Add(-Smena.Schedule.Buffer) && i < x.BookEndTime.Add(Smena.Schedule.Buffer)))
                 {
                     continue;
                 }

@@ -18,7 +18,7 @@ namespace Bronya.Services
             var books = bookService.GetCurrentBooks(table).ToArray();
             Bitmap bmp = new Bitmap(1000, 1500);
 
-            var smena = bookService.GetCurrentSmena();
+            var smena = bookService.Smena;
             var smenaLength = smena.Schedule.Length;
             var oneHourHeight = bmp.Height / smenaLength.TotalHours;
             var hourSpace = 50;
@@ -106,7 +106,7 @@ namespace Bronya.Services
             var books = bookService.GetCurrentBooks(table).ToArray();
             Bitmap bmp = new Bitmap(2000, 3000);
 
-            var smena = bookService.GetCurrentSmena();
+            var smena = bookService.Smena;
             var smenaLength = smena.Schedule.Length;
             var oneHourHeight = bmp.Height / smenaLength.TotalHours;
             var hourSpace = 100;

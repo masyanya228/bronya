@@ -89,7 +89,7 @@ namespace Bronya.Entities
 
         public virtual string GetState()
         {
-            var smena = new BookService(null).GetCurrentSmena();
+            var smena = new BookService(null).Smena;
 
             string state = "Бронь:";
             state += $"\r\n⏱️Время: {ActualBookStartTime:dd.MM HH:mm}";

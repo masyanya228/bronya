@@ -13,6 +13,7 @@ namespace Bronya.Services
         public LogToFileService LogService { get; }
         public TGAPI TgAPI { get; }
         public ExceptionLogService ExceptionLogService { get; set; }
+        public ProcessTimeLogService processTimeLogService { get; set; }
 
         public AuthorizeService(LogToFileService logService, TGAPI tgAPI)
         {
@@ -20,8 +21,9 @@ namespace Bronya.Services
             TgAPI = tgAPI;
             LogService = logService;
 
-            AccountService = new AccountService(null);
-            ExceptionLogService = new ExceptionLogService();
+            AccountService = new(null);
+            ExceptionLogService = new();
+            processTimeLogService = new();
 
             TgAPI.UpdateEvent += OnUpdateWrapper;
             tgAPI.Start();
@@ -32,15 +34,23 @@ namespace Bronya.Services
             Account acc = null;
             try
             {
+                var start = Environment.TickCount;
                 acc = AccountService.GetAccount(update);
                 var dataPackage = new DataPackage(acc, update);
                 var role = GetRole(acc);
-                return role switch
+                var res = role switch
                 {
                     RoleType.Administrator => new BronyaAdministratorService(LogService, TgAPI, acc).OnUpdateWrapper(dataPackage),
                     RoleType.Hostes => new BronyaHostesService(LogService, TgAPI, acc).OnUpdateWrapper(dataPackage),
                     _ => new BronyaService(LogService, TgAPI, acc).OnUpdateWrapper(dataPackage)
                 };
+
+                var diff = Environment.TickCount - start;
+                if (diff > 100)
+                {
+                    processTimeLogService.LogEvent(acc, dataPackage.Command, diff);
+                }
+                return res;
             }
             catch (Exception e)
             {

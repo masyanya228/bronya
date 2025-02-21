@@ -9,8 +9,7 @@ public class EntityBaseMap : NHClassMap<EntityBase>
 
         Id(item => item.Id)
             .Not.Nullable()
-            .Default("gen_random_uuid()")
-            .GeneratedBy.Guid();
+            .Default("gen_random_uuid()");
 
         Map(x => x.TimeStamp)
             .Default("now()");

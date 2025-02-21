@@ -181,7 +181,7 @@ namespace Bronya.Services
         [ApiPointer("try_start_book")]
         private string TryStartBook(Book book)
         {
-            var smena = BookService.GetCurrentSmena();
+            var smena = BookService.Smena;
             var allReadyOpened = BookService
                 .GetCurrentBooks(book.Table)
                 .FirstOrDefault(x => x != book && x.GetStatus() == BookStatus.Opened);
@@ -223,7 +223,7 @@ namespace Bronya.Services
         private string StartBook(Book book)
         {
             LogService.LogEvent(nameof(StartBook) + ":" + book?.Id);
-            var smena = BookService.GetCurrentSmena();
+            var smena = BookService.Smena;
             var allReadyOpened = BookService.GetCurrentBooks(book.Table)
                 .FirstOrDefault(x => x != book && x.GetStatus() == BookStatus.Opened);
             if (allReadyOpened != default)
@@ -563,7 +563,7 @@ namespace Bronya.Services
         private string SetName(string name)
         {
             LogService.LogEvent(nameof(SetName) + ":" + name);
-            var smena = BookService.GetCurrentSmena();
+            var smena = BookService.Smena;
             DateTime minimunBookTime = smena.GetMinimumTimeToBook(Package.Account);
             var isInWindow = Package.Account.SelectedTime.Between_LTE_GTE(minimunBookTime, minimunBookTime.Add(smena.Schedule.Step).Add(smena.Schedule.Step));
             var accs = AccountService.FindAccount(name, isInWindow);
@@ -595,7 +595,7 @@ namespace Bronya.Services
         private string SetNameTrue(Account account)
         {
             LogService.LogEvent(nameof(SetNameTrue) + ":" + account?.Id);
-            var smena = BookService.GetCurrentSmena();
+            var smena = BookService.Smena;
             var newBook = new Book()
             {
                 SeatAmount = Package.Account.SelectedPlaces,

@@ -42,7 +42,22 @@ namespace Bronya.Services
             set => _availablePointers = value;
         }
 
-        protected string ImageId;
+        private string imageId;
+        protected string ImageId
+        {
+            get
+            {
+                if (imageId == default)
+                {
+                    imageId = TableSchemaImageDS
+                        .GetAll()
+                        .OrderByDescending(x => x.TimeStamp)
+                        .FirstOrDefault()?.ImageId
+                        ?? "AgACAgIAAxkBAAIBqGedpO4Tjf56hP0V-rA80MgoUbqIAAIm-TEbTj7xSF53trpDEdOHAQADAgADeQADNgQ";
+                }
+                return imageId;
+            }
+        }
 
         public static ConcurrentQueue<QueryCommand> QueryCommands = new ();
 
@@ -55,11 +70,6 @@ namespace Bronya.Services
             LogService = new(account);
             ConversationLogService = new(account);
             TGAPI = tGAPI;
-            ImageId = TableSchemaImageDS
-                .GetAll()
-                .OrderByDescending(x => x.TimeStamp)
-                .FirstOrDefault()?.ImageId
-                ?? "AgACAgIAAxkBAAIBqGedpO4Tjf56hP0V-rA80MgoUbqIAAIm-TEbTj7xSF53trpDEdOHAQADAgADeQADNgQ";
         }
 
         public Task OnUpdateWrapper(DataPackage dataPackage)
@@ -85,6 +95,7 @@ namespace Bronya.Services
             CallbackQuery callbackQuery = update.CallbackQuery;
             ConversationLogService.LogEvent(callbackQuery.Data);
             var com = ParseCommand(callbackQuery.Data, out string[] args);
+            Package.Command = com;
             Package.ChatId = callbackQuery.Message.Chat.Id;
             Package.MessageId = callbackQuery.Message.MessageId;
 
@@ -144,6 +155,7 @@ namespace Bronya.Services
         {
             ConversationLogService.LogEvent(text);
             var com = ParseCommand(text, out string[] args);
+            Package.Command = com;
             var method = GetMethod(com);
             if (method.Key is not null)
             {
@@ -165,6 +177,7 @@ namespace Bronya.Services
                 return Task.CompletedTask;
 
             var com = acc.Waiting.GetAttribute<ApiPointer>()?.Pointers.SingleOrDefault();
+            Package.Command = com;
             var method = GetMethod(com);
             if (method.Key is not null)
             {
@@ -270,7 +283,7 @@ namespace Bronya.Services
         [ApiPointer("switch_role")]
         private protected string SwitchRole(RoleType role)
         {
-            if (Package.Account.Id != new Guid("4be29f89-f887-48a1-a8af-cad15d032758"))
+            if (Package.Account != AccountService.MainTester)
             {
                 return ShowRole();
             }

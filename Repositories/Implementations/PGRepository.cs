@@ -58,7 +58,10 @@ namespace Buratino.Repositories.Implementations
             {
                 using (var trans = session.BeginTransaction())
                 {
-                    session.Save(entity);
+                    if (entity.Id == default)
+                        session.Save(entity);
+                    else
+                        session.Save(entity, entity.Id);
                     trans.Commit();
                     return entity;
                 }

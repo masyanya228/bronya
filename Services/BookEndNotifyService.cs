@@ -12,7 +12,7 @@ namespace Bronya.Services
         {
             LogService logService = new LogService(AccountService.RootAccount);
             BookService bookService = new BookService(AccountService.RootAccount);
-            var smena = bookService.GetCurrentSmena();
+            var smena = bookService.Smena;
             var now = new TimeService().GetNow();
             var booksToNotify = bookService.GetCurrentBooks()
                 .Where(x => x.GetStatus() == BookStatus.Opened)

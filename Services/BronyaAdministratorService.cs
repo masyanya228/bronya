@@ -64,7 +64,6 @@ namespace Bronya.Services
                 if (string.IsNullOrEmpty(fileId))
                     throw new Exception("Не получилось обработать картинку");
                 TableSchemaImageDS.Save(new TableSchemaImage() { ImageId = fileId });
-                ImageId = fileId;
             }
 
             Package.Account.Waiting = WaitingText.None;

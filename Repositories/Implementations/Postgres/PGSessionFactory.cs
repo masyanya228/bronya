@@ -7,6 +7,7 @@ using NHibernate.Cfg;
 using NHibernate.Dialect;
 using Buratino.Xtensions;
 using Buratino.Maps.NHibMaps;
+using Buratino.DI;
 
 namespace Buratino.Repositories.Implementations.Postgres
 {
@@ -25,6 +26,13 @@ namespace Buratino.Repositories.Implementations.Postgres
             set => sessionFactory = value;
         }
 
+        public IConfiguration Configuration { get; }
+
+        public PGSessionFactory(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
         private ISessionFactory CreateSessionFactory()
         {
             var db = Fluently
@@ -32,11 +40,11 @@ namespace Buratino.Repositories.Implementations.Postgres
                     .Database(
                         PostgreSQLConfiguration.Standard
                         .ConnectionString(c =>
-                            c.Host("localhost")
-                            .Port(5433)
-                            .Database("bronya_thegreenplace")
-                            .Username("postgres")
-                            .Password("007007Qq"))
+                            c.Host(Configuration.GetValue("host", "localhost"))
+                            .Port(Configuration.GetValue("port", 5433))
+                            .Database(Configuration.GetValue("database", "bronya_thegreenplace"))
+                            .Username(Configuration.GetValue("username", "postgres"))
+                            .Password(Configuration.GetValue("password", "postgres")))
                         .Dialect<PostgreSQL82Dialect>());
 
             var mappings = typeof(INHMap).GetImplementations();

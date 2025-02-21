@@ -20,6 +20,11 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.Configuration.AddJsonFile("credentials.json",
+            optional: false,
+            reloadOnChange: true);
+
+
         builder.Services.AddQuartz(q =>
         {
             q.UseMicrosoftDependencyInjectionJobFactory();
@@ -112,14 +117,34 @@ public class Program
         JobRegistrator.RegisterJobs();
 
         var accountDS = Container.GetDomainService<Account>(null);
-        var account = accountDS.GetAll(x => x.TGTag == "morsw").Single();
+        var account = accountDS.GetAll(x => x.Name == "Root").SingleOrDefault();
         if (account == default)
         {
-            Account entity = new()
+            accountDS.Repository.Insert(new()
             {
+                Id = AccountService.RootAccount.Id,
                 Name = "Root",
-            };
-            accountDS.Save(entity);
+            });
+            accountDS.Repository.Insert(new()
+            {
+                Id = AccountService.MainTester.Id,
+                TGTag = "morsw",
+                TGChatId = "1029089379",
+                Name = "Марсель",
+            });
+        }
+
+        var roles = Container.GetDomainService<Role>(null);
+        if (!roles.GetAll().Any())
+        {
+            roles.Save(new Role() { Name = "Administrator" });
+            roles.Save(new Role() { Name = "Hostes" });
+        }
+
+        var workSchedules = Container.GetDomainService<WorkSchedule>(null);
+        if (!workSchedules.GetAll().Any())
+        {
+            workSchedules.Save(new WorkSchedule());
         }
     }
 }

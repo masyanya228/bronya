@@ -127,10 +127,11 @@ namespace Buratino.Xtensions
             var tables = bookService.TableDS.GetAll().OrderBy(x => x.Number).ToArray();
             int count = 0;
             int tablesInRow = 2;
+            var allBooks = bookService.GetCurrentBooks();
             foreach (var table in tables)
             {
-                var books = bookService.GetCurrentBooks(table);
-                bool isBusy = !bookService.GetAvailableTimesForBook(table, acc).Any();
+                var books = allBooks.Where(x => x.Table == table).ToList();
+                bool isBusy = !bookService.GetAvailableTimesForBook(table, acc, null, books).Any();
                 var btnTitle = isBusy
                     ? $"🔒 {table.Name}"
                     : $"{table.Name}";
@@ -163,13 +164,13 @@ namespace Buratino.Xtensions
             var bookService = new BookService(acc);
             var now = new TimeService().GetNow();
             var tables = bookService.TableDS.GetAll().OrderBy(x => x.Number).ToArray();
-            var smena = bookService.GetCurrentSmena();
+            var smena = bookService.Smena;
             int count = 0;
             int tablesInRow = 2;
+            var allBooks = bookService.GetCurrentBooks();
             foreach (var table in tables)
             {
-                var books = bookService.GetCurrentBooks(table);
-
+                var books = allBooks.Where(x => x.Table == table);
                 var actualBook = books.FirstOrDefault(x => x.GetTrueStartBook() < now /*&& x.GetTrueEndBook() > now*/ && x.GetStatus() != BookStatus.Closed);
                 var nowOpened = actualBook != default
                     ? actualBook.TableStarted != default && actualBook.TableClosed == default

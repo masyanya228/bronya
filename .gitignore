@@ -6,3 +6,5 @@ bin/
 obj/
 logs/
 Images/
+credentials.json
+credentials.Development.json

@@ -191,7 +191,7 @@ namespace Bronya.Services
                 Guest = Package.Account,
                 ActualBookStartTime = Package.Account.SelectedTime,
                 Table = Package.Account.SelectedTable,
-                BookLength = BookService.GetCurrentSmena().Schedule.MinPeriod,
+                BookLength = BookService.Smena.Schedule.MinPeriod,
                 SeatAmount = places,
             };
             BookService.BookDS.Save(newBook);
