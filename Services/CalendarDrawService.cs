@@ -90,7 +90,7 @@ namespace Bronya.Services
 
             MemoryStream stream = new MemoryStream();
             bmp.Save(stream, ImageFormat.Jpeg);
-            bmp.Save("C:\\Users\\marse\\source\\repos\\Bronya\\Images\\image2.jpeg", ImageFormat.Jpeg);
+            bmp.Save("\\Images\\image2.jpeg", ImageFormat.Jpeg);
             bmp.Dispose();
             stream.Position = 0;
             return stream;
