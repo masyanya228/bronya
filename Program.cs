@@ -112,7 +112,7 @@ public class Program
 
     public static void OnStarted()
     {
-        new AuthorizeService(Container.Get<LogToFileService>(), new TGAPI(Container.Get<LogToFileService>(), "7434892034:AAHZlmmmNZlPdsPU1hye-JcKqYlzayb-VRI"));
+        new AuthorizeService(Container.Get<LogToFileService>(), new TGAPI(Container.Get<LogToFileService>(), Container.Get<IConfiguration>().GetValue("TGApiKey", "")));
 
         JobRegistrator.RegisterJobs();
 
