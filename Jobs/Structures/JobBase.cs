@@ -1,4 +1,6 @@
-﻿using Quartz;
+﻿using Bronya.Services;
+
+using Quartz;
 
 namespace Bronya.Jobs.Structures
 {
@@ -6,10 +8,18 @@ namespace Bronya.Jobs.Structures
     {
         public Task Execute(IJobExecutionContext context)
         {
-            return Task.Factory.StartNew(() =>
+            try
             {
-                Execute();
-            });
+                return Task.Factory.StartNew(() =>
+                    {
+                        Execute();
+                    });
+            }
+            catch (Exception ex)
+            {
+                new ExceptionLogService().LogEvent(AccountService.RootAccount, ex);
+                throw;
+            }
         }
 
         public abstract void Execute();
