@@ -105,8 +105,9 @@ namespace Buratino.API
                     {
                         if (package?.Update?.CallbackQuery?.Message?.Type == MessageType.Photo)
                         {
-                            Send(package.ChatId, text, parseMode, replyConstructor);
-                            return Delete(package.ChatId, package.MessageId);
+                            var msgId = Send(package.ChatId, text, parseMode, replyConstructor);
+                            Delete(package.ChatId, package.MessageId);
+                            return msgId;
                         }
                         else
                         {
@@ -131,8 +132,9 @@ namespace Buratino.API
                         }
                         else
                         {
-                            SendFile(package.ChatId, file.GetInputOnlineFile(), text, parseMode, replyConstructor);
-                            return Delete(package.ChatId, package.MessageId);
+                            var msgId = SendFile(package.ChatId, file.GetInputOnlineFile(), text, parseMode, replyConstructor);
+                            Delete(package.ChatId, package.MessageId);
+                            return msgId;
                         }
                     }
                     return EditFile(package.ChatId, package.MessageId, file.GetInputMedia(), text, parseMode, replyConstructor);

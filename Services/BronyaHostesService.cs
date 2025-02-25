@@ -80,10 +80,10 @@ namespace Bronya.Services
         }
 
         [ApiPointer("now")]
-        private string Now()
+        public string Now()
         {
             var stream = new CalendarDrawService().DrawFull();
-            return SendOrEdit(
+            var msgId = SendOrEdit(
                 "Сейчас:",
                 new InlineKeyboardConstructor()
                     .AddHostesNowTableButtons(Package.Account)
@@ -91,6 +91,9 @@ namespace Bronya.Services
                 default,
                 stream
             );
+            Package.Account.NowMenuMessageId = msgId.AsInt();
+            AccountService.AccountDS.Save(Package.Account);
+            return msgId;
         }
 
         [ApiPointer("now_table")]

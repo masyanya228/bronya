@@ -75,6 +75,14 @@ namespace Bronya.Services
         public Task OnUpdateWrapper(DataPackage dataPackage)
         {
             Package = dataPackage;
+
+            //Обнуление актуального сообщения "Сейчас"
+            if (Package.Account.NowMenuMessageId != default)
+            {
+                Package.Account.NowMenuMessageId = default;
+                AccountService.AccountDS.Save(Package.Account);
+            }
+
             if (Package.Update.Type == UpdateType.CallbackQuery)
             {
                 return ProcessCallbackQuery(Package.Update);

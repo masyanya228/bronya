@@ -16,6 +16,7 @@ public class AccountNHMap : NHSubclassClassMap<Account>
         Map(x => x.SelectedPlaces);
         Map(x => x.Waiting);
         Map(x => x.GetAccountsPage);
+        Map(x => x.NowMenuMessageId);
 
         References(x => x.SelectedTable)
             .Not.LazyLoad();

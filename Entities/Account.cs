@@ -54,6 +54,11 @@ namespace Bronya.Entities
         public virtual IList<Role> Roles { get; set; } = [];
         public virtual WorkSchedule SelectedSchedule { get; set; }
 
+        /// <summary>
+        /// Актуальное сообщение "Сейчас"
+        /// </summary>
+        public virtual int NowMenuMessageId { get; set; }
+
         public virtual string GetNewBookState()
         {
             string state = "Новая бронь:";

@@ -44,7 +44,7 @@ public class Program
         builder.Services.AddTransient(typeof(IDomainService<Account>), typeof(PersistentDomainService<Account>));
         builder.Services.AddTransient(typeof(IDomainService<WorkSchedule>), typeof(PersistentDomainService<WorkSchedule>));
         builder.Services.AddTransient(typeof(IDomainService<Table>), typeof(PersistentDomainService<Table>));
-        builder.Services.AddTransient(typeof(IDomainService<Book>), typeof(PersistentDomainService<Book>));
+        builder.Services.AddTransient(typeof(IDomainService<Book>), typeof(BookDomainService));
 
         builder.Services.AddSingleton(typeof(LogToFileService), new LogToFileService());
         
