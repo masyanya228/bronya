@@ -15,6 +15,7 @@ namespace Bronya.Jobs.Structures
         {
             new BookAutoCancelJob().RegisterJobWithCron();
             new BookEndNotifyJob().RegisterJobWithCron();
+            new BookAutoCloselJob().RegisterJobWithCron();
         }
 
         public static DateTimeOffset RegisterJobWithCron<T>(string cron)
