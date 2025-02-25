@@ -65,6 +65,10 @@ namespace Bronya.Services
                     throw new Exception("Не получилось обработать картинку");
                 TableSchemaImageDS.Save(new TableSchemaImage() { ImageId = fileId });
             }
+            else
+            {
+                return SelectTableSchema();
+            }
 
             Package.Account.Waiting = WaitingText.None;
             AccountService.AccountDS.Save(Package.Account);
@@ -72,7 +76,7 @@ namespace Bronya.Services
             return SendOrEdit(
                 "Схема столов обновлена",
                 new InlineKeyboardConstructor()
-                    .AddButtonDown("Отмена", "/menu"),
+                    .AddButtonDown("В меню", "/menu"),
                 null,
                 ImageId
             );
