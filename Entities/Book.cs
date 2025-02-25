@@ -29,6 +29,9 @@ namespace Bronya.Entities
         /// </summary>
         public virtual TimeSpan BookLength { get; set; }
         
+        /// <summary>
+        /// Фактическая продолжительность брони после закрытия
+        /// </summary>
         public virtual TimeSpan FactBookLength
         {
             get
@@ -54,7 +57,7 @@ namespace Bronya.Entities
         public virtual DateTime NotifiedAboutEndBook { get; set; }
 
         /// <summary>
-        /// Время расчета стола
+        /// Время закрытия брони
         /// </summary>
         public virtual DateTime TableClosed { get; set; }
 
@@ -68,14 +71,14 @@ namespace Bronya.Entities
         public virtual DateTime GetTrueStartBook()
         {
             if (TableStarted != default)
-                return TableStarted < ActualBookStartTime
+                return TableStarted < ActualBookStartTime //todo - возможно надо переписать
                     ? TableStarted
                     : ActualBookStartTime;
             return ActualBookStartTime;
         }
 
         /// <summary>
-        /// Возвращает
+        /// Возвращает конец брони
         /// </summary>
         /// <returns></returns>
         public virtual DateTime GetTrueEndBook()

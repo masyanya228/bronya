@@ -116,6 +116,16 @@ namespace Bronya.Services
         private SmenaDto GetCurrentSmena()
         {
             DateTime now = TimeService.GetNow();
+            return GetCurrentSmena(now);
+        }
+
+        /// <summary>
+        /// Возращает график на определнную дату
+        /// </summary>
+        /// <param name="now"></param>
+        /// <returns></returns>
+        public SmenaDto GetCurrentSmena(DateTime now)
+        {
             var workSchedule = ScheduleService.GetWorkSchedule(now);
             GetCurrentSmena(now, workSchedule, out DateTime smenaStart, out DateTime smenaEnd);
             return new SmenaDto()
