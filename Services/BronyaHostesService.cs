@@ -33,13 +33,14 @@ namespace Bronya.Services
         [ApiPointer("tables")]
         private string Tables()
         {
+            var stream = new CalendarDrawService().DrawFull();
             return SendOrEdit(
                 "Столы:",
                 new InlineKeyboardConstructor()
                     .AddHostesAllTableButtons(Package.Account)
                     .AddButtonDown("Назад", $"/menu"),
                 default,
-                ImageId
+                stream
             );
         }
 
@@ -81,13 +82,14 @@ namespace Bronya.Services
         [ApiPointer("now")]
         private string Now()
         {
+            var stream = new CalendarDrawService().DrawFull();
             return SendOrEdit(
                 "Сейчас:",
                 new InlineKeyboardConstructor()
                     .AddHostesNowTableButtons(Package.Account)
                     .AddButtonDown("Назад", $"/menu"),
                 default,
-                ImageId
+                stream
             );
         }
 
