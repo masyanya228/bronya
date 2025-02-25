@@ -83,7 +83,7 @@ namespace Bronya.Entities
             if (TableClosed != default)
                 return TableClosed;
             if (TableStarted != default)
-                return TableStarted.Add(BookLength);
+                return TableAllowedStarted.Add(BookLength);
             return BookEndTime;
         }
 

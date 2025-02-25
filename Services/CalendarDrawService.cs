@@ -58,13 +58,18 @@ namespace Bronya.Services
                     {
                         int yBook = (int)(book.TableAllowedStarted.Subtract(smena.SmenaStart).TotalHours * oneHourHeight);
                         int hBook = (int)(book.BookLength.TotalHours * oneHourHeight);
+
                         g.FillRectangle(Brushes.Purple,
                             new Rectangle(hourSpace, yBook, bmp.Width, hBook));
-
                         g.DrawString($"{book.TableAllowedStarted:HH:mm}-{book.TableAllowedStarted.Add(book.BookLength):HH:mm}",
                             new Font("Tahoma", bookStringSize),
                             Brushes.White,
                             new Point(hourSpace + 5, yBook + 5));
+
+                        int bufferLeft = (int)(book.BookEndTime.Add(smena.Schedule.Buffer).Subtract(book.TableAllowedStarted.Add(book.BookLength)).TotalHours * oneHourHeight);
+
+                        g.FillRectangle(Brushes.Gray,
+                            new Rectangle(hourSpace, yBook+hBook, bmp.Width, bufferLeft));
                     }
                     else if (book.GetStatus() == BookStatus.Closed)
                     {
@@ -96,20 +101,22 @@ namespace Bronya.Services
             return stream;
         }
 
-        public MemoryStream DrawFull(Table table)
+        public MemoryStream DrawFull()
         {
             const int workHourStringSize = 50;
-            const int bookShortStringSize = 25;
-            const int bookNormalStringSize = 150;
+            const int bookShortStringSize = 50;
 
             BookService bookService = new BookService(null);
-            var books = bookService.GetCurrentBooks(table).ToArray();
+            var tables = bookService.TableDS.GetAll().OrderBy(x => x.Number).ToArray();
+            var allBooks = bookService.GetCurrentBooks().ToArray();
             Bitmap bmp = new Bitmap(2000, 3000);
 
             var smena = bookService.Smena;
             var smenaLength = smena.Schedule.Length;
             var oneHourHeight = bmp.Height / smenaLength.TotalHours;
             var hourSpace = 100;
+            var tableColW = (bmp.Width - hourSpace) / tables.Count();
+
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.FillRectangle(Brushes.White, new Rectangle(0, 0, bmp.Width, bmp.Height));
@@ -127,50 +134,60 @@ namespace Bronya.Services
                     g.DrawString($"{i.Hour:00}", new Font("Tahoma", workHourStringSize), Brushes.Blue, new Point(5, y));
                     g.DrawLine(new Pen(Color.DarkBlue, 3), 0, y, bmp.Width, y);
                 }
-                foreach (var book in books.OrderBy(x => x.ActualBookStartTime))
+
+                for (int t = 0; t < tables.Count(); t++)
                 {
-                    var bookStringSize = book.FactBookLength.TotalHours < 1 ? bookShortStringSize : bookNormalStringSize;
-                    if (book.GetStatus() == BookStatus.Booked)
+                    var shiftX = tableColW * t;
+                    var table = tables[t];
+                    var books = allBooks.Where(x => x.Table == table);
+                    foreach (var book in books.OrderBy(x => x.ActualBookStartTime))
                     {
-                        int yBook = (int)(book.ActualBookStartTime.Subtract(smena.SmenaStart).TotalHours * oneHourHeight);
-                        int hBook = (int)(book.BookLength.TotalHours * oneHourHeight);
-                        g.FillRectangle(Brushes.LightGray,
-                            new Rectangle(hourSpace, yBook, bmp.Width, hBook));
+                        var bookStringSize = bookShortStringSize;
+                        if (book.GetStatus() == BookStatus.Booked)
+                        {
+                            int yBook = (int)(book.ActualBookStartTime.Subtract(smena.SmenaStart).TotalHours * oneHourHeight);
+                            int hBook = (int)(book.BookLength.TotalHours * oneHourHeight);
+                            g.FillRectangle(Brushes.LightGray,
+                                new Rectangle(hourSpace + shiftX, yBook, tableColW, hBook));
 
-                        g.DrawString($"{book.GetTrueStartBook():HH:mm}-{book.GetTrueEndBook():HH:mm}",
-                            new Font("Tahoma", bookStringSize),
-                            Brushes.White,
-                            new Point(hourSpace + 5, yBook + 5));
-                    }
-                    else if (book.GetStatus() == BookStatus.Opened)
-                    {
-                        int yBook = (int)(book.TableStarted.Subtract(smena.SmenaStart).TotalHours * oneHourHeight);
-                        int hBook = (int)(book.BookLength.TotalHours * oneHourHeight);
-                        g.FillRectangle(Brushes.Purple,
-                            new Rectangle(hourSpace, yBook, bmp.Width, hBook));
+                            g.DrawString($"{table.Name}\r\n{book.GetTrueStartBook():HH:mm}\r\n{book.GetTrueEndBook():HH:mm}",
+                                new Font("Tahoma", bookStringSize),
+                                Brushes.White,
+                                new Point(hourSpace + shiftX + 5, yBook + 5));
+                        }
+                        else if (book.GetStatus() == BookStatus.Opened)
+                        {
+                            int yBook = (int)(book.TableAllowedStarted.Subtract(smena.SmenaStart).TotalHours * oneHourHeight);
+                            int hBook = (int)(book.BookLength.TotalHours * oneHourHeight);
+                            g.FillRectangle(Brushes.Purple,
+                                new Rectangle(hourSpace + shiftX, yBook, tableColW, hBook));
 
-                        g.DrawString($"{book.TableStarted:HH:mm}-{book.BookEndTime:HH:mm}",
-                            new Font("Tahoma", bookStringSize),
-                            Brushes.White,
-                            new Point(hourSpace + 5, yBook + 5));
-                    }
-                    else if (book.GetStatus() == BookStatus.Closed)
-                    {
-                        int yBook = (int)(book.TableStarted.Subtract(smena.SmenaStart).TotalHours * oneHourHeight);
-                        int hBook = (int)(book.TableClosed.Subtract(book.TableStarted).TotalHours * oneHourHeight);
-                        g.FillRectangle(Brushes.DarkBlue,
-                            new Rectangle(hourSpace, yBook, bmp.Width, hBook));
+                            g.DrawString($"{table.Name}\r\n{book.TableAllowedStarted:HH:mm}\r\n{book.GetTrueEndBook():HH:mm}",
+                                new Font("Tahoma", bookStringSize),
+                                Brushes.White,
+                                new Point(hourSpace + shiftX + 5, yBook + 5));
+                        }
+                        else if (book.GetStatus() == BookStatus.Closed)
+                        {
+                            int yBook = (int)(book.TableAllowedStarted.Subtract(smena.SmenaStart).TotalHours * oneHourHeight);
+                            int hBook = (int)(book.TableClosed.Subtract(book.TableStarted).TotalHours * oneHourHeight);
+                            g.FillRectangle(Brushes.DarkBlue,
+                                new Rectangle(hourSpace + shiftX, yBook, tableColW, hBook));
 
-                        g.DrawString($"{book.TableStarted:HH:mm}-{book.TableClosed:HH:mm}",
-                            new Font("Tahoma", bookStringSize),
-                            Brushes.White,
-                            new Point(hourSpace + 5, yBook + 5));
-                    }
-                    else if (book.GetStatus() == BookStatus.Canceled)
-                    {
-                        continue;
+                            g.DrawString($"{table.Name}\r\n{book.TableAllowedStarted:HH:mm}\r\n{book.GetTrueEndBook():HH:mm}",
+                                new Font("Tahoma", bookStringSize),
+                                Brushes.White,
+                                new Point(hourSpace + shiftX + 5, yBook + 5));
+                        }
+                        else if (book.GetStatus() == BookStatus.Canceled)
+                        {
+                            continue;
+                        }
                     }
                 }
+
+                int yNow = (int)(new TimeService().GetNow().Subtract(smena.SmenaStart).TotalHours * oneHourHeight);
+                g.DrawLine(new Pen(Color.Red, 3), 0, yNow, bmp.Width, yNow);
             }
 
             MemoryStream stream = new MemoryStream();
