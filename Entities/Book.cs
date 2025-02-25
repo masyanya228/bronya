@@ -114,9 +114,13 @@ namespace Bronya.Entities
             }
             else if (TableStarted != default)
             {
-                var timeEnd = BookEndTime.Add(smena.Schedule.Buffer);
+                var timeEnd = TableAllowedStarted.Add(BookLength);
                 var timeLeft = timeEnd.Subtract(new TimeService().GetNow());
-                state += $"\r\n\r\n*Вынос кальяна: {TableStarted:HH:mm}; Стол до: {timeEnd:HH:mm}" +
+
+                state += "\r\n";
+                if (TableAllowedStarted != TableStarted)
+                    state += $"\r\n*Опоздание*";
+                state += $"\r\n*Вынос кальяна: {TableStarted:HH:mm}; Стол до: {timeEnd:HH:mm}" +
                     $"\r\nОсталось: {timeLeft.TotalMinutes.Round()} мин.*";
             }
             return state;
