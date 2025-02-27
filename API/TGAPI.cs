@@ -41,6 +41,9 @@ namespace Buratino.API
 
         private Task OnUpdate(ITelegramBotClient botClient, Update update, CancellationToken token)
         {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Request");
+            Console.ResetColor();
             try
             {
                 UpdateEvent.Invoke(this, update);
@@ -71,6 +74,9 @@ namespace Buratino.API
                     }
                 }
             }
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("End");
+            Console.ResetColor();
             return Task.CompletedTask;
         }
 

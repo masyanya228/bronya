@@ -10,10 +10,15 @@ namespace Bronya.Jobs.Structures
         {
             try
             {
-                return Task.Factory.StartNew(() =>
-                    {
-                        Execute();
-                    });
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Job");
+                Console.ResetColor();
+                var result = Task.Factory.StartNew(Execute);
+                result.Wait();
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("End");
+                Console.ResetColor();
+                return result;
             }
             catch (Exception ex)
             {
