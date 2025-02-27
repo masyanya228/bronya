@@ -201,6 +201,21 @@ namespace Bronya.Services
         }
 
         /// <summary>
+        /// Возвращает брони на определенную смену
+        /// </summary>
+        /// <returns></returns>
+        public List<Book> GetBooks(SmenaDto smena)
+        {
+            return BookDS.GetAll()
+                .Where(x => x.ActualBookStartTime >= smena.SmenaStart
+                    && !x.IsCanceled)
+                .ToList()
+                .Where(x => x.BookEndTime <= smena.SmenaEnd)
+                .OrderBy(x => x.ActualBookStartTime)
+                .ToList();
+        }
+
+        /// <summary>
         /// Возвращает все брони гостя
         /// </summary>
         /// <param name="mainAccount"></param>
