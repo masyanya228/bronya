@@ -112,6 +112,7 @@ public class Program
 
     public static void OnStarted()
     {
+        IPGSessionFactory sessionFactory = Container.Get<IPGSessionFactory>();
         new AuthorizeService(Container.Get<LogToFileService>(), new TGAPI(Container.Get<LogToFileService>(), Container.Get<IConfiguration>().GetValue("TGApiKey", "")));
 
         JobRegistrator.RegisterJobs();
