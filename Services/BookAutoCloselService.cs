@@ -1,5 +1,7 @@
 ﻿using Bronya.Enums;
 
+using Buratino.Xtensions;
+
 namespace Bronya.Services
 {
     public class BookAutoCloselService
@@ -11,7 +13,7 @@ namespace Bronya.Services
             var now = new TimeService().GetNow();
             var smena = bookService.Smena;
 
-            if (smena.SmenaStart.Subtract(now).TotalHours > 1)//Если до старта смены осталось меньше часа
+            if (smena.SmenaStart.Subtract(now).TotalHours.Between_LTE_GTE(0, 1))//Если до старта смены осталось меньше часа
                 return;
 
             var booksToCancel = bookService.GetCurrentBooks()

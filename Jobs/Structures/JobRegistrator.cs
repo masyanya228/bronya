@@ -15,7 +15,7 @@ namespace Bronya.Jobs.Structures
         {
             new BookAutoCancelJob().RegisterJobWithCron();
             new BookEndNotifyJob().RegisterJobWithCron();
-            new BookAutoCloselJob().RegisterJobWithCron();
+            //new BookAutoCloselJob().RegisterJobWithCron();
             new StatisticJob().RegisterJobWithCron();
         }
 
