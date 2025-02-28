@@ -28,7 +28,9 @@ namespace Bronya.Services
                     .AddButtonDown("График работы", "/work_schedule")
                     .AddButtonDown("🔲 Столы", "/tables")
                     .AddButtonDown("Изменить картинку столов", "/select_table_schema")
-                    .AddButtonDown("Изменить текст", "/select_text")
+                    .AddButtonDown("Изменить постоянный текст", "/select_text")
+                    .AddButtonDown("Изменить правила", "/select_rules")
+                    .AddButtonDown("Изменить меню заведения", "/select_menu_pdf")
                     .AddButtonDownIf(() => Package.Account.Id == new Guid("4be29f89-f887-48a1-a8af-cad15d032758"), "Роль", "/show_role")
                 );
         }
@@ -49,7 +51,7 @@ namespace Bronya.Services
             AccountService.AccountDS.Save(Package.Account);
 
             return SendOrEdit(
-                "Пришлите картнку со схемой столов",
+                "Пришлите картнку со схемой столов:",
                 new InlineKeyboardConstructor()
                     .AddButtonDown("Отмена", "/cancel_select_table_schema")
             );

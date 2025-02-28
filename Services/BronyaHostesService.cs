@@ -146,7 +146,7 @@ namespace Bronya.Services
             var vars = BookService.GetMoveVariants(book, Package.Account);
             string text = vars.Any()
                 ? $"Варианты переноса стола:"
-                : $"Этот стол нельзя перенести";
+                : $"\r\nЭтот стол нельзя перенести";
             return SendOrEdit(
                 $"{book.GetState()}" +
                 $"\r\n\r\n{text}",
@@ -171,7 +171,7 @@ namespace Bronya.Services
             var vars = BookService.GetProlongationVariants(book, Package.Account);
             string text = vars.Any()
                 ? $"Варианты продления стола:"
-                : $"Этот стол нельзя продлить";
+                : $"\r\nЭтот стол нельзя продлить";
             return SendOrEdit(
                 $"{book.GetState()}" +
                 $"\r\n\r\n{text}",
@@ -483,7 +483,7 @@ namespace Bronya.Services
 
             return SendOrEdit(
                 $"{Package.Account.GetNewBookState()}" +
-                $"\r\n*Выбор времени:*",
+                $"\r\n\r\n*Выбор времени:*",
                 new InlineKeyboardConstructor()
                     .AddTimeButtons(times)
                     .AddButtonDown("🗑", backCallback)
@@ -529,7 +529,7 @@ namespace Bronya.Services
 
             return SendOrEdit(
                 $"{Package.Account.GetNewBookState()}" +
-                $"\r\n*Выбор стола:*",
+                $"\r\n\r\n*Выбор стола:*",
                 new InlineKeyboardConstructor()
                     .AddHostesTableButtons(tables, Package.Account)
                     .AddButtonDown("🗑", $"/reset_all")
@@ -567,7 +567,7 @@ namespace Bronya.Services
             }
             return SendOrEdit(
                 $"{Package.Account.GetNewBookState()}" +
-                $"\r\n*Гостей:*",
+                $"\r\n\r\n*Гостей:*",
                 new InlineKeyboardConstructor()
                     .AddHostesPlacesButtons(Package.Account.SelectedTable)
                     .AddButtonDown("🗑", $"/reset_all")
@@ -594,7 +594,7 @@ namespace Bronya.Services
 
             return SendOrEdit(
                 $"{Package.Account.GetNewBookState()}" +
-                $"\r\n*Имя брони:*" +
+                $"\r\n\r\n*Имя брони:*" +
                 $"\r\n_Пример: Иван, 1111_",
                 new InlineKeyboardConstructor()
                     .AddButtonDown("🗑", $"/reset_all")
@@ -628,6 +628,7 @@ namespace Bronya.Services
                     $"\r\n\r\n*Уточните имя:*",
                     new InlineKeyboardConstructor()
                         .AddHostesShowAccounts(accs, "set_name_true")
+                        .AddButtonDown("✏️👤", $"/select_name")
                         .AddButtonDown("🗑", $"/reset_all")
                         .AddButtonRight("✏️⏱️", $"/book_select_time")
                         .AddButtonRight("✏️🔲", $"/select_table")

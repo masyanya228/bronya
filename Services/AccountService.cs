@@ -132,7 +132,7 @@ namespace Bronya.Services
         public IEnumerable<Account> GetAccountsToUnion(Account account)
         {
             return AccountDS.GetAll()
-                .Where(x=> account.CardNumber != default && account.CardNumber == x.CardNumber 
+                .Where(x => account.CardNumber != default && account.CardNumber == x.CardNumber
                     || account.Phone != default && account.Phone == x.Phone)
                 //.Where(x => x.GetCardNumber != default || x.GetPhone != default)
                 //.Where(x => x.GetCardNumber == account.GetCardNumber || x.GetPhone == account.GetPhone)
