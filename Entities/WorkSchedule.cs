@@ -74,11 +74,11 @@ namespace Bronya.Entities
             string state = "*Когда работает этот график:*\r\n";
             if (IsOneTimeSchedule)
             {
-                state += $"Особый график на {StartDate.ToddMMyyyy()}";
+                state += $"Особый график на {StartDate.ToddMM()}";
             }
             else
             {
-                state += $"График работы с {StartDate.ToddMMyyyy()}";
+                state += $"График работы с {StartDate.ToddMM()}";
             }
 
             if (IsDayOff)
@@ -93,7 +93,7 @@ namespace Bronya.Entities
             }
             else if (!IsOneTimeSchedule && DayOfWeeks == DayOfWeeks.None)
             {
-                state += $"\r\n*Не выбраны дни недели для этого графика!*";
+                state += $"\r\n*Не выбраны дни недели для этого графика\\!*";
             }
             else if (!IsOneTimeSchedule)
             {
@@ -102,7 +102,7 @@ namespace Bronya.Entities
             }
 
             state += $"\r\n\r\n*Настройки смены:*";
-            state += $"\r\nРабочие часы: {Start.ToHHmm()} - {Start.Add(Length).ToHHmm()} ({Length.TotalHours.Round(1)} ч.)";
+            state += $"\r\nРабочие часы: {Start.ToHHmm()} - {Start.Add(Length).ToHHmm()} ({Length.TotalHours.Round(1)} ч\\.)";
             state += $"\r\nМинимальная бронь: {MinPeriod.ToHHmm()}";
             state += $"\r\nБуффер: {Buffer.ToHHmm()}";
             state += $"\r\nШаг бронирования: {Step.ToHHmm()}";

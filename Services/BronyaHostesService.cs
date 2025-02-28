@@ -4,6 +4,7 @@ using Buratino.Xtensions;
 using Buratino.Helpers;
 using Bronya.Entities;
 using Bronya.Enums;
+using Bronya.Xtensions;
 
 namespace Bronya.Services
 {
@@ -56,7 +57,7 @@ namespace Bronya.Services
             var books = BookService.GetCurrentBooks(table, true);
             var isAvailable = !table.IsBookAvailable ? "\r\n🚫 Бронь отключена" : string.Empty;
             return SendOrEdit(
-                $"Стол: {table.Name.EscapeMarkdown1()}{isAvailable}",
+                $"Стол: {table.Name.EscapeFormat()}{isAvailable}",
                 new InlineKeyboardConstructor()
                     .AddHostesBooksButtons(books, "/show_book")
                     .AddButtonDownIf(() => table.IsBookAvailable, "🚫 Отключить бронирование", $"/disable/{table.Id}")
@@ -108,7 +109,7 @@ namespace Bronya.Services
             var books = BookService.GetCurrentBooks(table, true);
             var isAvailable = !table.IsBookAvailable ? "\r\n🚫 Бронь отключена" : string.Empty;
             return SendOrEdit(
-                $"Стол: {table.Name.EscapeMarkdown1()}{isAvailable}",
+                $"Стол: {table.Name.EscapeFormat()}{isAvailable}",
                 new InlineKeyboardConstructor()
                     .AddHostesBooksButtons(books, "/show_book")
                     .AddButtonDownIf(() => table.IsBookAvailable, "🚫 Отключить бронирование", $"/disable/{table.Id}")
@@ -197,7 +198,7 @@ namespace Bronya.Services
                 if (Math.Abs(diffInMinutes) > smena.Schedule.Buffer.TotalMinutes)
                 {
                     var trueText = diffInMinutes > 0 ? "рано" : "поздно";
-                    text += $"\r\n*Обратите внимание*, гость пришел слишком {trueText}. Проверьте себя.";
+                    text += $"\r\n*Обратите внимание*, гость пришел слишком {trueText}\\. Проверьте себя\\.";
                 }
                 return SendOrEdit(
                     $"{book.GetState()}" +
@@ -208,18 +209,18 @@ namespace Bronya.Services
             }
             else
             {
-                string text = $"*Предыдущая бронь на имя {allReadyOpened.Guest} не была закрыта. Проверьте себя.*";
+                string text = $"*Предыдущая бронь на имя {allReadyOpened.Guest} не была закрыта\\. Проверьте себя\\.*";
                 double diffInMinutes = book.ActualBookStartTime.Subtract(new TimeService().GetNow()).TotalMinutes;
                 if (Math.Abs(diffInMinutes) > smena.Schedule.Buffer.TotalMinutes)
                 {
                     var trueText = diffInMinutes > 0 ? "рано" : "поздно";
-                    text += $"\r\n*Обратите внимание*, гость пришел слишком {trueText}. Проверьте себя.";
+                    text += $"\r\n*Обратите внимание*, гость пришел слишком {trueText}\\. Проверьте себя\\.";
                 }
                 return SendOrEdit(
                     $"{book.GetState()}" +
                     $"\r\n\r\n{text}",
                     new InlineKeyboardConstructor()
-                        .AddButtonDown("✅Закрыть предыдущий стол и открыть этот✅", $"/start_book/{book.Id}")
+                        .AddButtonDown("✅Закрыть предыдущую бронь и вынести кальян✅", $"/start_book/{book.Id}")
                         .AddButtonDown("Назад", $"/show_book/{book.Id}"));
             }
         }
@@ -256,7 +257,7 @@ namespace Bronya.Services
             }
             return SendOrEdit(
                 $"{book.GetState()}" +
-                $"\r\n*Отменить бронь на {book.ActualBookStartTime:dd.MM HH:mm}?*",
+                $"\r\n*Отменить бронь на {book.ActualBookStartTime.ToddMM_HHmm()}?*",
                 new InlineKeyboardConstructor()
                     .AddButtonDown("🔴Отменить🔴", $"/cancel/{book.Id}")
                     .AddButtonDown("Назад", $"/show_book/{book.Id}"));
@@ -293,7 +294,7 @@ namespace Bronya.Services
             }
             return SendOrEdit(
                 $"{book.GetState()}" +
-                $"\r\n*Восстановить бронь на {book.ActualBookStartTime:dd.MM HH:mm}?*",
+                $"\r\n*Восстановить бронь на {book.ActualBookStartTime.ToddMM_HHmm()}?*",
                 new InlineKeyboardConstructor()
                     .AddButtonDown("🟢Восстановить🟢", $"/repair/{book.Id}")
                     .AddButtonDown("Назад", $"/show_book/{book.Id}")
@@ -648,11 +649,12 @@ namespace Bronya.Services
             }
             return SendOrEdit(
                 $"Гостей {total}" +
-                $"\r\nСтр. {page}/{maxPage}",
+                $"\r\nСтр {page}/{maxPage}",
                 new InlineKeyboardConstructor()
                     .AddHostesShowAccounts(accs.Skip((page - 1) * onPage).Take(onPage), "account")
                     .AddButtonDownIf(() => page > 1, "<", $"/get_accounts/{page - 1}")
-                    .AddButtonDownIf(() => page < maxPage, ">", $"/get_accounts/{page + 1}")
+                    .AddButtonRightIf(() => page < maxPage && page > 1, ">", $"/get_accounts/{page + 1}")
+                    .AddButtonDownIf(() => page < maxPage && page == 1, ">", $"/get_accounts/{page + 1}")
                     .AddButtonDown("Назад", $"/menu")
             );
         }
@@ -727,7 +729,7 @@ namespace Bronya.Services
             var books = BookService.GetBooks(mainAccount).Where(x => x.ActualBookStartTime.Date == date.Date).ToArray();
             return SendOrEdit(
                 $"{mainAccount.GetCard()}" +
-                $"\r\nНесколько броней на {date.ToShortDateString()}",
+                $"\r\nНесколько броней на {date.ToddMM()}",
                 new InlineKeyboardConstructor()
                     .AddHostesBooksButtons(books, "/abbd_show_book")
                     .AddButtonDown("Назад", $"/account_books/{mainAccount.Id}")
@@ -790,7 +792,7 @@ namespace Bronya.Services
             }
 
             return SendOrEdit(
-                $"Аккаунты гостя {mainAccount} успешно объеденены!",
+                $"Аккаунты гостя {mainAccount} успешно объеденены\\!",
                 new InlineKeyboardConstructor()
                     .AddButtonDown("Назад", $"/account/{mainAccount.Id}")
             );

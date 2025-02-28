@@ -20,21 +20,25 @@ namespace Bronya.Entities
         public override string ToString()
         {
             return HasConsole
-                ? $"{Name.EscapeMarkdown1()}🎮"
-                : $"{Name.EscapeMarkdown1()}";
+                ? $"{Name.EscapeFormat()}🎮"
+                : $"{Name.EscapeFormat()}";
         }
 
         public virtual string GetState()
         {
-            var state = $"Название: {Name.EscapeMarkdown1()}" +
+            var state = $"Название: {Name.EscapeFormat()}" +
                 $"\r\nМест: {NormalSeatAmount}";
             if (HasConsole)
                 state += $"\r\nЕсть приставка 🎮";
             if (!IsBookAvailable)
-                state += $"\r\n🚫Онлайн бронирование не доступно!";
+                state += $"\r\n🚫Онлайн бронирование не доступно\\!";
             return state ;
         }
 
+        /// <summary>
+        /// Без mdV2
+        /// </summary>
+        /// <returns></returns>
         public virtual string GetTitle()
         {
             var state = string.Empty;
@@ -42,7 +46,7 @@ namespace Bronya.Entities
                 state += $"🚫";
             if (HasConsole)
                 state += $"🎮";
-             state += $"Стол: {Name.EscapeMarkdown1()}" +
+             state += $"Стол: {Name}" +
                 $" 👤{NormalSeatAmount}";
             return state;
         }

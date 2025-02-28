@@ -1,6 +1,7 @@
 ﻿using Telegram.Bot;
 using Telegram.Bot.Types.ReplyMarkups;
 
+
 namespace Buratino.Xtensions
 {
     public static class TGAPIXtensions
@@ -17,11 +18,29 @@ namespace Buratino.Xtensions
             }
         }
 
-        public static string EscapeMarkdown1(this string source)
+        public static string EscapeFormat(this string source)
+        {
+            return EscapeMarkdown2(source);
+        }
+
+        private static string EscapeMarkdown1(this string source)
         {
             if (source == null)
                 return null;
             return source.Replace("_", "\\_").Replace("*", "\\*").Replace("`", "\\`").Replace("[", "\\[");
+        }
+
+        private static string EscapeMarkdown2(this string source)
+        {
+            if (source == null)
+                return null;
+
+            var chars = new char[] { '_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!' };
+            foreach (var item in chars)
+            {
+                source = source.Replace(item.ToString(), "\\" + item);
+            }
+            return source;
         }
     }
 }

@@ -1,9 +1,12 @@
 ﻿using Bronya.Entities.Abstractions;
 using Bronya.Enums;
 using Bronya.Services;
+using Bronya.Xtensions;
 
 using Buratino.Helpers;
 using Buratino.Xtensions;
+
+using vkteams.Xtensions;
 
 namespace Bronya.Entities
 {
@@ -95,17 +98,17 @@ namespace Bronya.Entities
             var smena = new BookService(null).Smena;
 
             string state = "Бронь:";
-            state += $"\r\n⏱️Время: {ActualBookStartTime:dd.MM HH:mm}";
-            state += $"\r\n🔲Стол: {Table.Name.EscapeMarkdown1()}";
+            state += $"\r\n⏱️Время: {ActualBookStartTime.ToHHmm()}";
+            state += $"\r\n🔲Стол: {Table.Name.EscapeFormat()}";
             if (Table.HasConsole)
                 state += "🎮";
 
             state += $"\r\n👤Гостей: {SeatAmount}";
             state += $"\r\nИмя: {Guest}";
             if (Guest.TGTag != default)
-                state += $"\r\n@{Guest.TGTag.EscapeMarkdown1()}";
+                state += $"\r\n@{Guest.TGTag.EscapeFormat()}";
             if (Guest.Phone != default)
-                state += $"\r\n{Guest.Phone.EscapeMarkdown1()}";
+                state += $"\r\n{Guest.Phone.EscapeFormat()}";
 
             if (IsCanceled)
             {
@@ -113,7 +116,7 @@ namespace Bronya.Entities
             }
             if (TableClosed != default)
             {
-                state += $"\r\n\r\n*Стол закрыт: {TableClosed:HH:mm}*";
+                state += $"\r\n\r\n*Стол закрыт: {TableClosed.ToHHmm()}*";
             }
             else if (TableStarted != default)
             {
@@ -123,8 +126,57 @@ namespace Bronya.Entities
                 state += "\r\n";
                 if (TableAllowedStarted != TableStarted)
                     state += $"\r\n*Опоздание*";
-                state += $"\r\n*Вынос кальяна: {TableStarted:HH:mm}; Стол до: {timeEnd:HH:mm}" +
-                    $"\r\nОсталось: {timeLeft.TotalMinutes.Round()} мин.*";
+                state += $"\r\n*Вынос кальяна: {TableStarted.ToHHmm()}; Стол до: {timeEnd.ToHHmm()}" +
+                    $"\r\nОсталось: {timeLeft.TotalMinutes.Round()} мин*";
+            }
+            return state;
+        }
+
+        public virtual string GetEditState(Account account)
+        {
+            var smena = new BookService(account).Smena;
+
+            string state = "Бронь:";
+            if (ActualBookStartTime == account.SelectedTime)
+                state += $"\r\n⏱️Время: {ActualBookStartTime.ToddMM_HHmm()}";
+            else
+                state += $"\r\n⏱️Время: ~{ActualBookStartTime.ToddMM_HHmm()}~ *{account.SelectedTime.ToddMM_HHmm()}*";
+
+            var consoleTitle = Table.HasConsole ? "🎮" : string.Empty;
+            var console2Title = account.SelectedTable.HasConsole ? "🎮" : string.Empty;
+            if (Table == account.SelectedTable)
+                state += $"\r\n🔲Стол: {Table.Name.EscapeFormat()}{consoleTitle}";
+            else
+                state += $"\r\n🔲Стол: ~{Table.Name.EscapeFormat()}{consoleTitle}~ *{account.SelectedTable.Name.EscapeFormat()}{console2Title}*";
+
+            state += $"\r\n👤Гостей: {SeatAmount}";
+
+            state += $"\r\nИмя: {Guest}";
+            if (Guest.TGTag != default)
+                state += $"\r\n@{Guest.TGTag.EscapeFormat()}";
+            if (Guest.Phone != default)
+                state += $"\r\n{Guest.Phone.EscapeFormat()}";
+
+            if (IsCanceled)
+            {
+                state += $"\r\n*🚫Отменена🚫*";
+                return state;
+            }
+
+            if (TableStarted != default)
+            {
+                var timeEnd = TableAllowedStarted.Add(BookLength);
+                var timeLeft = timeEnd.Subtract(new TimeService().GetNow());
+
+                state += "\r\n";
+                if (TableAllowedStarted != TableStarted)
+                    state += $"\r\n*Опоздание*";
+                state += $"\r\n*Вынос кальяна: {TableStarted.ToHHmm()}; Стол до: {timeEnd.ToHHmm()}" +
+                    $"\r\nОсталось: {timeLeft.TotalMinutes.Round()} мин*";
+            }
+            if (TableClosed != default)
+            {
+                state += $"\r\n\r\n*Стол закрыт: {TableClosed.ToHHmm()}*";
             }
             return state;
         }
@@ -132,7 +184,7 @@ namespace Bronya.Entities
         public virtual string GetTitle()
         {
             var closedTitle = TableClosed != default ? "⛔️" : "";
-            return $"{closedTitle}{ActualBookStartTime:HH:mm} {Guest.ToString()} 👤:{SeatAmount}";
+            return $"{closedTitle}{ActualBookStartTime.ToHHmm()} {Guest.ToString()} 👤:{SeatAmount}";
         }
 
         public virtual InlineKeyboardConstructor GetButtons()
@@ -157,7 +209,8 @@ namespace Bronya.Entities
                 return new InlineKeyboardConstructor()
                     .AddButtonDown("⛔️", $"/try_close/{Id}")
                     .AddButtonRight("↔️", $"/try_prolongate/{Id}")
-                    .AddButtonRight("🔲", $"/table/{Table.Id}");
+                    .AddButtonRight("П", $"/edit/{Id}")
+                    .AddButtonDown("🔲", $"/table/{Table.Id}");
             }
             else
             {
@@ -165,7 +218,8 @@ namespace Bronya.Entities
                     .AddButtonRight("✅", $"/try_start_book/{Id}")
                     .AddButtonDown("🔴", $"/try_cancel/{Id}")
                     .AddButtonRight("⤵️", $"/try_move/{Id}")
-                    .AddButtonRight("🔲", $"/table/{Table.Id}");
+                    .AddButtonRight("П", $"/edit/{Id}")
+                    .AddButtonDown("🔲", $"/table/{Table.Id}");
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿using Bronya.Entities.Abstractions;
 using Bronya.Enums;
+using Bronya.Xtensions;
 
 using Buratino.Models.Attributes;
 using Buratino.Xtensions;
@@ -59,16 +60,21 @@ namespace Bronya.Entities
         /// </summary>
         public virtual int NowMenuMessageId { get; set; }
 
+        /// <summary>
+        /// Бронь для редактирования
+        /// </summary>
+        public virtual Book SelectedBook { get; set; }
+
         public virtual string GetNewBookState()
         {
             string state = "Новая бронь:";
             if (SelectedTime != default)
             {
-                state += $"\r\n⏱️Время: {SelectedTime:dd.MM HH:mm}";
+                state += $"\r\n⏱️Время: {SelectedTime.ToddMM_HHmm()}";
             }
             if (SelectedTable != default)
             {
-                state += $"\r\n🔲Стол: {SelectedTable.Name.EscapeMarkdown1()}";
+                state += $"\r\n🔲Стол: {SelectedTable.Name.EscapeFormat()}";
                 if (SelectedTable.HasConsole)
                     state += "🎮";
             }
@@ -86,12 +92,16 @@ namespace Bronya.Entities
 
         public override string ToString()
         {
-            return $"{Name.EscapeMarkdown1()}";
+            return $"{Name.EscapeFormat()}";
         }
 
+        /// <summary>
+        /// Без mdV2
+        /// </summary>
+        /// <returns></returns>
         public virtual string GetCardTitle()
         {
-            string title = $"{Name.EscapeMarkdown1()} {Phone.EscapeMarkdown1()} ({CardNumber.EscapeMarkdown1()})";
+            string title = $"{Name} {Phone} ({CardNumber})";
             if (TGTag != default)
                 title = "✅" + title;
             return title;
@@ -99,18 +109,18 @@ namespace Bronya.Entities
 
         public virtual string GetCard()
         {
-            string state = $"{Name.EscapeMarkdown1()}";
+            string state = $"{Name.EscapeFormat()}";
             if (CardNumber != default)
             {
-                state += $"\r\nКарта: {CardNumber.EscapeMarkdown1()}";
+                state += $"\r\nКарта: {CardNumber.EscapeFormat()}";
             }
             if (TGTag != default)
             {
-                state += $"\r\n@{TGTag.EscapeMarkdown1()}";
+                state += $"\r\n@{TGTag.EscapeFormat()}";
             }
             if (Phone != default)
             {
-                state += $"\r\n{Phone.EscapeMarkdown1()}";
+                state += $"\r\n{Phone.EscapeFormat()}";
             }
             return state;
         }
