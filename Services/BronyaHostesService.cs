@@ -20,6 +20,14 @@ namespace Bronya.Services
         [ApiPointer("start", "menu")]
         private string Menu()
         {
+            //Сброс на всякий случай
+            if (Package.Account.SelectedBook != default)
+            {
+                Package.Account.SelectedTable = default;
+                Package.Account.SelectedTime = default;
+                AccountService.SelectBook(Package.Account, default);
+            }
+
             return SendOrEdit(
                 "Меню хостеса:",
                 new InlineKeyboardConstructor()
@@ -345,6 +353,86 @@ namespace Bronya.Services
             BookService.BookDS.Save(book);
             return ShowBook(book);
         }
+
+        [ApiPointer("edit")]
+        private string Edit(Book book)
+        {
+            LogService.LogEvent(nameof(Edit) + ":" + book?.Id);
+
+            Package.Account.SelectedTable = default;
+            Package.Account.SelectedTime = book.ActualBookStartTime;
+            AccountService.SelectBook(Package.Account, book);
+
+            return SelectTable();
+        }
+
+        private string EditPreview()
+        {
+            LogService.LogEvent(nameof(EditPreview) + ":" + Package.Account.SelectedBook?.Id);
+
+            return SendOrEdit(
+                Package.Account.SelectedBook.GetEditState(Package.Account),
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("Отмена", $"/reset_all")
+                    .AddButtonRight("✏️⏱️", $"/book_select_time")
+                    .AddButtonRight("✏️🔲", $"/select_table")
+                    .AddButtonDown("Сохранить", $"/update_book")
+            );
+        }
+
+        [ApiPointer("update_book")]
+        private string UpdateBook()
+        {
+            var book = Package.Account.SelectedBook;
+            var availables = BookService.GetAvailableTimesForBook(Package.Account.SelectedTable, Package.Account, book);
+            if (!availables.Contains(Package.Account.SelectedTime))
+            {
+                return SendOrEdit(
+                    "Теперь нельзя забронировать стол на это время",
+                    new InlineKeyboardConstructor()
+                        .AddButtonDown("Поменять время", $"/reset_time")
+                );
+            }
+
+            if (book.GetStatus() == BookStatus.Opened)
+            {
+                var newBook = new Book()
+                {
+                    Guest = book.Guest,
+                    SeatAmount = book.SeatAmount,
+                    ActualBookStartTime = Package.Account.SelectedTime,
+                    BookLength = book.BookLength - (Package.Account.SelectedTime - book.TableAllowedStarted),
+                    TableStarted = Package.Account.SelectedTime,
+                    TableAllowedStarted = Package.Account.SelectedTime,
+                    Table = Package.Account.SelectedTable,
+                };
+                BookService.BookDS.Save(newBook);
+
+                book.SetNewBookEndTime(Package.Account.SelectedTime);
+                book.TableClosed = Package.Account.SelectedTime;
+                BookService.BookDS.Save(book);
+
+                Package.Account.SelectedTable = default;
+                Package.Account.SelectedTime = default;
+                AccountService.SelectBook(Package.Account, default);
+                return ShowBook(newBook);
+            }
+            else if (book.GetStatus() == BookStatus.Booked)
+            {
+                book.ActualBookStartTime = Package.Account.SelectedTime;
+                book.Table = Package.Account.SelectedTable;
+                BookService.BookDS.Save(book);
+
+                Package.Account.SelectedTable = default;
+                Package.Account.SelectedTime = default;
+                AccountService.SelectBook(Package.Account, default);
+                return ShowBook(book);
+            }
+            else
+            {
+                return ShowBook(book);
+            }
+        }
         #endregion
 
         #region table manage
@@ -404,60 +492,6 @@ namespace Bronya.Services
                 );
         }
 
-        /// <summary>
-        /// Сбросить время и выбрать стол
-        /// </summary>
-        /// <param name="Package.Account"></param>
-        /// <param name="time"></param>
-        /// <param name=""></param>
-        /// <param name="messageId"></param>
-        /// <returns></returns>
-        [ApiPointer("reset_time")]
-        private string ResetTime()
-        {
-            LogService.LogEvent(nameof(ResetTime));
-            Package.Account.SelectedTime = default;
-            AccountService.AccountDS.Save(Package.Account);
-            return SelectTable();
-        }
-
-        /// <summary>
-        /// Сбросить стол и выбрать время
-        /// </summary>
-        /// <param name="Package.Account"></param>
-        /// <param name="time"></param>
-        /// <param name=""></param>
-        /// <param name="messageId"></param>
-        /// <returns></returns>
-        [ApiPointer("reset_table")]
-        private string ResetTable()
-        {
-            LogService.LogEvent(nameof(ResetTable));
-            Package.Account.SelectedTable = default;
-            AccountService.AccountDS.Save(Package.Account);
-            return BookSelectTime();
-        }
-
-        /// <summary>
-        /// Сбросить стол, время, места и имя гостя
-        /// </summary>
-        /// <param name="Package.Account"></param>
-        /// <param name="time"></param>
-        /// <param name=""></param>
-        /// <param name="messageId"></param>
-        /// <returns></returns>
-        [ApiPointer("reset_all")]
-        private string ResetAll()
-        {
-            LogService.LogEvent(nameof(ResetAll));
-            Package.Account.SelectedTable = default;
-            Package.Account.SelectedTime = default;
-            Package.Account.SelectedPlaces = default;
-            Package.Account.Waiting = default;
-            AccountService.AccountDS.Save(Package.Account);
-            return Menu();
-        }
-
         [ApiPointer("set_time")]
         private string SetTime(DateTime time)
         {
@@ -482,14 +516,14 @@ namespace Bronya.Services
                     .ToArray()
                     .Where(table =>
                     {
-                        var times = BookService.GetAvailableTimesForBook(table, Package.Account);
+                        var times = BookService.GetAvailableTimesForBook(table, Package.Account, Package.Account.SelectedBook);
                         return times.Contains(Package.Account.SelectedTime);//Поиск по конкретному времени
                     }).ToArray()
                 : BookService.TableDS.GetAll().Where(x => x.IsBookAvailable).OrderBy(x => x.Number)
                     .ToArray()
                     .Where(table =>
                     {
-                        var times = BookService.GetAvailableTimesForBook(table, Package.Account);//Поиск столов, у которых есть свободное время
+                        var times = BookService.GetAvailableTimesForBook(table, Package.Account, Package.Account.SelectedBook);//Поиск столов, у которых есть свободное время
                         return times.Any();
                     }).ToArray();
 
@@ -526,6 +560,11 @@ namespace Bronya.Services
         [ApiPointer("select_places")]
         private string SelectPlaces()
         {
+            //Редактирование брони
+            if (Package.Account.SelectedBook != default)
+            {
+                return EditPreview();
+            }
             return SendOrEdit(
                 $"{Package.Account.GetNewBookState()}" +
                 $"\r\n*Гостей:*",
@@ -620,6 +659,69 @@ namespace Bronya.Services
             AccountService.AccountDS.Save(Package.Account);
 
             return ShowBook(newBook);
+        }
+
+        /// <summary>
+        /// Сбросить время и выбрать стол
+        /// </summary>
+        /// <param name="Package.Account"></param>
+        /// <param name="time"></param>
+        /// <param name=""></param>
+        /// <param name="messageId"></param>
+        /// <returns></returns>
+        [ApiPointer("reset_time")]
+        private string ResetTime()
+        {
+            LogService.LogEvent(nameof(ResetTime));
+            Package.Account.SelectedTime = default;
+            AccountService.AccountDS.Save(Package.Account);
+            return SelectTable();
+        }
+
+        /// <summary>
+        /// Сбросить стол и выбрать время
+        /// </summary>
+        /// <param name="Package.Account"></param>
+        /// <param name="time"></param>
+        /// <param name=""></param>
+        /// <param name="messageId"></param>
+        /// <returns></returns>
+        [ApiPointer("reset_table")]
+        private string ResetTable()
+        {
+            LogService.LogEvent(nameof(ResetTable));
+            Package.Account.SelectedTable = default;
+            AccountService.AccountDS.Save(Package.Account);
+            return BookSelectTime();
+        }
+
+        /// <summary>
+        /// Сбросить стол, время, места и имя гостя
+        /// </summary>
+        /// <param name="Package.Account"></param>
+        /// <param name="time"></param>
+        /// <param name=""></param>
+        /// <param name="messageId"></param>
+        /// <returns></returns>
+        [ApiPointer("reset_all")]
+        private string ResetAll()
+        {
+            LogService.LogEvent(nameof(ResetAll));
+            Package.Account.SelectedTable = default;
+            Package.Account.SelectedTime = default;
+            Package.Account.SelectedPlaces = default;
+            Package.Account.Waiting = default;
+
+            var book = Package.Account.SelectedBook;
+            AccountService.SelectBook(Package.Account, default);
+            if (book != null)
+            {
+                return ShowBook(book);
+            }
+            else
+            {
+                return Menu();
+            }
         }
         #endregion
 

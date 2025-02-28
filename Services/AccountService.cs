@@ -173,5 +173,12 @@ namespace Bronya.Services
             AccountDS.Save(account);
             return true;
         }
+
+        public bool SelectBook(Account account, Book book)
+        {
+            account.SelectedBook = book;
+            AccountDS.Save(account);
+            return true;
+        }
     }
 }

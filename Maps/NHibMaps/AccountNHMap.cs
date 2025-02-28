@@ -24,6 +24,8 @@ public class AccountNHMap : NHSubclassClassMap<Account>
             .Not.LazyLoad();
         References(x => x.SelectedSchedule)
             .Not.LazyLoad();
+        References(x => x.SelectedBook)
+            .Not.LazyLoad();
 
         HasManyToMany(x => x.Roles)
             .Access.Property()
