@@ -39,6 +39,12 @@ namespace Buratino.Helpers
             return this;
         }
 
+        public InlineKeyboardConstructor AddLinkDown(string title, string url)
+        {
+            KeyboardButtons.Add(new() { new InlineKeyboardButton(title) { Url = url } });
+            return this;
+        }
+
         public InlineKeyboardConstructor AddGrid(IEnumerable<IEnumerable<InlineKeyboardButton>> array)
         {
             KeyboardButtons.AddRange(array.Select(x => x.ToList()).ToList());

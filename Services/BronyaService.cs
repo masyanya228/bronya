@@ -83,9 +83,10 @@ namespace Bronya.Services
             return SendOrEdit(
                 $"{GetContactsForMenu()}",
                 new InlineKeyboardConstructor()
-                    .AddButtonDown("Insta", "#")
-                    .AddButtonDown("Telegram группа", "#")
-                    .AddButtonDown("Чат с администратором", "#")
+                    .AddLinkDown("Insta", "https://www.instagram.com/greenplace_kzn")
+                    .AddLinkDown("Threads", "https://www.threads.net/@greenplace_kzn")
+                    .AddLinkDown("Telegram группа", "https://t.me/the_green_place")
+                    .AddLinkDown("Чат с администратором", "https://t.me/+S8emunypWyo4NGNi")
                     .AddButtonDown("Назад", $"/menu"));
         }
 
