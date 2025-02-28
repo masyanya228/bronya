@@ -86,20 +86,10 @@ namespace Buratino.API
             return Task.CompletedTask;
         }
 
-        public string SendOrEdit(DataPackage package, string text, IReplyConstructor replyConstructor = null, ParseMode? parseMode = ParseMode.Markdown, TGInputImplict file = null)
+        public string SendOrEdit(DataPackage package, string text, IReplyConstructor replyConstructor = null, ParseMode? parseMode = default, TGInputImplict file = null)
         {
             if (parseMode == default)
-                parseMode = ParseMode.Markdown;
-
-            if (parseMode == ParseMode.MarkdownV2)
-            {
-                text = string.Concat(text.ToArray().Select(x =>
-                {
-                    if (((int)x).Between_LTE_GTE(1, 126))
-                        return $"\\{x}";
-                    return x.ToString();
-                }));
-            }
+                parseMode = ParseMode.MarkdownV2;
 
             if (file == default)
             {

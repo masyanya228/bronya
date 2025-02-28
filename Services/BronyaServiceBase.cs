@@ -266,7 +266,7 @@ namespace Bronya.Services
             return method.Key.Invoke(this, arguments).ToString();
         }
 
-        protected string SendOrEdit(string text, IReplyConstructor replyConstructor = null, ParseMode? parseMode = ParseMode.Markdown, TGInputImplict file = default)
+        protected string SendOrEdit(string text, IReplyConstructor replyConstructor = null, ParseMode? parseMode = ParseMode.MarkdownV2, TGInputImplict file = default)
         {
             return TGAPI.SendOrEdit(Package, text, replyConstructor, parseMode, file);
         }
