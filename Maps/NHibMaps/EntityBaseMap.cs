@@ -1,4 +1,5 @@
-﻿using Buratino.Entities.Abstractions;
+﻿using Bronya.Entities.Abstractions;
+
 using Buratino.Maps.NHibMaps;
 
 public class EntityBaseMap : NHClassMap<EntityBase>

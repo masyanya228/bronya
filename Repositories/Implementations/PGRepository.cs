@@ -2,7 +2,6 @@
 using Bronya.Entities.Abstractions;
 
 using Buratino.DI;
-using Buratino.Entities.Abstractions;
 using Buratino.Repositories.Implementations.Postgres;
 using Buratino.Repositories.RepositoryStructure;
 

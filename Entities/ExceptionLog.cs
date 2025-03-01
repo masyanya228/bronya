@@ -1,4 +1,4 @@
-﻿using Buratino.Entities.Abstractions;
+﻿using Bronya.Entities.Abstractions;
 
 namespace Bronya.Entities
 {

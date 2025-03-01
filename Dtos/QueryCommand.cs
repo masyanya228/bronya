@@ -1,9 +1,5 @@
 ﻿using Bronya.Entities;
 
-using Buratino.Entities.Abstractions;
-
-using System.Diagnostics.CodeAnalysis;
-
 namespace Bronya.Dtos
 {
     public class QueryCommand : IEquatable<QueryCommand>

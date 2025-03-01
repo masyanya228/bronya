@@ -1,6 +1,4 @@
-﻿using Buratino.Entities.Abstractions;
-
-namespace Bronya.Entities.Abstractions
+﻿namespace Bronya.Entities.Abstractions
 {
     public abstract class PersistentEntity : NamedEntity
     {

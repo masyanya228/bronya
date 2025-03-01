@@ -1,4 +1,5 @@
-﻿using Buratino.Entities.Abstractions;
+﻿using Bronya.Entities.Abstractions;
+
 using Buratino.Models.DomainService.DomainStructure;
 
 namespace Buratino.Models.DomainService

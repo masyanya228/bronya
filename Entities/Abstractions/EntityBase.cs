@@ -1,6 +1,4 @@
-﻿using Bronya.Entities;
-
-namespace Buratino.Entities.Abstractions
+﻿namespace Bronya.Entities.Abstractions
 {
     public abstract class EntityBase : IEquatable<EntityBase>, IEntityBase
     {

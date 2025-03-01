@@ -1,6 +1,6 @@
 ﻿using Bronya.Entities;
+using Bronya.Entities.Abstractions;
 
-using Buratino.Entities.Abstractions;
 using Buratino.Models.DomainService;
 using Buratino.Models.DomainService.DomainStructure;
 using Buratino.Repositories.RepositoryStructure;

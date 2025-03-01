@@ -1,4 +1,4 @@
-﻿namespace Buratino.Entities.Abstractions
+﻿namespace Bronya.Entities.Abstractions
 {
     public abstract class NamedEntity : EntityBase
     {
