@@ -127,7 +127,7 @@ namespace Bronya.Entities
                 if (TableAllowedStarted != TableStarted)
                     state += $"\r\n*Опоздание*";
                 state += $"\r\n*Вынос кальяна: {TableStarted.ToHHmm()}; Стол до: {timeEnd.ToHHmm()}" +
-                    $"\r\nОсталось: {timeLeft.TotalMinutes.Round()} мин*";
+                    $"\r\nОсталось: {timeLeft.TotalMinutes.Round().ToString().EscapeFormat()} мин*";
             }
             return state;
         }
