@@ -1,4 +1,5 @@
-﻿using Bronya.Dtos;
+﻿using Bronya.Caching.Structure;
+using Bronya.Dtos;
 using Bronya.Entities;
 
 using Buratino.DI;
@@ -8,7 +9,6 @@ namespace Bronya.Services
 {
     public class BookService
     {
-
         public IDomainService<Book> BookDS { get; set; }
         public IDomainService<Table> TableDS {  get; set; }
         public WorkScheduleService ScheduleService {  get; set; }
@@ -20,7 +20,7 @@ namespace Bronya.Services
             {
                 if (smena == null)
                 {
-                    smena = GetCurrentSmena();
+                    smena = Container.Get<ICacheService<SmenaDto>>().Get(GetCurrentSmena, "currentSmena");
                 }
                 return smena;
             }
@@ -113,7 +113,7 @@ namespace Bronya.Services
             return book.ActualBookStartTime.Add(Smena.Schedule.Step);
         }
 
-        private SmenaDto GetCurrentSmena()
+        public SmenaDto GetCurrentSmena()
         {
             DateTime now = TimeService.GetNow();
             return GetCurrentSmena(now);
@@ -139,9 +139,10 @@ namespace Bronya.Services
         public DateTime[] GetAvailableTimesForBook(Account acc)
         {
             IEnumerable<DateTime> allTimes = Array.Empty<DateTime>();
+            var allBooks = GetCurrentBooks();
             foreach (var table in TableDS.GetAll())
             {
-                allTimes = allTimes.Union(GetAvailableTimesForBook(table, acc));
+                allTimes = allTimes.Union(GetAvailableTimesForBook(table, acc, null, allBooks.Where(x => x.Table == table).ToList()));
             }
             return allTimes.OrderBy(x => x).ToArray();
         }

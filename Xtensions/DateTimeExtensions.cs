@@ -3,6 +3,9 @@ using Bronya.Services;
 
 using Buratino.Xtensions;
 
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System;
+
 namespace Bronya.Xtensions
 {
     public static class DateTimeExtensions
@@ -32,5 +35,11 @@ namespace Bronya.Xtensions
         public static DayOfWeeks ToDayOfWeeks(this DayOfWeek dayOfWeek) => Enum.TryParse(dayOfWeek.ToString(), out DayOfWeeks result)
             ? result
             : DayOfWeeks.None;
+
+        public static DateTime Round(this DateTime dateTime, TimeSpan epsilon)
+        {
+            long ticks = dateTime.Ticks / epsilon.Ticks;
+            return new DateTime(ticks * epsilon.Ticks, dateTime.Kind);
+        }
     }
 }

@@ -488,8 +488,10 @@ namespace Bronya.Services
                     .AddTimeButtons(times)
                     .AddButtonDown("🗑", backCallback)
                     .AddButtonRightIf(() => table != null, "♻️⏱️", "/reset_table")
-                    .AddButtonRight(table != null ? "✏️🔲" : "✏️🔲", "/select_table")
-                );
+                    .AddButtonRight(table != null ? "✏️🔲" : "✏️🔲", "/select_table"),
+                null,
+                new CalendarDrawService().DrawFull()
+            );
         }
 
         [ApiPointer("set_time")]
@@ -511,19 +513,21 @@ namespace Bronya.Services
         [ApiPointer("select_table")]
         private string SelectTable()
         {
+            var allBooks = BookService.GetCurrentBooks();
             var tables = Package.Account.SelectedTime != default
                 ? BookService.TableDS.GetAll().Where(x => x.IsBookAvailable).OrderBy(x => x.Number)
                     .ToArray()
                     .Where(table =>
                     {
-                        var times = BookService.GetAvailableTimesForBook(table, Package.Account, Package.Account.SelectedBook);
+                        var times = BookService.GetAvailableTimesForBook(table, Package.Account, Package.Account.SelectedBook, allBooks.Where(x => x.Table == table).ToList());
                         return times.Contains(Package.Account.SelectedTime);//Поиск по конкретному времени
                     }).ToArray()
                 : BookService.TableDS.GetAll().Where(x => x.IsBookAvailable).OrderBy(x => x.Number)
                     .ToArray()
                     .Where(table =>
                     {
-                        var times = BookService.GetAvailableTimesForBook(table, Package.Account, Package.Account.SelectedBook);//Поиск столов, у которых есть свободное время
+                        //Поиск столов, у которых есть свободное время
+                        var times = BookService.GetAvailableTimesForBook(table, Package.Account, Package.Account.SelectedBook, allBooks.Where(x => x.Table == table).ToList());
                         return times.Any();
                     }).ToArray();
 
@@ -536,7 +540,7 @@ namespace Bronya.Services
                     .AddButtonRight(Package.Account.SelectedTime != default ? "✏️⏱️" : "✏️⏱️", "/book_select_time")
                     .AddButtonRightIf(() => Package.Account.SelectedTime != default, "♻️🔲", "/reset_time"),
                 default,
-                ImageId
+                new CalendarDrawService().DrawFull()
             );
         }
 
@@ -765,9 +769,13 @@ namespace Bronya.Services
         [ApiPointer("account")]
         private string Account(Account mainAccount)
         {
-            Package.Account.SelectedAccount = default;
-            Package.Account.Waiting = WaitingText.None;
-            AccountService.AccountDS.Save(mainAccount);
+            //Сброс на всякий случай
+            if (Package.Account.Waiting != default)
+            {
+                Package.Account.SelectedAccount = default;
+                Package.Account.Waiting = WaitingText.None;
+                AccountService.AccountDS.Save(Package.Account);
+            }
 
             var accs = AccountService.GetAccountsToUnion(mainAccount);
             var trueAcc = AccountService.GetTrueAccount(mainAccount);

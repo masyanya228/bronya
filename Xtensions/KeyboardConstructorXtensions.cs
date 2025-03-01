@@ -236,10 +236,11 @@ namespace Buratino.Xtensions
             var bookService = new BookService(acc);
             int count = 0;
             int tablesInRow = 2;
+            var allBooks = bookService.GetCurrentBooks();
             foreach (var table in tables)
             {
-                var books = bookService.GetCurrentBooks(table);
-                bool isBusy = !bookService.GetAvailableTimesForBook(table, acc).Any();
+                var books = allBooks.Where(x => x.Table == table).ToList();
+                bool isBusy = !bookService.GetAvailableTimesForBook(table, acc, null, books).Any();
 
                 string btnTitle = string.Empty;
 

@@ -1,4 +1,5 @@
-﻿using Bronya.Dtos;
+﻿using Bronya.Caching.Structure;
+using Bronya.Dtos;
 using Bronya.Entities;
 using Bronya.Enums;
 using Bronya.Helpers;
@@ -309,6 +310,7 @@ namespace Bronya.Services
                 Package.Account.Roles.Add(newRole);
             }
             AccountService.AccountDS.Save(Package.Account);
+            Container.Get<ICacheService<Account>>().Remove(Package.Account);
 
             return ShowRole();
         }

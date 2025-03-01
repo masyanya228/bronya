@@ -1,16 +1,21 @@
-﻿using Bronya.Dtos;
+﻿using Bronya.Caching.Structure;
+using Bronya.Dtos;
 using Bronya.Helpers;
 using Bronya.Services;
 using Bronya.Xtensions;
 
+using Buratino.DI;
 using Buratino.Helpers;
 using Buratino.Xtensions;
+
+using System.Security.Cryptography;
 
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.ReplyMarkups;
+
+using vkteams.Xtensions;
 
 namespace Buratino.API
 {
@@ -21,6 +26,8 @@ namespace Buratino.API
 
         public bool IsWorking { get; private set; }
 
+        public ICacheService<StreamFileIdDto> StreamFilesCacheService { get; private set; }
+
         public delegate Task APIUpdateEventHandler(object sender, Update update);
 
         public event APIUpdateEventHandler UpdateEvent;
@@ -29,6 +36,7 @@ namespace Buratino.API
         {
             Console.WriteLine(token);
             client = new TelegramBotClient(token, new HttpClient());
+            StreamFilesCacheService = Container.Get<ICacheService<StreamFileIdDto>>();
             this.logService = logService;
             IsWorking = true;
         }
@@ -108,28 +116,28 @@ namespace Buratino.API
                         }
                     }
                     return Edit(package.ChatId, package.MessageId, text, parseMode, replyConstructor);
-                }   
+                }
             }
             else
             {
                 if (package.MessageId == default)
-                    return SendFile(package.ChatId, file.GetInputOnlineFile(), text, parseMode, replyConstructor);
+                    return SendFile(package.ChatId, file, text, parseMode, replyConstructor);
                 else
                 {
                     if (package?.Update?.Type == UpdateType.CallbackQuery)
                     {
                         if (package?.Update?.CallbackQuery?.Message?.Type == MessageType.Photo)
                         {
-                            return EditFile(package.ChatId, package.MessageId, file.GetInputMedia(), text, parseMode, replyConstructor);
+                            return EditFile(package.ChatId, package.MessageId, file, text, parseMode, replyConstructor);
                         }
                         else
                         {
-                            var msgId = SendFile(package.ChatId, file.GetInputOnlineFile(), text, parseMode, replyConstructor);
+                            var msgId = SendFile(package.ChatId, file, text, parseMode, replyConstructor);
                             Delete(package.ChatId, package.MessageId);
                             return msgId;
                         }
                     }
-                    return EditFile(package.ChatId, package.MessageId, file.GetInputMedia(), text, parseMode, replyConstructor);
+                    return EditFile(package.ChatId, package.MessageId, file, text, parseMode, replyConstructor);
                 }
             }
         }
@@ -155,19 +163,35 @@ namespace Buratino.API
             return string.Empty;
         }
 
-        private string SendFile(long chatId, InputOnlineFile image, string caption, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
+        private string SendFile(long chatId, TGInputImplict image, string caption, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
         {
-            return client.SendPhotoAsync(chatId, image, caption, parseMode, null, null, null, null, null, replyConstructor?.GetMarkup() ?? new ReplyKeyboardRemove())
-                .GetAwaiter().GetResult().MessageId.ToString();
+            string hash = GetHash(image);
+
+            var result = client.SendPhotoAsync(chatId, image.GetInputOnlineFile(StreamFilesCacheService, hash), caption, parseMode, null, null, null, null, null, replyConstructor?.GetMarkup() ?? new ReplyKeyboardRemove())
+                .GetAwaiter().GetResult();
+
+            if (image.FileId == default && hash != default)
+            {
+                StreamFilesCacheService.Set(hash, new StreamFileIdDto(result.Photo.First().FileId));
+            }
+            return result.MessageId.ToString();
         }
-        
-        private string EditFile(long chatId, int messageId, InputMedia image, string caption, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
+
+        private string EditFile(long chatId, int messageId, TGInputImplict image, string caption, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
         {
             if (!(replyConstructor is InlineKeyboardConstructor inlineKeyboardConstructor))
                 throw new InvalidOperationException("Нельзя передать кнопки сообщения. Нужно передать кнопки клавиатуры");
 
-            return client.EditMessageMediaAsync(chatId, messageId, new InputMediaPhoto(image) { Caption = caption, ParseMode = parseMode }, inlineKeyboardConstructor?.GetMarkup() as InlineKeyboardMarkup)
-                .GetAwaiter().GetResult().MessageId.ToString();
+            string hash = GetHash(image);
+
+            var result = client.EditMessageMediaAsync(chatId, messageId, new InputMediaPhoto(image.GetInputMedia(StreamFilesCacheService, hash)) { Caption = caption, ParseMode = parseMode }, inlineKeyboardConstructor?.GetMarkup() as InlineKeyboardMarkup)
+                .GetAwaiter().GetResult();
+
+            if (image.FileId == default && hash != default)
+            {
+                StreamFilesCacheService.Set(hash, new StreamFileIdDto(result.Photo.First().FileId));
+            }
+            return result.MessageId.ToString();
         }
 
         public void AnswerCallbackQuery(object queryId, string text = null)
@@ -178,6 +202,15 @@ namespace Buratino.API
         public void SendActions(object chatId, params ChatAction[] actions)
         {
             throw new NotImplementedException();
+        }
+
+        private static string GetHash(TGInputImplict image)
+        {
+            HashAlgorithm hasher = SHA512.Create();
+            var hash = image.Stream != default
+                ? hasher.ComputeHash(image.Stream).ToHex(true)
+                : default;
+            return hash;
         }
     }
 }

@@ -1,4 +1,11 @@
-﻿using Telegram.Bot.Types;
+﻿using Bronya.Caching.Structure;
+using Bronya.Dtos;
+
+using Buratino.DI;
+
+using System.Text;
+
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.InputFiles;
 
 namespace Bronya.Helpers
@@ -25,8 +32,26 @@ namespace Bronya.Helpers
         public static implicit operator TGInputImplict(string value) =>
             value is null ? default : new(value);
 
-        public InputOnlineFile GetInputOnlineFile() => FileId != default ? FileId : Stream;
+        public InputOnlineFile GetInputOnlineFile(ICacheService<StreamFileIdDto> streamFilesCacheService, string hash)
+        {
+            CheckInCache(streamFilesCacheService, hash);
+            return FileId != default ? FileId : Stream;
+        }
 
-        public InputMedia GetInputMedia() => FileId != default ? FileId : new InputMedia(Stream, "Картинка");
+        public InputMedia GetInputMedia(ICacheService<StreamFileIdDto> streamFilesCacheService, string hash)
+        {
+            CheckInCache(streamFilesCacheService, hash);
+            return FileId != default ? FileId : new InputMedia(Stream, "Картинка");
+        }
+
+        private void CheckInCache(ICacheService<StreamFileIdDto> streamFilesCacheService, string hash)
+        {
+            if (Stream != default && hash != default)
+            {
+                var exist = streamFilesCacheService.Get(null, hash);
+                FileId = exist?.FileId;
+                Stream.Position = 0;
+            }
+        }
     }
 }

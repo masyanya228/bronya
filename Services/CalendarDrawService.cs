@@ -3,6 +3,7 @@ using Bronya.Enums;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Drawing;
+using Bronya.Xtensions;
 
 namespace Bronya.Services
 {
@@ -103,18 +104,18 @@ namespace Bronya.Services
 
         public MemoryStream DrawFull()
         {
-            const int workHourStringSize = 50;
-            const int bookShortStringSize = 50;
+            const int workHourStringSize = 25;
+            const int bookShortStringSize = 25;
 
             BookService bookService = new BookService(null);
             var tables = bookService.TableDS.GetAll().OrderBy(x => x.Number).ToArray();
             var allBooks = bookService.GetCurrentBooks().ToArray();
-            Bitmap bmp = new Bitmap(2000, 3000);
+            Bitmap bmp = new Bitmap(1000, 1500);
 
             var smena = bookService.Smena;
             var smenaLength = smena.Schedule.Length;
             var oneHourHeight = bmp.Height / smenaLength.TotalHours;
-            var hourSpace = 100;
+            var hourSpace = 50;
             var tableColW = (bmp.Width - hourSpace) / tables.Count();
 
             using (Graphics g = Graphics.FromImage(bmp))
@@ -186,13 +187,13 @@ namespace Bronya.Services
                     }
                 }
 
-                int yNow = (int)(new TimeService().GetNow().Subtract(smena.SmenaStart).TotalHours * oneHourHeight);
+                int yNow = (int)(new TimeService().GetNow().Round(TimeSpan.FromMinutes(10)).Subtract(smena.SmenaStart).TotalHours * oneHourHeight);
                 g.DrawLine(new Pen(Color.Red, 3), 0, yNow, bmp.Width, yNow);
             }
 
             MemoryStream stream = new MemoryStream();
             bmp.Save(stream, ImageFormat.Jpeg);
-            bmp.Save("C:\\Users\\marse\\source\\repos\\Bronya\\Images\\image2.jpeg", ImageFormat.Jpeg);
+            //bmp.Save("C:\\Users\\marse\\source\\repos\\Bronya\\Images\\image2.jpeg", ImageFormat.Jpeg);
             bmp.Dispose();
             stream.Position = 0;
             return stream;

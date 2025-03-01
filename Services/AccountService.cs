@@ -1,5 +1,7 @@
-﻿using Bronya.Entities;
+﻿using Bronya.Caching.Structure;
+using Bronya.Entities;
 using Bronya.Enums;
+using Bronya.Helpers;
 
 using Buratino.DI;
 using Buratino.Models.DomainService.DomainStructure;
@@ -15,16 +17,18 @@ namespace Bronya.Services
         public static Account RootAccount = new Account { Id = new Guid("da8c13be-6d97-4287-b47e-34caada8d315") };
         public static Account MainTester = new Account { Id = new Guid("4be29f89-f887-48a1-a8af-cad15d032758") };
         public IDomainService<Account> AccountDS { get; set; }
+        public ICacheService<Account> AccountCacheService { get; set; }
 
         public AccountService(Account account)
         {
             AccountDS = Container.GetDomainService<Account>(account);
+            AccountCacheService = Container.Get<ICacheService<Account>>();
         }
 
         public Account GetAccount(Update update)
         {
             var chatId = update.Message?.Chat?.Id ?? update.CallbackQuery?.Message?.Chat?.Id ?? throw new NotImplementedException("Такой тип события не поддерживается");
-            var acc = AccountDS.GetAll().Where(x => x.TGChatId == chatId.ToString()).SingleOrDefault();
+            var acc = AccountCacheService.Get(() => GetAccountByChatId(chatId), chatId.ToString());
             if (acc is null)
             {
                 string name = string.Empty;
@@ -51,6 +55,11 @@ namespace Bronya.Services
                 AccountDS.Save(acc);
             }
             return acc;
+        }
+
+        public Account GetAccountByChatId(long chatId)
+        {
+            return AccountDS.GetAll().Where(x => x.TGChatId == chatId.ToString()).SingleOrDefault();
         }
 
         public IEnumerable<Account> FindAccount(string fullName, bool allowOnlyName)

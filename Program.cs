@@ -14,6 +14,8 @@ using Bronya.Services;
 using Bronya.Jobs.Structures;
 using Quartz;
 using Bronya.Xtensions;
+using System.Runtime.Caching;
+using Bronya.Caching.Structure;
 
 public class Program
 {
@@ -44,10 +46,11 @@ public class Program
 
         builder.Services.AddTransient(typeof(IDomainService<Account>), typeof(PersistentDomainService<Account>));
         builder.Services.AddTransient(typeof(IDomainService<WorkSchedule>), typeof(PersistentDomainService<WorkSchedule>));
-        builder.Services.AddTransient(typeof(IDomainService<Table>), typeof(PersistentDomainService<Table>));
+        builder.Services.AddTransient(typeof(IDomainService<Table>), typeof(TableDomainService));
         builder.Services.AddTransient(typeof(IDomainService<Book>), typeof(BookDomainService));
 
         builder.Services.AddSingleton(typeof(LogToFileService), new LogToFileService());
+        CacheRegistrator.RegisterCaches(builder.Services);
         
         //for PG
         builder.Services.AddSingleton(typeof(IPGSessionFactory), typeof(PGSessionFactory));
