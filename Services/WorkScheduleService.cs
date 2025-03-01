@@ -44,8 +44,9 @@ namespace Bronya.Services
             }
 
             var dayOfWeeks = dateTime.DayOfWeek.ToDayOfWeeks();
+            var dayOfWeeksYesterday = dateTime.AddDays(-1).DayOfWeek.ToDayOfWeeks();
             var standartSchedules = WorkScheduleDS.GetAll(x => !x.IsOneTimeSchedule)
-                .Where(x => x.DayOfWeeks.HasFlag(dayOfWeeks))
+                .Where(x => x.DayOfWeeks.HasFlag(dayOfWeeks) || x.DayOfWeeks.HasFlag(dayOfWeeksYesterday))
                 .OrderByDescending(x => x.StartDate)
                 .ToArray();
             for (var i = 0; i < standartSchedules.Length; i++)
@@ -62,7 +63,7 @@ namespace Bronya.Services
 
                 if (prev != null)
                 {
-                    if (dateTime.Date == workSchedule.StartDate && dateTime.Date.AddDays(-1).Add(prev.Start).Add(prev.Length) > dateTime)
+                    if (dateTime.Date >= workSchedule.StartDate && dateTime.Date.AddDays(-1).Add(prev.Start).Add(prev.Length) > dateTime)
                     {
                         return prev;
                     }
