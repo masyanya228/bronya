@@ -13,6 +13,7 @@ using Bronya.Entities;
 using Bronya.Services;
 using Bronya.Jobs.Structures;
 using Quartz;
+using Bronya.Xtensions;
 
 public class Program
 {
@@ -116,11 +117,16 @@ public class Program
         new AuthorizeService(Container.Get<LogToFileService>(), new TGAPI(Container.Get<LogToFileService>(), Container.Get<IConfiguration>().GetValue("TGApiKey", "")));
 
         JobRegistrator.RegisterJobs(Container.Get<IConfiguration>());
+        SetupEmptyDB();
+    }
 
+    private static void SetupEmptyDB()
+    {
         var accountDS = Container.GetDomainService<Account>(null);
         var account = accountDS.GetAll(x => x.Name == "Root").SingleOrDefault();
         if (account == default)
         {
+            ConsoleXtensions.ColoredPrint("Empty DB. Setup root account", ConsoleColor.Red);
             accountDS.Repository.Insert(new()
             {
                 Id = AccountService.RootAccount.Id,
@@ -138,6 +144,7 @@ public class Program
         var roles = Container.GetDomainService<Role>(null);
         if (!roles.GetAll().Any())
         {
+            ConsoleXtensions.ColoredPrint("Empty DB. Setup roles", ConsoleColor.Red);
             roles.Save(new Role() { Name = "Administrator" });
             roles.Save(new Role() { Name = "Hostes" });
         }
@@ -145,6 +152,7 @@ public class Program
         var workSchedules = Container.GetDomainService<WorkSchedule>(null);
         if (!workSchedules.GetAll().Any())
         {
+            ConsoleXtensions.ColoredPrint("Empty DB. Setup work schedule", ConsoleColor.Red);
             workSchedules.Save(new WorkSchedule());
         }
     }

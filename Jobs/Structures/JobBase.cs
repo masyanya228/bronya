@@ -1,4 +1,5 @@
 ﻿using Bronya.Services;
+using Bronya.Xtensions;
 
 using Quartz;
 
@@ -10,14 +11,10 @@ namespace Bronya.Jobs.Structures
         {
             try
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Job");
-                Console.ResetColor();
+                ConsoleXtensions.ColoredPrint($"Job: {GetType().Name}", ConsoleColor.Yellow);
                 var result = Task.Factory.StartNew(Execute);
                 result.Wait();
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("End");
-                Console.ResetColor();
+                ConsoleXtensions.ColoredPrint($"End: {GetType().Name}", ConsoleColor.Yellow);
                 return result;
             }
             catch (Exception ex)
