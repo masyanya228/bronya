@@ -51,7 +51,7 @@ namespace Bronya.Services
 
                         g.DrawString($"{book.GetTrueStartBook():HH:mm}-{book.GetTrueEndBook():HH:mm}",
                             new Font("Tahoma", bookStringSize),
-                            Brushes.White,
+                            Brushes.Black,
                             new Point(hourSpace + 5, yBook + 5));
                     }
                     else if (book.GetStatus() == BookStatus.Opened)
@@ -152,7 +152,7 @@ namespace Bronya.Services
 
                             g.DrawString($"{table.Name}\r\n{book.GetTrueStartBook():HH:mm}\r\n{book.GetTrueEndBook():HH:mm}",
                                 new Font("Tahoma", bookStringSize),
-                                Brushes.White,
+                                Brushes.Black,
                                 new Point(hourSpace + shiftX + 5, yBook + 5));
                         }
                         else if (book.GetStatus() == BookStatus.Opened)
