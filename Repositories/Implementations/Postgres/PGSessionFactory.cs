@@ -7,7 +7,6 @@ using NHibernate.Cfg;
 using NHibernate.Dialect;
 using Buratino.Xtensions;
 using Buratino.Maps.NHibMaps;
-using Buratino.DI;
 
 namespace Buratino.Repositories.Implementations.Postgres
 {
@@ -27,10 +26,21 @@ namespace Buratino.Repositories.Implementations.Postgres
         }
 
         public IConfiguration Configuration { get; }
+        public string Host { get; }
+        public int Port { get; }
+        public string Database { get; }
+        public string Username { get; }
+        public string Password { get; }
 
         public PGSessionFactory(IConfiguration configuration)
         {
             Configuration = configuration;
+            Host = Configuration.GetValue("host", "localhost");
+            Port = Configuration.GetValue("port", 5433);
+            Database = Configuration.GetValue("database", "bronya_thegreenplace");
+            Username = Configuration.GetValue("username", "postgres");
+            Password = Configuration.GetValue("password", "postgres");
+            Console.Title += $"[{Host}:{Port} DB:{Database}]";
         }
 
         private ISessionFactory CreateSessionFactory()
@@ -40,11 +50,13 @@ namespace Buratino.Repositories.Implementations.Postgres
                     .Database(
                         PostgreSQLConfiguration.Standard
                         .ConnectionString(c =>
-                            c.Host(Configuration.GetValue("host", "localhost"))
-                            .Port(Configuration.GetValue("port", 5433))
-                            .Database(Configuration.GetValue("database", "bronya_thegreenplace"))
-                            .Username(Configuration.GetValue("username", "postgres"))
-                            .Password(Configuration.GetValue("password", "postgres")))
+                        {
+                            c.Host(Host)
+                            .Port(Port)
+                            .Database(Database)
+                            .Username(Username)
+                            .Password(Password);
+                        })
                         .Dialect<PostgreSQL82Dialect>());
 
             var mappings = typeof(INHMap).GetImplementations();
