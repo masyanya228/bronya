@@ -115,7 +115,7 @@ public class Program
         IPGSessionFactory sessionFactory = Container.Get<IPGSessionFactory>();
         new AuthorizeService(Container.Get<LogToFileService>(), new TGAPI(Container.Get<LogToFileService>(), Container.Get<IConfiguration>().GetValue("TGApiKey", "")));
 
-        JobRegistrator.RegisterJobs();
+        JobRegistrator.RegisterJobs(Container.Get<IConfiguration>());
 
         var accountDS = Container.GetDomainService<Account>(null);
         var account = accountDS.GetAll(x => x.Name == "Root").SingleOrDefault();

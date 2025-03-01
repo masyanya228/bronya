@@ -11,11 +11,11 @@ namespace Bronya.Jobs.Structures
     {
         public static IQuartzProvider QuartzProvider { get; set; } = Container.Get<IQuartzProvider>();
 
-        public static void RegisterJobs()
+        public static void RegisterJobs(IConfiguration configuration)
         {
             new BookAutoCancelJob().RegisterJobWithCron();
             new BookEndNotifyJob().RegisterJobWithCron();
-            //new BookAutoCloselJob().RegisterJobWithCron();
+            new BookAutoCloselJob() { CroneTime = configuration.GetValue("AutoCloseCron", $"0 0 10 ? * * *") }.RegisterJobWithCron();
             new StatisticJob().RegisterJobWithCron();
         }
 

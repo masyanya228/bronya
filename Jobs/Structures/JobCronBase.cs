@@ -2,6 +2,6 @@
 {
     public abstract class JobCronBase : JobBase
     {
-        public abstract string CroneTime { get; set; }
+        public virtual string CroneTime { get; set; }
     }
 }
