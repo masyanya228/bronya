@@ -17,12 +17,5 @@ namespace Bronya.Caching
         {
             return "currentSmena";
         }
-
-        public override void OnRemoved(CacheEntryRemovedArguments removedArguments)
-        {
-            SmenaDto smena = new BookService(null).GetCurrentSmena();
-            base.Set(GetKey(smena), smena);
-            base.OnRemoved(removedArguments);
-        }
     }
 }
