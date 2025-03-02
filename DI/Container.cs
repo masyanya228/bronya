@@ -1,12 +1,12 @@
-﻿using Bronya.Entities;
+﻿using Bronya.DomainServices;
+using Bronya.DomainServices.DomainStructure;
+using Bronya.Entities;
 using Bronya.Entities.Abstractions;
+using Bronya.Repositories.RepositoryStructure;
 
-using Buratino.Models.DomainService;
-using Buratino.Models.DomainService.DomainStructure;
-using Buratino.Repositories.RepositoryStructure;
 using Buratino.Xtensions;
 
-namespace Buratino.DI
+namespace Bronya.DI
 {
     public class Container
     {

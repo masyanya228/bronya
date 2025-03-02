@@ -2,7 +2,7 @@
 
 using System.Linq.Expressions;
 
-namespace Buratino.Repositories.RepositoryStructure
+namespace Bronya.Repositories.RepositoryStructure
 {
     public interface IRepository<T>
     {

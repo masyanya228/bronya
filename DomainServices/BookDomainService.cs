@@ -1,9 +1,8 @@
-﻿using Bronya.Entities;
+﻿using Bronya.DomainServices.DomainStructure;
+using Bronya.Entities;
 using Bronya.Services;
 
-using Buratino.Models.DomainService.DomainStructure;
-
-namespace Buratino.Models.DomainService
+namespace Bronya.DomainServices
 {
     public class BookDomainService : PersistentDomainService<Book>
     {

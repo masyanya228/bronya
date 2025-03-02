@@ -3,7 +3,7 @@ using Bronya.Services;
 
 using System.Linq.Expressions;
 
-namespace Buratino.Models.DomainService.DomainStructure
+namespace Bronya.DomainServices.DomainStructure
 {
     public class PersistentDomainService<T> : DomainServiceBase<T> where T : PersistentEntity
     {

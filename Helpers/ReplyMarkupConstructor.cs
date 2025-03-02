@@ -1,10 +1,10 @@
 ﻿using Telegram.Bot.Types.ReplyMarkups;
 
-namespace Buratino.Helpers
+namespace Bronya.Helpers
 {
     public class ReplyMarkupConstructor : IReplyConstructor
     {
-        public List<List<KeyboardButton>> KeyboardButtons { get; set; } = new();
+        public List<List<KeyboardButton>> KeyboardButtons { get; set; } = [];
 
         public ReplyMarkupConstructor()
         {
@@ -32,8 +32,7 @@ namespace Buratino.Helpers
             {
                 foreach (var item in row)
                 {
-                    if (item.Text is null)
-                        item.Text = "Пусто";
+                    item.Text ??= "Пусто";
                 }
             }
             return new ReplyKeyboardMarkup(KeyboardButtons);

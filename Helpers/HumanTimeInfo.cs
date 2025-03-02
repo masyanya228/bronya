@@ -1,4 +1,4 @@
-﻿namespace Buratino.Helpers
+﻿namespace Bronya.Helpers
 {
     public class HumanTimeInfo
     {

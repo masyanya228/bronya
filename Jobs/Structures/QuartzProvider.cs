@@ -1,4 +1,4 @@
-﻿using Buratino.DI;
+﻿using Bronya.DI;
 
 using Quartz;
 

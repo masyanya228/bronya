@@ -1,6 +1,5 @@
 ﻿using Bronya.Entities;
-
-using Buratino.Maps.NHibMaps;
+using Bronya.Maps.NHibMaps;
 
 public class PermissionRoleLinkNHMap : NHSubclassClassMap<PermissionRoleLink>
 {

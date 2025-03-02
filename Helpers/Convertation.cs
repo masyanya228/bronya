@@ -1,4 +1,4 @@
-﻿namespace Buratino.Helpers
+﻿namespace Bronya.Helpers
 {
     public class Convertation
     {
@@ -6,7 +6,7 @@
         public Type A { get; set; }
         public Type B { get; set; }
         public Func<object, object> Expression { get; set; }
-        public static List<Convertation> Convertations = new List<Convertation>();
+        public static List<Convertation> Convertations = [];
         public Convertation(Type a, Type b, Func<object, object> myProperty)
         {
             A = a;

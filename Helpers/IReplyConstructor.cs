@@ -1,7 +1,7 @@
 ﻿
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace Buratino.Helpers
+namespace Bronya.Helpers
 {
     public interface IReplyConstructor
     {

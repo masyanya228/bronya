@@ -1,4 +1,4 @@
-﻿namespace Buratino.Maps.NHibMaps
+﻿namespace Bronya.Maps.NHibMaps
 {
     public interface INHMap
     {

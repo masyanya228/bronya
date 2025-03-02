@@ -1,6 +1,6 @@
 ﻿using Quartz;
-using Buratino.DI;
 using Bronya.Jobs.Structures;
+using Bronya.DI;
 
 namespace Buratino.Xtensions
 {

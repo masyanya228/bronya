@@ -3,7 +3,7 @@ using Bronya.Entities.Abstractions;
 
 using System.Linq.Expressions;
 
-namespace Buratino.Repositories.RepositoryStructure
+namespace Bronya.Repositories.RepositoryStructure
 {
     public abstract class RepositoryBase<T> : IRepository<T>
         where T : IEntityBase

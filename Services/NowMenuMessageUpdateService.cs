@@ -1,8 +1,7 @@
-﻿using Bronya.Entities;
-
-using Buratino.API;
-using Buratino.DI;
-using Buratino.Models.DomainService.DomainStructure;
+﻿using Bronya.API;
+using Bronya.DI;
+using Bronya.DomainServices.DomainStructure;
+using Bronya.Entities;
 
 namespace Bronya.Services
 {
@@ -24,8 +23,10 @@ namespace Bronya.Services
             var accToUpdate = AccountDS.GetAll().Where(x => x.NowMenuMessageId != default).ToArray();
             foreach (var acc in accToUpdate)
             {
-                var service = new BronyaHostesService(LogToFileService, tGAPI, acc);
-                service.Package = new Dtos.DataPackage(acc) { MessageId = acc.NowMenuMessageId };
+                var service = new BronyaHostesService(LogToFileService, tGAPI, acc)
+                {
+                    Package = new Dtos.DataPackage(acc) { MessageId = acc.NowMenuMessageId }
+                };
                 service.Now();
                 LogService.LogEvent(nameof(UpdateNowMenuMessages) + ":" + acc.Id);
             }

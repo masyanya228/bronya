@@ -1,16 +1,16 @@
 ﻿using System.Linq.Expressions;
 using System.Reflection;
 
+using Bronya.DI;
 using Bronya.Dtos;
 using Bronya.Entities;
 using Bronya.Entities.Abstractions;
+using Bronya.Repositories.RepositoryStructure;
 using Bronya.Services;
 
-using Buratino.DI;
-using Buratino.Repositories.RepositoryStructure;
 using Buratino.Xtensions;
 
-namespace Buratino.Models.DomainService.DomainStructure
+namespace Bronya.DomainServices.DomainStructure
 {
     public class DomainServiceBase<T> : IDomainService<T> where T : IEntityBase
     {
@@ -63,7 +63,7 @@ namespace Buratino.Models.DomainService.DomainStructure
                     }
 
                     var subDomain = Container.GetDomainService(item.PropertyType, Account);
-                    subDomain.InvokeMethod("Save", new object[] { value });
+                    subDomain.InvokeMethod("Save", [value]);
                 }
             }
             return Save(entity);

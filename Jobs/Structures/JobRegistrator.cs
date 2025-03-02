@@ -1,6 +1,7 @@
 ﻿using BannerWebIS.Jobs;
 
-using Buratino.DI;
+using Bronya.DI;
+
 using Buratino.Xtensions;
 
 using Quartz;

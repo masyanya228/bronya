@@ -1,9 +1,9 @@
 ﻿using Bronya.Caching.Structure;
+using Bronya.DI;
+using Bronya.DomainServices.DomainStructure;
 using Bronya.Entities;
 using Bronya.Enums;
 
-using Buratino.DI;
-using Buratino.Models.DomainService.DomainStructure;
 using Buratino.Xtensions;
 
 using Telegram.Bot.Types;

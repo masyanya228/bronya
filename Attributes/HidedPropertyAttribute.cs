@@ -1,4 +1,4 @@
-﻿namespace Buratino.Models.Attributes
+﻿namespace Bronya.Attributes
 {
 
     [AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = false)]

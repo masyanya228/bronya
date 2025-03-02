@@ -1,12 +1,11 @@
 ﻿using Bronya.Caching.Structure;
+using Bronya.DomainServices.DomainStructure;
 using Bronya.Entities;
 using Bronya.Services;
 
-using Buratino.Models.DomainService.DomainStructure;
-
 using System.Linq.Expressions;
 
-namespace Buratino.Models.DomainService
+namespace Bronya.DomainServices
 {
     public class TableDomainService : PersistentDomainService<Table>
     {

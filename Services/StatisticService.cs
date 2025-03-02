@@ -1,11 +1,5 @@
 ﻿using Bronya.Dtos;
-using Bronya.Entities;
-using Bronya.Enums;
-
-using Buratino.Helpers;
-using Buratino.Xtensions;
-
-using vkteams.Xtensions;
+using Bronya.Xtensions;
 
 namespace Bronya.Services
 {
@@ -13,8 +7,8 @@ namespace Bronya.Services
     {
         public void SendStats()
         {
-            LogService logService = new LogService(AccountService.RootAccount);
-            BookService bookService = new BookService(AccountService.RootAccount);
+            LogService logService = new(AccountService.RootAccount);
+            BookService bookService = new(AccountService.RootAccount);
             var now = new TimeService().GetNow();
             var yesterday = now.AddDays(-1);
             var smena = bookService.GetCurrentSmena(yesterday);

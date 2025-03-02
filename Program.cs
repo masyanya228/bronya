@@ -1,9 +1,3 @@
-using Buratino.DI;
-using Buratino.API;
-using Buratino.Models.DomainService.DomainStructure;
-using Buratino.Models.DomainService;
-using Buratino.Repositories.Implementations.Postgres;
-using Buratino.Repositories.RepositoryStructure;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -15,6 +9,12 @@ using Quartz;
 using Bronya.Xtensions;
 using Bronya.Caching.Structure;
 using Bronya.Repositories.Implementations;
+using Bronya.API;
+using Bronya.DI;
+using Bronya.DomainServices;
+using Bronya.DomainServices.DomainStructure;
+using Bronya.Repositories.Implementations.Postgres;
+using Bronya.Repositories.RepositoryStructure;
 
 namespace Bronya
 {

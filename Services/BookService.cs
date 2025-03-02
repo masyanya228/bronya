@@ -1,9 +1,8 @@
 ﻿using Bronya.Caching.Structure;
+using Bronya.DI;
+using Bronya.DomainServices.DomainStructure;
 using Bronya.Dtos;
 using Bronya.Entities;
-
-using Buratino.DI;
-using Buratino.Models.DomainService.DomainStructure;
 
 namespace Bronya.Services
 {

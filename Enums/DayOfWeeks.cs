@@ -1,4 +1,4 @@
-﻿using Buratino.Models.Attributes;
+﻿using Bronya.Attributes;
 
 namespace Bronya.Enums
 {

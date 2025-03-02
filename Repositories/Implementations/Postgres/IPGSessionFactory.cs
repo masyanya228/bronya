@@ -1,6 +1,6 @@
 ﻿using NHibernate;
 
-namespace Buratino.Repositories.Implementations.Postgres
+namespace Bronya.Repositories.Implementations.Postgres
 {
     public interface IPGSessionFactory
     {

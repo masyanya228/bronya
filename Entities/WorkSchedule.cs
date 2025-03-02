@@ -1,8 +1,8 @@
-﻿using Bronya.Entities.Abstractions;
+﻿using Bronya.Attributes;
+using Bronya.Entities.Abstractions;
 using Bronya.Enums;
 using Bronya.Xtensions;
 
-using Buratino.Models.Attributes;
 using Buratino.Xtensions;
 
 namespace Bronya.Entities

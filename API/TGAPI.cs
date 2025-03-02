@@ -1,12 +1,9 @@
 ﻿using Bronya.Caching.Structure;
+using Bronya.DI;
 using Bronya.Dtos;
 using Bronya.Helpers;
 using Bronya.Services;
 using Bronya.Xtensions;
-
-using Buratino.DI;
-using Buratino.Helpers;
-using Buratino.Xtensions;
 
 using System.Security.Cryptography;
 
@@ -15,9 +12,7 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
-using vkteams.Xtensions;
-
-namespace Buratino.API
+namespace Bronya.API
 {
     public class TGAPI
     {
@@ -150,7 +145,7 @@ namespace Buratino.API
 
         private string Edit(long chatId, int messageId, string text, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
         {
-            if (!(replyConstructor is InlineKeyboardConstructor inlineKeyboardConstructor))
+            if (replyConstructor is not InlineKeyboardConstructor inlineKeyboardConstructor)
                 throw new InvalidOperationException("Нельзя передать кнопки сообщения. Нужно передать кнопки клавиатуры");
             return client.EditMessageTextAsync(chatId, messageId, text, parseMode, null, null, inlineKeyboardConstructor?.GetMarkup() as InlineKeyboardMarkup)
                 .GetAwaiter().GetResult().MessageId.ToString();
@@ -179,7 +174,7 @@ namespace Buratino.API
 
         private string EditFile(long chatId, int messageId, TGInputImplict image, string caption, ParseMode? parseMode, IReplyConstructor replyConstructor = null)
         {
-            if (!(replyConstructor is InlineKeyboardConstructor inlineKeyboardConstructor))
+            if (replyConstructor is not InlineKeyboardConstructor inlineKeyboardConstructor)
                 throw new InvalidOperationException("Нельзя передать кнопки сообщения. Нужно передать кнопки клавиатуры");
 
             string hash = GetHash(image);

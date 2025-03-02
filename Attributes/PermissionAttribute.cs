@@ -1,8 +1,5 @@
-﻿using System;
-
-namespace Buratino.Models.Attributes
+﻿namespace Bronya.Attributes
 {
-
     [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
     sealed class PermissionAttribute : Attribute
     {

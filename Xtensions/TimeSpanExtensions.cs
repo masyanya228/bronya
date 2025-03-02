@@ -1,6 +1,4 @@
-﻿using Buratino.Xtensions;
-
-namespace Bronya.Xtensions
+﻿namespace Bronya.Xtensions
 {
     public static class TimeSpanExtensions
     {

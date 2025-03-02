@@ -1,8 +1,6 @@
 ﻿using Bronya.Entities.Abstractions;
 
-using Buratino.Models.DomainService.DomainStructure;
-
-namespace Buratino.Models.DomainService
+namespace Bronya.DomainServices.DomainStructure
 {
     public class DomainService<T> : DomainServiceBase<T> where T : IEntityBase
     {

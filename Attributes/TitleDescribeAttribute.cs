@@ -1,4 +1,4 @@
-﻿namespace Buratino.Models.Attributes
+﻿namespace Bronya.Attributes
 {
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
     sealed class TitleAttribute : Attribute

@@ -1,10 +1,10 @@
 ﻿using Telegram.Bot.Types.ReplyMarkups;
 
-namespace Buratino.Helpers
+namespace Bronya.Helpers
 {
     public class InlineKeyboardConstructor : IReplyConstructor
     {
-        public List<List<InlineKeyboardButton>> KeyboardButtons { get; set; } = new();
+        public List<List<InlineKeyboardButton>> KeyboardButtons { get; set; } = [];
 
         public InlineKeyboardConstructor()
         {
@@ -27,7 +27,7 @@ namespace Buratino.Helpers
         {
             if (!KeyboardButtons.Any())
             {
-                KeyboardButtons.Add(new());
+                KeyboardButtons.Add([]);
             }
             KeyboardButtons.Last().Add(new InlineKeyboardButton(title) { CallbackData = callbackData });
             return this;
@@ -57,10 +57,8 @@ namespace Buratino.Helpers
             {
                 foreach (var item in row)
                 {
-                    if (item.Text is null)
-                        item.Text = "Пусто";
-                    if (item.CallbackData is null)
-                        item.CallbackData = "/menu";
+                    item.Text ??= "Пусто";
+                    item.CallbackData ??= "/menu";
                 }
             }
             return new InlineKeyboardMarkup(KeyboardButtons);

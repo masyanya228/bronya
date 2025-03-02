@@ -2,7 +2,7 @@
 using Telegram.Bot.Types.ReplyMarkups;
 
 
-namespace Buratino.Xtensions
+namespace Bronya.Xtensions
 {
     public static class TGAPIXtensions
     {
@@ -20,7 +20,7 @@ namespace Buratino.Xtensions
 
         public static string EscapeFormat(this string source)
         {
-            return EscapeMarkdown2(source);
+            return source.EscapeMarkdown2();
         }
 
         private static string EscapeMarkdown1(this string source)

@@ -1,12 +1,9 @@
 ﻿using Bronya.Entities.Abstractions;
-using Bronya.Repositories.Implementations;
 using Bronya.Services;
-
-using Buratino.Repositories.RepositoryStructure;
 
 using System.Linq.Expressions;
 
-namespace Buratino.Repositories.Implementations
+namespace Bronya.Repositories.Implementations
 {
     /// <summary>
     /// Использовать для репозиториев, в которых нужно ограничить разработчика от удаленых объектов

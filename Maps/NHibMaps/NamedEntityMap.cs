@@ -1,6 +1,5 @@
 ﻿using Bronya.Entities.Abstractions;
-
-using Buratino.Maps.NHibMaps;
+using Bronya.Maps.NHibMaps;
 
 public class NamedEntityMap : NHSubclassClassMap<NamedEntity>
 {

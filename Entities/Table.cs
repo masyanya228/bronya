@@ -1,6 +1,5 @@
 ﻿using Bronya.Entities.Abstractions;
-
-using Buratino.Xtensions;
+using Bronya.Xtensions;
 
 namespace Bronya.Entities
 {

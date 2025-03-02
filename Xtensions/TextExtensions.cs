@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace vkteams.Xtensions
+namespace Bronya.Xtensions
 {
     public static class TextExtensions
     {
@@ -8,7 +8,7 @@ namespace vkteams.Xtensions
         {
             var titles = new[] { nominativ, genetiv, plural };
             var cases = new[] { 2, 0, 1, 1, 1, 2 };
-            return number + " " + titles[number % 100 > 4 && number % 100 < 20 ? 2 : cases[(number % 10 < 5) ? number % 10 : 5]];
+            return number + " " + titles[number % 100 > 4 && number % 100 < 20 ? 2 : cases[number % 10 < 5 ? number % 10 : 5]];
         }
 
         public static string ToHex(this byte[] bytes, bool upperCase)

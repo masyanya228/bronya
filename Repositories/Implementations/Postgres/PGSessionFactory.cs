@@ -6,9 +6,9 @@ using NHibernate;
 using NHibernate.Cfg;
 using NHibernate.Dialect;
 using Buratino.Xtensions;
-using Buratino.Maps.NHibMaps;
+using Bronya.Maps.NHibMaps;
 
-namespace Buratino.Repositories.Implementations.Postgres
+namespace Bronya.Repositories.Implementations.Postgres
 {
     public class PGSessionFactory : IPGSessionFactory
     {
@@ -73,12 +73,10 @@ namespace Buratino.Repositories.Implementations.Postgres
         {
             Action<string> updateExport = x =>
             {
-                using (var file = new FileStream(@"update.sql", FileMode.Append, FileAccess.Write))
-                using (var sw = new StreamWriter(file))
-                {
-                    sw.Write(x);
-                    sw.Close();
-                }
+                using var file = new FileStream(@"update.sql", FileMode.Append, FileAccess.Write);
+                using var sw = new StreamWriter(file);
+                sw.Write(x);
+                sw.Close();
             };
             var update = new SchemaUpdate(configuration);
             update.Execute(updateExport, true);

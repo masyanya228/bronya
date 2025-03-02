@@ -1,12 +1,11 @@
 ﻿using Bronya.Dtos;
 using Bronya.Entities;
 using Bronya.Entities.Abstractions;
-
-using Buratino.Repositories.RepositoryStructure;
+using Bronya.Repositories.RepositoryStructure;
 
 using System.Linq.Expressions;
 
-namespace Buratino.Models.DomainService.DomainStructure
+namespace Bronya.DomainServices.DomainStructure
 {
     public interface IDomainService<T> where T : IEntityBase
     {
@@ -15,7 +14,7 @@ namespace Buratino.Models.DomainService.DomainStructure
         Account Account { get; set; }
 
         IEnumerable<T> GetAll(Expression<Func<T, bool>> filter = null);
-        
+
         QueryableSession<T> GetAllQuery();
 
         T Get(Guid id);
@@ -23,7 +22,7 @@ namespace Buratino.Models.DomainService.DomainStructure
         T Save(T entity);
 
         T CascadeSave(T entity);
-        
+
         bool Delete(T entity);
 
         bool Delete(Guid id);

@@ -1,9 +1,8 @@
-﻿using Bronya.Dtos;
+﻿using Bronya.DI;
+using Bronya.Dtos;
 using Bronya.Entities.Abstractions;
-
-using Buratino.DI;
-using Buratino.Repositories.Implementations.Postgres;
-using Buratino.Repositories.RepositoryStructure;
+using Bronya.Repositories.Implementations.Postgres;
+using Bronya.Repositories.RepositoryStructure;
 
 using NHibernate;
 

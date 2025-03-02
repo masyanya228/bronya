@@ -1,7 +1,6 @@
-﻿using Bronya.Entities;
-
-using Buratino.DI;
-using Buratino.Models.DomainService.DomainStructure;
+﻿using Bronya.DI;
+using Bronya.DomainServices.DomainStructure;
+using Bronya.Entities;
 
 namespace Bronya.Services
 {
