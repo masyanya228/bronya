@@ -10,10 +10,10 @@ namespace Bronya.Services
     {
         public static AuthorizeService Instance { get; private set; }
         public AccountService AccountService { get; set; }
-        public LogToFileService LogService { get; }
         public TGAPI TgAPI { get; }
-        public ExceptionLogService ExceptionLogService { get; set; }
-        public ProcessTimeLogService processTimeLogService { get; set; }
+        private LogToFileService LogService { get; }
+        private ExceptionLogService ExceptionLogService { get; }
+        private ProcessTimeLogService ProcessTimeLogService { get; }
 
         public AuthorizeService(LogToFileService logService, TGAPI tgAPI)
         {
@@ -23,7 +23,7 @@ namespace Bronya.Services
 
             AccountService = new(null);
             ExceptionLogService = new();
-            processTimeLogService = new();
+            ProcessTimeLogService = new();
 
             TgAPI.UpdateEvent += OnUpdateWrapper;
             tgAPI.Start();
@@ -48,7 +48,7 @@ namespace Bronya.Services
                 var diff = Environment.TickCount - start;
                 if (diff > 100)
                 {
-                    processTimeLogService.LogEvent(acc, dataPackage.Command, diff);
+                    ProcessTimeLogService.LogEvent(acc, dataPackage.Command, diff);
                 }
                 return res;
             }

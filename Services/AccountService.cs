@@ -1,7 +1,6 @@
 ﻿using Bronya.Caching.Structure;
 using Bronya.Entities;
 using Bronya.Enums;
-using Bronya.Helpers;
 
 using Buratino.DI;
 using Buratino.Models.DomainService.DomainStructure;
@@ -14,8 +13,8 @@ namespace Bronya.Services
 {
     public class AccountService
     {
-        public static Account RootAccount = new Account { Id = new Guid("da8c13be-6d97-4287-b47e-34caada8d315") };
-        public static Account MainTester = new Account { Id = new Guid("4be29f89-f887-48a1-a8af-cad15d032758") };
+        public static readonly Account RootAccount = new() { Id = new Guid("da8c13be-6d97-4287-b47e-34caada8d315") };
+        public static readonly Account MainTester = new() { Id = new Guid("4be29f89-f887-48a1-a8af-cad15d032758") };
         public IDomainService<Account> AccountDS { get; set; }
         public ICacheService<Account> AccountCacheService { get; set; }
 
@@ -76,7 +75,7 @@ namespace Bronya.Services
                 number = ParseNumber(args[1]);
                 var byPhone = AccountDS.GetAll().Where(x => x.Phone == number).ToList();
                 var byCardNumber = AccountDS.GetAll().Where(x => x.CardNumber == number).ToList();
-                if (byPhone.Any())
+                if (byPhone.Count != 0)
                 {
                     if (byPhone.Count == 1)
                     {
@@ -91,7 +90,7 @@ namespace Bronya.Services
                             return byPhone;
                     }
                 }
-                else if (byCardNumber.Any())
+                else if (byCardNumber.Count != 0)
                 {
                     if (byCardNumber.Count == 1)
                     {
@@ -130,9 +129,9 @@ namespace Bronya.Services
                 return phone;
             if (phone.Length == 10)
                 return "+7" + phone;
-            else if (phone.Length == 11 && phone.StartsWith("8"))
-                return "+7" + phone.Substring(1);
-            else if (phone.Length == 11 && phone.StartsWith("7"))
+            else if (phone.Length == 11 && phone.StartsWith('8'))
+                return string.Concat("+7", phone[1..]);
+            else if (phone.Length == 11 && phone.StartsWith('7'))
                 return "+" + phone;
             else
                 return phone;

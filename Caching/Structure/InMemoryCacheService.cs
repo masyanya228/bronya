@@ -42,7 +42,7 @@ namespace Bronya.Caching.Structure
 
         public virtual T Set(string key, T value, TimeSpan? timeExpiration = null)
         {
-            Cache.Set(key, value, CacheItemPolicy.SetTimeExpiration(timeExpiration ??= TimeExpiration ?? TimeSpan.FromMinutes(1)));
+            Cache.Set(key, value, CacheItemPolicy.SetTimeExpiration(timeExpiration ?? TimeExpiration ?? TimeSpan.FromMinutes(1)));
             ConsoleXtensions.ColoredPrint($"{GetType().Name}: {key}", ConsoleColor.Red);
             return value;
         }

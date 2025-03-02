@@ -18,11 +18,7 @@ namespace Bronya.Services
         {
             get
             {
-                if (smena == null)
-                {
-                    smena = Container.Get<ICacheService<SmenaDto>>().Get(GetCurrentSmena, "currentSmena");
-                }
-                return smena;
+                return smena ??= Container.Get<ICacheService<SmenaDto>>().Get(GetCurrentSmena, "currentSmena");
             }
         }
 
@@ -37,7 +33,7 @@ namespace Bronya.Services
 
         public DateTime[] GetAvailableTimesForMove(Table table, Account acc)
         {
-            List<DateTime> times = new();
+            List<DateTime> times = [];
 
             List<Book> books = GetCurrentBooks(table);
 
@@ -136,13 +132,18 @@ namespace Bronya.Services
             };
         }
 
+        /// <summary>
+        /// Получить свободное время по всем столам
+        /// </summary>
+        /// <param name="acc"></param>
+        /// <returns></returns>
         public DateTime[] GetAvailableTimesForBook(Account acc)
         {
-            IEnumerable<DateTime> allTimes = Array.Empty<DateTime>();
+            IEnumerable<DateTime> allTimes = [];
             var allBooks = GetCurrentBooks();
             foreach (var table in TableDS.GetAll())
             {
-                allTimes = allTimes.Union(GetAvailableTimesForBook(table, acc, null, allBooks.Where(x => x.Table == table).ToList()));
+                allTimes = allTimes.Union(GetAvailableTimesForBook(table, acc, null, allBooks.Where(x => x.Table == table)));
             }
             return allTimes.OrderBy(x => x).ToArray();
         }
@@ -195,7 +196,6 @@ namespace Bronya.Services
             return BookDS.GetAll()
                 .Where(x => x.ActualBookStartTime >= Smena.SmenaStart
                     && !x.IsCanceled)
-                .ToList()
                 .Where(x => x.BookEndTime <= Smena.SmenaEnd)
                 .OrderBy(x => x.ActualBookStartTime)
                 .ToList();
@@ -210,7 +210,6 @@ namespace Bronya.Services
             return BookDS.GetAll()
                 .Where(x => x.ActualBookStartTime >= smena.SmenaStart
                     && !x.IsCanceled)
-                .ToList()
                 .Where(x => x.BookEndTime <= smena.SmenaEnd)
                 .OrderBy(x => x.ActualBookStartTime)
                 .ToList();
@@ -242,16 +241,21 @@ namespace Bronya.Services
             smenaEnd = smenaStart.Add(workSchedule.Length);
         }
 
-        public DateTime[] GetAvailableTimesForBook(Table table, Account acc, Book except = default, List<Book> tableBooks = default)
+        /// <summary>
+        /// Получить свободное время по определенному столу 
+        /// </summary>
+        /// <param name="table"></param>
+        /// <param name="acc"></param>
+        /// <param name="except"></param>
+        /// <param name="tableBooks"></param>
+        /// <returns></returns>
+        public DateTime[] GetAvailableTimesForBook(Table table, Account acc, Book except = default, IEnumerable<Book> tableBooks = default)
         {
             if (!table.IsBookAvailable)
-                return Array.Empty<DateTime>();
-            List<DateTime> times = new();
+                return [];
+            List<DateTime> times = [];
 
-            if (tableBooks == default)
-            {
-                tableBooks = GetCurrentBooks(table);
-            }
+            tableBooks ??= GetCurrentBooks(table);
             List<Book> books = tableBooks.Except([except]).Where(x => x.TableClosed == default).ToList();
 
             for (var i = Smena.GetMinimumTimeToBook(acc); i <= Smena.SmenaEnd.Subtract(Smena.Schedule.MinPeriod); i = i.Add(Smena.Schedule.Step))

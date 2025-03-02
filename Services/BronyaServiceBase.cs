@@ -60,7 +60,7 @@ namespace Bronya.Services
             }
         }
 
-        public static ConcurrentQueue<QueryCommand> QueryCommands = new ();
+        public static readonly ConcurrentQueue<QueryCommand> QueryCommands = new ();
 
         public BronyaServiceBase(LogToFileService logService, TGAPI tGAPI, Account account)
         {
@@ -114,7 +114,7 @@ namespace Bronya.Services
                 QueryCommands.Enqueue(queryCommand);
                 if (QueryCommands.Count > 100)
                 {
-                    QueryCommands.TryDequeue(out QueryCommand old);
+                    QueryCommands.TryDequeue(out _);
                 }
             }
             else
@@ -141,7 +141,7 @@ namespace Bronya.Services
             if (update.Message.Type == MessageType.Text)
             {
                 string text = update.Message.Text;
-                if (!text.StartsWith("/"))
+                if (!text.StartsWith('/'))
                 {
                     return ProcessTextMessage(text);
                 }
@@ -251,7 +251,7 @@ namespace Bronya.Services
             for (int i = 0; i < parameters.Length; i++)
             {
                 var item = parameters[i];
-                if (comArgs.Any())
+                if (comArgs.Count != 0)
                 {
                     arguments[i] = comArgs.Dequeue().Cast(item.ParameterType);
                 }
@@ -313,6 +313,44 @@ namespace Bronya.Services
             Container.Get<ICacheService<Account>>().Remove(Package.Account);
 
             return ShowRole();
+        }
+        
+        protected static DateTime ParseDate(string date)
+        {
+            var parts = date.FSpl(".").Select(x => x.AsInt()).ToArray();
+            if (parts.Length == 3)
+            {
+                if (parts[2] < 100)
+                    parts[2] += 2000;
+                return new DateTime(parts[2], parts[1], parts[0]);
+            }
+            else if (parts.Length == 2)
+            {
+                return new DateTime(new TimeService().GetNow().Year, parts[1], parts[0]);
+            }
+            else
+            {
+                return default;
+            }
+        }
+
+        protected static TimeSpan ParseTime(string time, out string error)
+        {
+            error = string.Empty;
+            var parts = time.FSpl(":").Select(x => x.AsInt()).ToArray();
+            if (parts.Length == 2)
+            {
+                return new TimeSpan(parts[0], parts[1], 0);
+            }
+            else if (parts.Length == 1)
+            {
+                return new TimeSpan(parts[0], 0, 0);
+            }
+            else
+            {
+                error = "Неверный формат. Напишите время в формате *ч:м*";
+                return default;
+            }
         }
     }
 }

@@ -7,7 +7,7 @@ using Buratino.Helpers;
 
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace Buratino.Xtensions
+namespace Bronya.Xtensions
 {
     public static class KeyboardConstructorXtensions
     {
@@ -37,9 +37,10 @@ namespace Buratino.Xtensions
             var tables = Container.GetDomainService<Table>(acc).GetAll().Where(x => x.IsBookAvailable).OrderBy(x => x.Number).ToArray();
             int count = 0;
             int tablesInRow = 3;
+            var allBooks = bookService.GetCurrentBooks();
             foreach (var table in tables)
             {
-                bool isBusy = !bookService.GetAvailableTimesForBook(table, acc).Any();
+                bool isBusy = bookService.GetAvailableTimesForBook(table, acc, null, allBooks.Where(x => x.Table == table)).Length == 0;
                 var btnTitle = isBusy
                     ? $"🔒 {table}"
                     : $"{table}";
@@ -87,10 +88,7 @@ namespace Buratino.Xtensions
         /// <exception cref="ArgumentNullException"></exception>
         public static InlineKeyboardConstructor AddPlacesButtons(this InlineKeyboardConstructor constructor, Table table)
         {
-            if (table is null)
-            {
-                throw new ArgumentNullException(nameof(table));
-            }
+            ArgumentNullException.ThrowIfNull(table);
 
             for (var i = 1; i <= table.NormalSeatAmount; i++)
             {
@@ -109,10 +107,7 @@ namespace Buratino.Xtensions
         /// <exception cref="ArgumentNullException"></exception>
         public static InlineKeyboardConstructor AddBooksButtons(this InlineKeyboardConstructor constructor, IEnumerable<Book> books)
         {
-            if (books is null)
-            {
-                throw new ArgumentNullException(nameof(books));
-            }
+            ArgumentNullException.ThrowIfNull(books);
 
             foreach (var item in books)
             {
@@ -131,7 +126,7 @@ namespace Buratino.Xtensions
             foreach (var table in tables)
             {
                 var books = allBooks.Where(x => x.Table == table).ToList();
-                bool isBusy = !bookService.GetAvailableTimesForBook(table, acc, null, books).Any();
+                bool isBusy = bookService.GetAvailableTimesForBook(table, acc, null, books).Length == 0;
                 var btnTitle = isBusy
                     ? $"🔒 {table.Name}"
                     : $"{table.Name}";
@@ -139,7 +134,7 @@ namespace Buratino.Xtensions
                 if (table.HasConsole)
                     btnTitle += $"🎮";
 
-                if (books.Any())
+                if (books.Count != 0)
                     btnTitle += $" 📘{books.Count}";
 
                 if (!table.IsBookAvailable)
@@ -240,7 +235,7 @@ namespace Buratino.Xtensions
             foreach (var table in tables)
             {
                 var books = allBooks.Where(x => x.Table == table).ToList();
-                bool isBusy = !bookService.GetAvailableTimesForBook(table, acc, null, books).Any();
+                bool isBusy = bookService.GetAvailableTimesForBook(table, acc, null, books).Length == 0;
 
                 string btnTitle = string.Empty;
 
@@ -254,7 +249,7 @@ namespace Buratino.Xtensions
                 if (table.HasConsole)
                     btnTitle += $"🎮";
 
-                if (books.Any())
+                if (books.Count != 0)
                     btnTitle += $" 📘{books.Count}";
 
                 if (count == tablesInRow)
@@ -275,7 +270,6 @@ namespace Buratino.Xtensions
         {
             foreach (var item in books)
             {
-                var closedTitle = item.TableClosed != default ? "⛔️" : "";
                 constructor.AddButtonDown($"{item.GetTitle()}", $"{precommand}/{item.Id}");
             }
             return constructor;
@@ -283,10 +277,7 @@ namespace Buratino.Xtensions
 
         public static InlineKeyboardConstructor AddHostesPlacesButtons(this InlineKeyboardConstructor constructor, Table table)
         {
-            if (table is null)
-            {
-                throw new ArgumentNullException(nameof(table));
-            }
+            ArgumentNullException.ThrowIfNull(table);
             int count = 0;
             int tablesInRow = 3;
             for (var i = 1; i <= table.NormalSeatAmount; i++)

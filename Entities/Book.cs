@@ -95,8 +95,6 @@ namespace Bronya.Entities
 
         public virtual string GetState()
         {
-            var smena = new BookService(null).Smena;
-
             string state = "Бронь:";
             state += $"\r\n⏱️Время: {ActualBookStartTime.ToHHmm()}";
             state += $"\r\n🔲Стол: {Table.Name.EscapeFormat()}";
@@ -134,8 +132,6 @@ namespace Bronya.Entities
 
         public virtual string GetEditState(Account account)
         {
-            var smena = new BookService(account).Smena;
-
             string state = "Бронь:";
             if (ActualBookStartTime == account.SelectedTime)
                 state += $"\r\n⏱️Время: {ActualBookStartTime.ToddMM_HHmm()}";
@@ -184,7 +180,7 @@ namespace Bronya.Entities
         public virtual string GetTitle()
         {
             var closedTitle = TableClosed != default ? "⛔️" : "";
-            return $"{closedTitle}{ActualBookStartTime.ToHHmm()} {Guest.ToString()} 👤:{SeatAmount}";
+            return $"{closedTitle}{ActualBookStartTime.ToHHmm()} {Guest} 👤:{SeatAmount}";
         }
 
         public virtual InlineKeyboardConstructor GetButtons()

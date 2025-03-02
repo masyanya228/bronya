@@ -144,7 +144,7 @@ namespace Bronya.Services
         private string TryMove(Book book)
         {
             var vars = BookService.GetMoveVariants(book, Package.Account);
-            string text = vars.Any()
+            string text = vars.Length != 0
                 ? $"Варианты переноса стола:"
                 : $"\r\nЭтот стол нельзя перенести";
             return SendOrEdit(
@@ -169,7 +169,7 @@ namespace Bronya.Services
         private string TryProlongate(Book book)
         {
             var vars = BookService.GetProlongationVariants(book, Package.Account);
-            string text = vars.Any()
+            string text = vars.Length != 0
                 ? $"Варианты продления стола:"
                 : $"\r\nЭтот стол нельзя продлить";
             return SendOrEdit(
@@ -514,22 +514,36 @@ namespace Bronya.Services
         private string SelectTable()
         {
             var allBooks = BookService.GetCurrentBooks();
-            var tables = Package.Account.SelectedTime != default
-                ? BookService.TableDS.GetAll().Where(x => x.IsBookAvailable).OrderBy(x => x.Number)
+            Table[] tables;
+            if (Package.Account.SelectedTime != default)
+            {
+                tables = BookService.TableDS.GetAll().Where(x => x.IsBookAvailable).OrderBy(x => x.Number)
                     .ToArray()
                     .Where(table =>
                     {
-                        var times = BookService.GetAvailableTimesForBook(table, Package.Account, Package.Account.SelectedBook, allBooks.Where(x => x.Table == table).ToList());
-                        return times.Contains(Package.Account.SelectedTime);//Поиск по конкретному времени
-                    }).ToArray()
-                : BookService.TableDS.GetAll().Where(x => x.IsBookAvailable).OrderBy(x => x.Number)
+                        //Поиск по конкретному времени
+                        return BookService.GetAvailableTimesForBook(
+                            table,
+                            Package.Account,
+                            Package.Account.SelectedBook,
+                            allBooks.Where(x => x.Table == table).ToList())
+                        .Contains(Package.Account.SelectedTime);
+                    }).ToArray();
+            }
+            else
+            {
+                tables = BookService.TableDS.GetAll().Where(x => x.IsBookAvailable).OrderBy(x => x.Number)
                     .ToArray()
                     .Where(table =>
                     {
                         //Поиск столов, у которых есть свободное время
-                        var times = BookService.GetAvailableTimesForBook(table, Package.Account, Package.Account.SelectedBook, allBooks.Where(x => x.Table == table).ToList());
-                        return times.Any();
+                        return BookService.GetAvailableTimesForBook(
+                            table,
+                            Package.Account,
+                            Package.Account.SelectedBook,
+                            allBooks.Where(x => x.Table == table).ToList()).Length != 0;
                     }).ToArray();
+            }
 
             return SendOrEdit(
                 $"{Package.Account.GetNewBookState()}" +

@@ -9,7 +9,7 @@ using NHibernate;
 
 using System.Linq.Expressions;
 
-namespace Buratino.Repositories.Implementations
+namespace Bronya.Repositories.Implementations
 {
     public class PGRepository<T> : RepositoryBase<T> where T : IEntityBase
     {
@@ -23,12 +23,10 @@ namespace Buratino.Repositories.Implementations
         public override IEnumerable<T> GetAll(Expression<Func<T, bool>> filter = null)
         {
             Console.WriteLine($"{DateTime.Now:HH:mm:ss} {nameof(GetAll)}");
-            using (var session = SessionFactory.OpenSession())
-            {
-                return filter == null
-                    ? session.Query<T>().ToList()
-                    : session.Query<T>().Where(filter).ToList();
-            }
+            using var session = SessionFactory.OpenSession();
+            return filter == null
+                ? session.Query<T>().ToList()
+                : session.Query<T>().Where(filter).ToList();
         }
 
         public override QueryableSession<T> GetAllQuery()
@@ -44,10 +42,8 @@ namespace Buratino.Repositories.Implementations
         public override T Get(Guid id)
         {
             Console.WriteLine($"{DateTime.Now:HH:mm:ss} {nameof(Get)}");
-            using (var session = SessionFactory.OpenSession())
-            {
-                return session.Get<T>(id);
-            }
+            using var session = SessionFactory.OpenSession();
+            return session.Get<T>(id);
         }
 
         public override T Insert(T entity)

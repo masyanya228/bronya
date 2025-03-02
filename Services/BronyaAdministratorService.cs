@@ -92,8 +92,7 @@ namespace Bronya.Services
             Package.Account.SelectedSchedule = default;
             AccountService.ResetWaiting(Package.Account);
 
-            TimeService timeService = new TimeService();
-            var yesterday = timeService.GetNow().AddDays(-1);
+            var yesterday = new TimeService().GetNow().AddDays(-1);
             var oneTimes = BookService.ScheduleService.WorkScheduleDS
                 .GetAll(x => x.IsOneTimeSchedule && x.StartDate >= yesterday);
 
@@ -143,7 +142,7 @@ namespace Bronya.Services
         [ApiPointer("new_schedule")]
         private string NewSchedule()
         {
-            WorkSchedule entity = new WorkSchedule() { IsDeleted = true };
+            WorkSchedule entity = new() { IsDeleted = true };
             var standart = BookService.ScheduleService.GetStandartSchedule();
             if (standart != null)
             {
@@ -503,7 +502,7 @@ namespace Bronya.Services
             if (workSchedule.DayOfWeeks.HasFlag(dayOfWeek))
                 workSchedule.DayOfWeeks -= dayOfWeek;
             else
-                workSchedule.DayOfWeeks = workSchedule.DayOfWeeks | dayOfWeek;
+                workSchedule.DayOfWeeks |= dayOfWeek;
 
             BookService.ScheduleService.WorkScheduleDS.Save(workSchedule);
             return SelectScheduleDayOfWeeks();
@@ -733,11 +732,7 @@ namespace Bronya.Services
                     }
                 }
             }
-            tables.Select(x =>
-            {
-                BookService.TableDS.Save(x);
-                return x;
-            }).ToArray();
+            tables.Select(BookService.TableDS.Save).ToArray();
             return TableOrder();
         }
 
@@ -760,11 +755,7 @@ namespace Bronya.Services
                     }
                 }
             }
-            tables.Select(x =>
-            {
-                BookService.TableDS.Save(x);
-                return x;
-            }).ToArray();
+            tables.Select(BookService.TableDS.Save).ToArray();
             return TableOrder();
         }
 
@@ -775,44 +766,7 @@ namespace Bronya.Services
 
             return EditTable(table);
         }
+
         #endregion
-
-        private DateTime ParseDate(string date)
-        {
-            var parts = date.FSpl(".").Select(x => x.AsInt()).ToArray();
-            if (parts.Length == 3)
-            {
-                if (parts[2] < 100)
-                    parts[2] += 2000;
-                return new DateTime(parts[2], parts[1], parts[0]);
-            }
-            else if (parts.Length == 2)
-            {
-                return new DateTime(new TimeService().GetNow().Year, parts[1], parts[0]);
-            }
-            else
-            {
-                return default;
-            }
-        }
-
-        private TimeSpan ParseTime(string time, out string error)
-        {
-            error = string.Empty;
-            var parts = time.FSpl(":").Select(x => x.AsInt()).ToArray();
-            if (parts.Length == 2)
-            {
-                return new TimeSpan(parts[0], parts[1], 0);
-            }
-            else if (parts.Length == 1)
-            {
-                return new TimeSpan(parts[0], 0, 0);
-            }
-            else
-            {
-                error = "Неверный формат. Напишите время в формате *ч:м*";
-                return default;
-            }
-        }
     }
 }

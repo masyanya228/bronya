@@ -97,7 +97,7 @@ namespace Bronya.Services
                 .GetMyActualBooks(Package.Account)
                 .OrderBy(x => x.ActualBookStartTime)
                 .ToArray();
-            if (books.Any())
+            if (books.Length != 0)
             {
                 return SendOrEdit(
                     $"{GetContactsForMenu()}" +
@@ -124,7 +124,7 @@ namespace Bronya.Services
             AccountService.AccountDS.Save(Package.Account);
 
             DateTime[] avalableTimes = BookService.GetAvailableTimesForBook(table, Package.Account);
-            if (!avalableTimes.Any())
+            if (avalableTimes.Length == 0)
             {
                 return SendOrEdit(
                     $"{GetContactsForMenu()}" +
@@ -189,7 +189,7 @@ namespace Bronya.Services
                         .AddButtonDown("В главное меню", $"/menu"));
             }
 
-            Book newBook = new Book()
+            Book newBook = new()
             {
                 Guest = Package.Account,
                 ActualBookStartTime = Package.Account.SelectedTime,
@@ -324,7 +324,7 @@ namespace Bronya.Services
                 .GetMyActualBooks(Package.Account)
                 .OrderBy(x => x.ActualBookStartTime)
                 .ToArray();
-            if (!books.Any())
+            if (books.Length == 0)
             {
                 return Book();
             }
