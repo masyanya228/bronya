@@ -71,8 +71,7 @@ namespace Bronya.Services
                     .AddButtonDownIf(() => table.IsBookAvailable, "🚫 Отключить бронирование", $"/disable/{table.Id}")
                     .AddButtonDownIf(() => !table.IsBookAvailable, "✅ Включить бронирование", $"/enable/{table.Id}")
                     .AddButtonRight("➕📋", $"/book_select_time/{table.Id}")
-                    .AddButtonDown("🔲 Столы", $"/tables")
-                    .AddButtonRight("В начало", $"/menu"),
+                    .AddButtonDown("🔲 Столы", $"/tables"),
                 default,
                 stream
             );
@@ -123,7 +122,7 @@ namespace Bronya.Services
                     .AddButtonDownIf(() => table.IsBookAvailable, "🚫 Отключить бронирование", $"/disable/{table.Id}")
                     .AddButtonDownIf(() => !table.IsBookAvailable, "✅ Включить бронирование", $"/enable/{table.Id}")
                     .AddButtonRight("➕📋", $"/book_select_time/{table.Id}")
-                    .AddButtonRight("Сейчас", $"/now"),
+                    .AddButtonDown("Сейчас", $"/now"),
                 default,
                 stream
             );
