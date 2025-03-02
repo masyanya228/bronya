@@ -10,7 +10,7 @@ namespace Bronya.Caching
     {
         public FileIdCacheService()
         {
-            TimeExpiration = TimeSpan.FromMinutes(1);
+            TimeExpiration = TimeSpan.FromMinutes(5);
         }
 
         /// <summary>

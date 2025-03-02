@@ -11,12 +11,13 @@ namespace Bronya.Caching.Structure
     /// <typeparam name="T">Сущность, которая хранится в кэше</typeparam>
     public abstract class InMemoryCacheService<T> : ICacheService<T> where T : class
     {
-        protected ObjectCache Cache { get; set; } = MemoryCache.Default;
+        protected ObjectCache Cache { get; set; }
         protected CacheItemPolicyProxy CacheItemPolicy { get; }
         protected TimeSpan? TimeExpiration { get; set; }
 
         protected InMemoryCacheService()
         {
+            Cache = new MemoryCache(GetType().Name);
             CacheItemPolicy = new CacheItemPolicyProxy();
             CacheItemPolicy.RemovedCallback += OnRemoved;
         }
