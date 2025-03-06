@@ -100,7 +100,7 @@ namespace Bronya.Entities
         public virtual string GetCardTitle()
         {
             string title = $"{Name} {Phone} ({CardNumber})";
-            if (TGTag != default)
+            if (!IsFake())
                 title = "✅" + title;
             return title;
         }

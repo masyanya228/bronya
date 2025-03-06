@@ -144,19 +144,19 @@ namespace Bronya.Services
                     || account.Phone != default && account.Phone == x.Phone)
                 //.Where(x => x.GetCardNumber != default || x.GetPhone != default)
                 //.Where(x => x.GetCardNumber == account.GetCardNumber || x.GetPhone == account.GetPhone)
-                .Where(x => x.Id != account.Id && x.TGTag == default)
+                .Where(x => x.Id != account.Id && x.IsFake())
                 .ToArray();
         }
 
         public Account GetTrueAccount(Account account)
         {
-            return account.TGTag == default
+            return account.IsFake()
                 ? AccountDS.GetAll()
                     .Where(x => account.CardNumber != default && account.CardNumber == x.CardNumber
                         || account.Phone != default && account.Phone == x.Phone)
                     //.Where(x => x.GetCardNumber != default || x.GetPhone != default)
                     //.Where(x => x.GetCardNumber == account.GetCardNumber || x.GetPhone == account.GetPhone)
-                    .Where(x => x.Id != account.Id && x.TGTag != default)
+                    .Where(x => x.Id != account.Id && !x.IsFake())
                     .FirstOrDefault()
                 : default;
         }
