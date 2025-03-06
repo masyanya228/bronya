@@ -31,6 +31,8 @@ namespace Bronya.Caching.Structure
                     return null;
                 timeExpiration ??= TimeExpiration ?? TimeSpan.FromMinutes(1);
                 cacheItem = func();
+                if (cacheItem == default)
+                    return null;
                 Cache.Add(key, cacheItem, CacheItemPolicy.SetTimeExpiration(timeExpiration.Value));
                 ConsoleXtensions.ColoredPrint($"{GetType().Name}: {key}", ConsoleColor.Red);
             }
