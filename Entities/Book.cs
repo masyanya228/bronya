@@ -130,18 +130,20 @@ namespace Bronya.Entities
 
         public virtual string GetEditState(Account account)
         {
-            string state = "Бронь:";
-            if (ActualBookStartTime == account.SelectedTime)
+            string state = "*Редактирование брони:*";
+            if (account.SelectedTime == default || ActualBookStartTime == account.SelectedTime)
                 state += $"\r\n⏱️Время: {ActualBookStartTime.ToddMM_HHmm()}";
             else
-                state += $"\r\n⏱️Время: ~{ActualBookStartTime.ToddMM_HHmm()}~ *{account.SelectedTime.ToddMM_HHmm()}*";
+                state += $"\r\n⏱️~Время: {ActualBookStartTime.ToddMM_HHmm()}~ *Время: {account.SelectedTime.ToddMM_HHmm()}*";
 
             var consoleTitle = Table.HasConsole ? "🎮" : string.Empty;
-            var console2Title = account.SelectedTable.HasConsole ? "🎮" : string.Empty;
-            if (Table == account.SelectedTable)
+            if (account.SelectedTable==default || Table == account.SelectedTable)
                 state += $"\r\n🔲Стол: {Table.Name.EscapeFormat()}{consoleTitle}";
             else
-                state += $"\r\n🔲Стол: ~{Table.Name.EscapeFormat()}{consoleTitle}~ *{account.SelectedTable.Name.EscapeFormat()}{console2Title}*";
+            {
+                var console2Title = account.SelectedTable.HasConsole ? "🎮" : string.Empty;
+                state += $"\r\n🔲~Стол: {Table.Name.EscapeFormat()}{consoleTitle}~ *Стол: {account.SelectedTable.Name.EscapeFormat()}{console2Title}*";
+            }
 
             state += $"\r\n👤Гостей: {SeatAmount}";
 
@@ -150,12 +152,6 @@ namespace Bronya.Entities
                 state += $"\r\n@{Guest.TGTag.EscapeFormat()}";
             if (Guest.Phone != default)
                 state += $"\r\n{Guest.Phone.EscapeFormat()}";
-
-            if (IsCanceled)
-            {
-                state += $"\r\n*🚫Отменена🚫*";
-                return state;
-            }
 
             if (TableStarted != default)
             {
@@ -167,10 +163,6 @@ namespace Bronya.Entities
                     state += $"\r\n*Опоздание*";
                 state += $"\r\n*Вынос кальяна: {TableStarted.ToHHmm()}; Стол до: {timeEnd.ToHHmm()}" +
                     $"\r\nОсталось: {timeLeft.TotalMinutes.Round()} мин*";
-            }
-            if (TableClosed != default)
-            {
-                state += $"\r\n\r\n*Стол закрыт: {TableClosed.ToHHmm()}*";
             }
             return state;
         }

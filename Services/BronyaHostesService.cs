@@ -358,8 +358,13 @@ namespace Bronya.Services
         {
             LogService.LogEvent(nameof(Edit) + ":" + book?.Id);
 
+            if (!book.GetStatus().In(BookStatus.Booked, BookStatus.Opened))
+            {
+                return ShowBook(book);
+            }
+            var minTime = BookService.Smena.GetMinimumTimeToBook(null);
             Package.Account.SelectedTable = default;
-            Package.Account.SelectedTime = book.ActualBookStartTime;
+            Package.Account.SelectedTime = book.ActualBookStartTime > minTime ? book.ActualBookStartTime : minTime;
             AccountService.SelectBook(Package.Account, book);
 
             return SelectTable();
@@ -459,7 +464,7 @@ namespace Bronya.Services
         private string BookSelectTime(Table table = default)
         {
             LogService.LogEvent(nameof(BookSelectTime) + ":" + table?.Name);
-            if (table != null)
+            if (table != default)
             {
                 Package.Account.SelectedTable = table;
                 AccountService.AccountDS.Save(Package.Account);
@@ -472,17 +477,25 @@ namespace Bronya.Services
 
             table = Package.Account.SelectedTable;
 
-            var times = table != null
+            var times = table != default
                 ? BookService.GetAvailableTimesForBook(table, Package.Account)
                 : BookService.GetAvailableTimesForBook(Package.Account);
 
-            var backCallback = table != null
+            var backCallback = table != default
                 ? $"/table/{table.Id}"
                 : $"/reset_all";
 
+            var paramText = Package.Account.SelectedBook == default
+                ? Package.Account.GetNewBookState()
+                : Package.Account.SelectedBook.GetEditState(Package.Account);
+
+            var footerText = table != default
+                ? $"Выбор времени на стол {table}:"
+                : $"Выбор времени:";
+
             return SendOrEdit(
-                $"{Package.Account.GetNewBookState()}" +
-                $"\r\n\r\n*Выбор времени:*",
+                $"{paramText}" +
+                $"\r\n\r\n*{footerText}*",
                 new InlineKeyboardConstructor()
                     .AddTimeButtons(times)
                     .AddButtonDown("🗑", backCallback)
@@ -544,9 +557,17 @@ namespace Bronya.Services
                     }).ToArray();
             }
 
+            var paramText = Package.Account.SelectedBook == default
+                ? Package.Account.GetNewBookState()
+                : Package.Account.SelectedBook.GetEditState(Package.Account);
+
+            var footerText = Package.Account.SelectedTime != default
+                ? $"Выбор стола на {Package.Account.SelectedTime.ToHHmm()}:"
+                : $"Выбор стола:";
+
             return SendOrEdit(
-                $"{Package.Account.GetNewBookState()}" +
-                $"\r\n\r\n*Выбор стола:*",
+                $"{paramText}" +
+                $"\r\n\r\n*{footerText}*",
                 new InlineKeyboardConstructor()
                     .AddHostesTableButtons(tables, Package.Account)
                     .AddButtonDown("🗑", $"/reset_all")

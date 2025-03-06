@@ -18,7 +18,7 @@ namespace Bronya.Dtos
             {
                 correctTime = correctTime.Add(Schedule.Step);
             }
-            if (AuthorizeService.Instance.GetRole(account) == RoleType.Hostes)
+            if (account != default && AuthorizeService.Instance.GetRole(account) == RoleType.Hostes)
             {
                 correctTime = correctTime.Add(-Schedule.Step);
             }
