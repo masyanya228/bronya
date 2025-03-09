@@ -15,6 +15,9 @@ using Bronya.DomainServices;
 using Bronya.DomainServices.DomainStructure;
 using Bronya.Repositories.Implementations.Postgres;
 using Bronya.Repositories.RepositoryStructure;
+using Buratino.Xtensions;
+using System.Diagnostics;
+using System.Text;
 
 namespace Bronya
 {
@@ -49,6 +52,7 @@ namespace Bronya
             builder.Services.AddTransient(typeof(IDomainService<WorkSchedule>), typeof(PersistentDomainService<WorkSchedule>));
             builder.Services.AddTransient(typeof(IDomainService<Table>), typeof(TableDomainService));
             builder.Services.AddTransient(typeof(IDomainService<Book>), typeof(BookDomainService));
+            builder.Services.AddTransient(typeof(IDomainService<AliceDialog>), typeof(PersistentDomainService<AliceDialog>));
 
             builder.Services.AddSingleton(typeof(LogToFileService), new LogToFileService());
             CacheRegistrator.RegisterCaches(builder.Services);
@@ -62,13 +66,13 @@ namespace Bronya
                     options.LoginPath = PathString.FromUriComponent("/Security/LoginPage");
                     options.ReturnUrlParameter = "url";
                 });
-            builder.Services.AddControllers(config =>
-            {
-                var policy = new AuthorizationPolicyBuilder()
-                    .RequireAuthenticatedUser()
-                    .Build();
-                config.Filters.Add(new AuthorizeFilter(policy));
-            });
+            //builder.Services.AddControllers(config =>
+            //{
+            //    var policy = new AuthorizationPolicyBuilder()
+            //        .RequireAuthenticatedUser()
+            //        .Build();
+            //    config.Filters.Add(new AuthorizeFilter(policy));
+            //});
 
             builder.Services.AddSingleton(typeof(IQuartzProvider), typeof(QuartzProvider));
 

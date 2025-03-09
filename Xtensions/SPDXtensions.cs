@@ -65,6 +65,11 @@ namespace Buratino.Xtensions
             }
         }
 
+        public static T CastVal<T>(this object obj)
+        {
+            return (T)obj.Cast(typeof(T));
+        }
+
         public static object Cast(this object obj, Type target)
         {
             if (obj == null)
