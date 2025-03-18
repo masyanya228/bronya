@@ -35,6 +35,7 @@ namespace Bronya.Services
 
         private string AskPhone()
         {
+            Package.MessageId = default;
             return SendOrEdit(
                 $"{GetContactsForMenu()}" +
                 $"\r\nПожалуйста, поделитесь своим номером телефона, чтобы бронировать столы:".EscapeFormat(),
