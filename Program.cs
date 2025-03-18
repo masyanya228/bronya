@@ -132,21 +132,37 @@ namespace Bronya
         private static void SetupEmptyDB()
         {
             var accountDS = Container.GetDomainService<Account>(null);
-            var account = accountDS.GetAll(x => x.Name == "Root").SingleOrDefault();
-            if (account == default)
+            var rootAccount = accountDS.Get(AccountService.RootAccount.Id);
+            if (rootAccount == default)
             {
-                ConsoleXtensions.ColoredPrint("Empty DB. Setup root account", ConsoleColor.Red);
+                ConsoleXtensions.ColoredPrint("Empty DB. Setup Root account", ConsoleColor.Red);
                 accountDS.Repository.Insert(new()
                 {
                     Id = AccountService.RootAccount.Id,
                     Name = "Root",
                 });
+            }
+            var mainAccount = accountDS.Get(AccountService.MainTester.Id);
+            if (mainAccount == default)
+            {
+                ConsoleXtensions.ColoredPrint("Empty DB. Setup Main account", ConsoleColor.Red);
                 accountDS.Repository.Insert(new()
                 {
                     Id = AccountService.MainTester.Id,
                     TGTag = "morsw",
                     TGChatId = "1029089379",
                     Name = "Марсель",
+                });
+            }
+
+            var aliceRootAccount = accountDS.Get(AccountService.AliceRoot.Id);
+            if (aliceRootAccount == default)
+            {
+                ConsoleXtensions.ColoredPrint("Empty DB. Setup AliceRoot account", ConsoleColor.Red);
+                accountDS.Repository.Insert(new()
+                {
+                    Id = AccountService.AliceRoot.Id,
+                    Name = "AliceRoot",
                 });
             }
 

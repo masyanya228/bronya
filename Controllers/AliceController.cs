@@ -15,10 +15,13 @@ namespace Bronya.Controllers
     public class AliceController : Controller
     {
         public IDomainService<AliceDialog> AliceDialogDS { get; set; }
+        public BookService BookService { get; set; } = new BookService(AccountService.AliceRoot);
 
         private static string[] YesPhrases = ["да", "давай", "поехали", "погнали", "хорошо", "попробуем", "допустим"];
         private static string[] NoPhrases = ["нет", "неправильно"];
         private static string[] ResetPhrases = ["отмена", "заново", "передумал"];
+        private static string[] BookPhrases = ["забронировать", "бронь", "стол", "столик", "забронить", "бронить", "броним", "забронируем", "бронировать","бронить","заброним"];
+
 
         public AliceController(IDomainService<AliceDialog> aliceDialogDS)
         {
@@ -61,7 +64,7 @@ namespace Bronya.Controllers
                     State = AliceDialogState.AskIntent,
                     SessionId = request.Session.SessionId,
                     UserId = request.Session.UserId,
-                    Name = oldUser.Name
+                    Name = oldUser?.Name
                 });
 
                 if (oldUser != default)
@@ -97,7 +100,7 @@ namespace Bronya.Controllers
                 {
                     if (request.Request.Type == RequestType.SimpleUtterance)
                     {
-                        if (request.Request.OriginalUtterance == "забронировать стол")
+                        if (request.Request.OriginalUtterance.FSpl(" ").Intersect(BookPhrases).Any())
                         {
                             dialogSession.State = AliceDialogState.AskSeatAmount;
                             AliceDialogDS.Save(dialogSession);
@@ -285,11 +288,12 @@ namespace Bronya.Controllers
                                 dialogSession.State = AliceDialogState.CheckTime;
                                 dialogSession.Time = time;
                                 AliceDialogDS.Save(dialogSession);
-                                return request.Reply($"Правильно ли я вас понял. В {time:HH:mm}");
+                                return request.Reply($"В {time:HH:mm}, верно?");
                             }
                             else
                             {
                                 dialogSession.Time = time;
+                                dialogSession.State = AliceDialogState.End;
                                 AliceDialogDS.Save(dialogSession);
 
                                 var number = dialogSession.SeatAmount == 1
@@ -306,6 +310,9 @@ namespace Bronya.Controllers
                     {
                         if (request.Request.OriginalUtterance.FSpl(" ").Intersect(YesPhrases).Any())
                         {
+                            dialogSession.State = AliceDialogState.End;
+                            AliceDialogDS.Save(dialogSession);
+
                             var number = dialogSession.SeatAmount == 1
                                     ? "одного гостя"
                                     : dialogSession.SeatAmount.TrueNumbers("гостя", "-х гостей", "гостей");
@@ -317,6 +324,13 @@ namespace Bronya.Controllers
                             AliceDialogDS.Save(dialogSession);
                             return request.Reply($"Извините пожалуйста. Скажите ещё раз, на какое время вам нужен стол?");
                         }
+                    }
+                }
+                else if (dialogSession.State == AliceDialogState.End)
+                {
+                    if (request.Request.Type == RequestType.SimpleUtterance)
+                    {
+                        return request.Reply($"Ждём вас в нашем заведении!", true);
                     }
                 }
             }
@@ -335,6 +349,16 @@ namespace Bronya.Controllers
             }
 
             return total;
+        }
+
+        public Book SaveBook(AliceDialog dialog)
+        {
+            if (!BookService.TimeByStepValidation(dialog.Time, out DateTime closest))
+            {
+                dialog.Time = closest;
+            }
+            var availableTimes = BookService.GetAvailableTimesForBook(AccountService.AliceRoot);
+            return null;
         }
     }
 }

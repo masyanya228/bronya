@@ -4,14 +4,16 @@ using Bronya.DomainServices.DomainStructure;
 using Bronya.Dtos;
 using Bronya.Entities;
 
+using Buratino.Xtensions;
+
 namespace Bronya.Services
 {
     public class BookService
     {
         public IDomainService<Book> BookDS { get; set; }
-        public IDomainService<Table> TableDS {  get; set; }
-        public WorkScheduleService ScheduleService {  get; set; }
-        
+        public IDomainService<Table> TableDS { get; set; }
+        public WorkScheduleService ScheduleService { get; set; }
+
         private SmenaDto smena;
         public SmenaDto Smena
         {
@@ -269,6 +271,36 @@ namespace Bronya.Services
                 }
             }
             return times.ToArray();
+        }
+
+        public bool TimeByStepValidation(DateTime dateTime, out DateTime closest)
+        {
+            if (dateTime.Between_LTE_GTE(Smena.SmenaStart, Smena.SmenaEnd))
+            {
+                var diff = dateTime.Subtract(Smena.SmenaStart).Divide(Smena.Schedule.Step);
+                if (diff == (int)diff)
+                {
+                    closest = dateTime;
+                    return true;
+                }
+                else
+                {
+                    closest = dateTime.Add(Smena.Schedule.Step * (diff - (int)diff));
+                    return false;
+                }
+            }
+            else
+            {
+                if (dateTime < Smena.SmenaStart)
+                {
+                    closest = Smena.SmenaStart;
+                }
+                else
+                {
+                    TimeByStepValidation(Smena.SmenaStart.AddDays(1), out closest);
+                }
+                return false;
+            }
         }
     }
 }

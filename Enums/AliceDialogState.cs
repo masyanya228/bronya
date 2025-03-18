@@ -46,5 +46,6 @@
         /// Проверяем время
         /// </summary>
         CheckTime,
+        End,
     }
 }

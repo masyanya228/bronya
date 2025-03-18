@@ -15,6 +15,7 @@ namespace Bronya.Services
     {
         public static readonly Account RootAccount = new() { Id = new Guid("da8c13be-6d97-4287-b47e-34caada8d315") };
         public static readonly Account MainTester = new() { Id = new Guid("4be29f89-f887-48a1-a8af-cad15d032758") };
+        public static readonly Account AliceRoot = new() { Id = new Guid("feb095a9-25be-42ae-b6a7-a48243636f37") };
         public IDomainService<Account> AccountDS { get; set; }
         public ICacheService<Account> AccountCacheService { get; set; }
 
