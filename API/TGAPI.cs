@@ -61,6 +61,10 @@ namespace Bronya.API
                         botClient.AnswerCallbackQueryAsync(cqId, "Помедленнее");
                     }
                 }
+                else if(sumText.Contains("message can't be deleted for everyone"))
+                {
+
+                }
                 else
                 {
                     if (update.Type == UpdateType.Message)
@@ -154,7 +158,7 @@ namespace Bronya.API
         public string Delete(long chatId, int messageId)
         {
             client.DeleteMessageAsync(chatId, messageId)
-                .GetAwaiter().GetResult();
+                    .GetAwaiter().GetResult();
             return string.Empty;
         }
 
