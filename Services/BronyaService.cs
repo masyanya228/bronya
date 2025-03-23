@@ -85,10 +85,12 @@ namespace Bronya.Services
         private string BarMenu()
         {
             return SendOrEdit(
-                $"{GetStaticText()}" +
-                $"\r\n\r\n *тут будут картинки с меню*",
+                $"{GetStaticText()}",
                 new InlineKeyboardConstructor()
-                    .AddButtonDown("Назад", $"/menu"));
+                    .AddButtonDown("Назад", $"/menu"),
+                null,
+                GetMenu()
+            );
         }
 
         [ApiPointer("socmedia")]

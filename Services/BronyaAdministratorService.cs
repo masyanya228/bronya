@@ -29,10 +29,59 @@ namespace Bronya.Services
                     .AddButtonDown("Изменить картинку столов", "/select_table_schema")
                     .AddButtonDown("Изменить постоянный текст", "/select_static_text")
                     .AddButtonDown("Изменить правила", "/select_rules")
-                    .AddButtonDown("Изменить меню заведения", "/select_menu_pdf")
+                    .AddButtonDown("Изменить меню заведения", "/select_menu")
                     .AddButtonDownIf(() => Package.Account.Id == new Guid("4be29f89-f887-48a1-a8af-cad15d032758"), "Роль", "/show_role")
                 );
         }
+
+        #region menu
+        [ApiPointer("select_menu")]
+        private string SelectMenu()
+        {
+            AccountService.SetWaiting(Package.Account, WaitingText.SetMenu);
+
+            return SendOrEdit(
+                "Текущее меню" +
+                "\r\n\r\nПришлите новое меню в виде PDF файла:",
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("Отмена", "/cancel_menu"),
+                null,
+                GetMenu()
+            );
+        }
+
+        [ApiPointer("cancel_menu")]
+        private string CancelMenu()
+        {
+            AccountService.ResetWaiting(Package.Account);
+            return Menu();
+        }
+
+        [ApiPointer("set_menu")]
+        private string SetMenu()
+        {
+            if (Package.Update.Message.Type == MessageType.Document)
+            {
+                var fileId = Package.Update.Message.Document.FileId;
+                if (string.IsNullOrEmpty(fileId))
+                    throw new Exception("Не получилось обработать PDF");
+                MenuImageDS.Save(new MenuImage() { Name = fileId });
+                AccountService.ResetWaiting(Package.Account);
+
+                return SendOrEdit(
+                    "Новое меню установлено",
+                    new InlineKeyboardConstructor()
+                        .AddButtonDown("В меню", "/menu"),
+                    null,
+                    GetMenu()
+                );
+            }
+            else
+            {
+                return SelectMenu();
+            }
+        }
+        #endregion
 
         #region rules
         [ApiPointer("select_rules")]

@@ -89,5 +89,11 @@ namespace Bronya.Enums
         /// </summary>
         [ApiPointer("set_rules")]
         SetRules,
+
+        /// <summary>
+        /// Администратор устанавливает меню в PDF
+        /// </summary>
+        [ApiPointer("set_menu")]
+        SetMenu,
     }
 }

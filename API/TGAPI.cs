@@ -89,7 +89,7 @@ namespace Bronya.API
             return Task.CompletedTask;
         }
 
-        public string SendOrEdit(DataPackage package, string text, IReplyConstructor replyConstructor = null, ParseMode? parseMode = default, TGInputImplict file = null)
+        public string SendOrEdit(DataPackage package, string text, IReplyConstructor replyConstructor = null, ParseMode? parseMode = default, TGInputImplict file = default)
         {
             if (parseMode == default)
                 parseMode = ParseMode.MarkdownV2;
@@ -102,7 +102,7 @@ namespace Bronya.API
                 {
                     if (package?.Update?.Type == UpdateType.CallbackQuery)
                     {
-                        if (package?.Update?.CallbackQuery?.Message?.Type == MessageType.Photo)
+                        if (package?.Update?.CallbackQuery?.Message?.Type != MessageType.Text)
                         {
                             var msgId = Send(package.ChatId, text, parseMode, replyConstructor);
                             Delete(package.ChatId, package.MessageId);
@@ -166,8 +166,14 @@ namespace Bronya.API
         {
             string hash = GetHash(image);
 
-            var result = client.SendPhotoAsync(chatId, image.GetInputOnlineFile(StreamFilesCacheService, hash), caption, parseMode, null, null, null, null, null, replyConstructor?.GetMarkup() ?? new ReplyKeyboardRemove())
-                .GetAwaiter().GetResult();
+            var result = image.MediaType switch
+            {
+                InputMediaType.Photo => client.SendPhotoAsync(chatId, image.GetInputMedia(StreamFilesCacheService, hash), caption, parseMode, null, null, null, null, null, replyConstructor?.GetMarkup() ?? new ReplyKeyboardRemove())
+                    .GetAwaiter().GetResult(),
+                InputMediaType.Document => client.SendDocumentAsync(chatId, image.GetInputMedia(StreamFilesCacheService, hash), null, caption, parseMode, null, null, null, null, null, null, replyConstructor?.GetMarkup() ?? new ReplyKeyboardRemove())
+                    .GetAwaiter().GetResult(),
+                _ => throw new NotImplementedException("Не получилось отправить такое сообщение")
+            };
 
             if (image.FileId == default && hash != default)
             {
@@ -183,7 +189,14 @@ namespace Bronya.API
 
             string hash = GetHash(image);
 
-            var result = client.EditMessageMediaAsync(chatId, messageId, new InputMediaPhoto(image.GetInputMedia(StreamFilesCacheService, hash)) { Caption = caption, ParseMode = parseMode }, inlineKeyboardConstructor?.GetMarkup() as InlineKeyboardMarkup)
+            InputMediaBase media = image.MediaType switch
+            {
+                InputMediaType.Photo => new InputMediaPhoto(image.GetInputMedia(StreamFilesCacheService, hash)) { Caption = caption, ParseMode = parseMode },
+                InputMediaType.Document => new InputMediaDocument(image.GetInputMedia(StreamFilesCacheService, hash)) { Caption = caption, ParseMode = parseMode },
+                _ => throw new NotImplementedException()
+            };
+
+            var result = client.EditMessageMediaAsync(chatId, messageId, media, inlineKeyboardConstructor?.GetMarkup() as InlineKeyboardMarkup)
                 .GetAwaiter().GetResult();
 
             if (image.FileId == default && hash != default)

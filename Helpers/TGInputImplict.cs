@@ -2,6 +2,7 @@
 using Bronya.Dtos;
 
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.InputFiles;
 
 namespace Bronya.Helpers
@@ -11,6 +12,8 @@ namespace Bronya.Helpers
         public Stream Stream { get; set; }
 
         public string FileId { get; set; }
+
+        public InputMediaType MediaType { get; set; } = InputMediaType.Photo;
 
         public TGInputImplict(Stream stream)
         {

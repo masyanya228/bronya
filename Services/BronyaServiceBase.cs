@@ -32,6 +32,7 @@ namespace Bronya.Services
         public IDomainService<TableSchemaImage> TableSchemaImageDS { get; set; }
         public IDomainService<StaticText> StaticTextDS { get; set; }
         public IDomainService<RulesText> RulesTextDS { get; set; }
+        public IDomainService<MenuImage> MenuImageDS { get; set; }
         
         private IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> _availablePointers = null;
         public IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> AvailablePointers
@@ -71,6 +72,7 @@ namespace Bronya.Services
             TableSchemaImageDS = Container.GetDomainService<TableSchemaImage>(account);
             StaticTextDS = Container.GetDomainService<StaticText>(account);
             RulesTextDS = Container.GetDomainService<RulesText>(account);
+            MenuImageDS = Container.GetDomainService<MenuImage>(account);
             LogService = new(account);
             ConversationLogService = new(account);
             TGAPI = tGAPI;
@@ -366,6 +368,17 @@ namespace Bronya.Services
         {
             using var query = RulesTextDS.GetAllQuery();
             return (query.Query.OrderByDescending(x => x.TimeStamp).FirstOrDefault()?.Name ?? "1. Быть трезвым\r\n2. Без детей\r\n3. ...").EscapeFormat();
+        }
+
+        protected TGInputImplict GetMenu()
+        {
+            using var query = MenuImageDS.GetAllQuery();
+            var fileId = query.Query.OrderByDescending(x => x.TimeStamp).FirstOrDefault()?.Name;
+            if (fileId == default)
+            {
+                return null;
+            }
+            return new TGInputImplict(fileId) { MediaType = InputMediaType.Document };
         }
     }
 }
