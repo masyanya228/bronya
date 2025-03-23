@@ -7,6 +7,7 @@ using Bronya.Dtos;
 using Bronya.Entities;
 using Bronya.Enums;
 using Bronya.Helpers;
+using Bronya.Xtensions;
 
 using Buratino.Xtensions;
 
@@ -30,6 +31,7 @@ namespace Bronya.Services
         public ConversationLogService ConversationLogService { get; set; }
         public AccountService AccountService { get; set; }
 
+        public IDomainService<StaticText> StaticTextDS { get; set; }
         private IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> _availablePointers = null;
         public IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> AvailablePointers
         {
@@ -66,6 +68,7 @@ namespace Bronya.Services
             AccountService = new(account);
             BookService = new(account);
             TableSchemaImageDS = Container.GetDomainService<TableSchemaImage>(account);
+            StaticTextDS = Container.GetDomainService<StaticText>(account);
             LogService = new(account);
             ConversationLogService = new(account);
             TGAPI = tGAPI;
@@ -349,6 +352,12 @@ namespace Bronya.Services
                 error = "Неверный формат. Напишите время в формате *ч:м*";
                 return default;
             }
+        }
+
+        protected string GetStaticText()
+        {
+            using var query = StaticTextDS.GetAllQuery();
+            return (query.Query.OrderByDescending(x => x.TimeStamp).FirstOrDefault()?.Name ?? "+7(992)076-17-47").EscapeFormat();
         }
     }
 }

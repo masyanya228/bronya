@@ -23,7 +23,7 @@ namespace Bronya.Services
                 return AskPhone();
             }
             return SendOrEdit(
-                GetContactsForMenu(),
+                GetStaticText(),
                 new InlineKeyboardConstructor()
                     .AddButtonDown("Бронь", "/mybooklist")
                     .AddButtonDown("Правила", $"/rules")
@@ -37,8 +37,8 @@ namespace Bronya.Services
         {
             Package.MessageId = default;
             return SendOrEdit(
-                $"{GetContactsForMenu()}" +
                 $"\r\nПожалуйста, поделитесь своим номером телефона, чтобы бронировать столы:".EscapeFormat(),
+                $"{GetStaticText()}" +
                 new ReplyMarkupConstructor().
                     AddButtonDown("Поделиться телефоном", true)
             );
@@ -58,7 +58,7 @@ namespace Bronya.Services
         private string Rules()
         {
             return SendOrEdit(
-                $"{GetContactsForMenu()}" +
+                $"{GetStaticText()}" +
                 $"\r\n\r\n Правила заведения:" +
                 $"\r\n 1 трезвость" +
                 $"\r\n 2 без детей" +
@@ -71,7 +71,7 @@ namespace Bronya.Services
         private string BarMenu()
         {
             return SendOrEdit(
-                $"{GetContactsForMenu()}" +
+                $"{GetStaticText()}" +
                 $"\r\n\r\n *тут будут картинки с меню*",
                 new InlineKeyboardConstructor()
                     .AddButtonDown("Назад", $"/menu"));
@@ -81,7 +81,7 @@ namespace Bronya.Services
         private string SocialMedias()
         {
             return SendOrEdit(
-                $"{GetContactsForMenu()}",
+                $"{GetStaticText()}",
                 new InlineKeyboardConstructor()
                     .AddLinkDown("Insta", "https://www.instagram.com/greenplace_kzn")
                     .AddLinkDown("Threads", "https://www.threads.net/@greenplace_kzn")
@@ -100,14 +100,14 @@ namespace Bronya.Services
             if (books.Length != 0)
             {
                 return SendOrEdit(
-                    $"{GetContactsForMenu()}" +
+                    $"{GetStaticText()}" +
                     $"\r\nУ вас уже есть бронь. Чтобы забронировать еще, позвоните по телефону.".EscapeFormat(),
                     new InlineKeyboardConstructor()
                         .AddButtonDown("Назад", $"/menu")
                 );
             }
             return SendOrEdit(
-                $"{GetContactsForMenu()}",
+                $"{GetStaticText()}",
                 new InlineKeyboardConstructor()
                     .AddTableButtons(Package.Account)
                     .AddButtonDown("Назад", $"/menu"),
@@ -127,7 +127,7 @@ namespace Bronya.Services
             if (avalableTimes.Length == 0)
             {
                 return SendOrEdit(
-                    $"{GetContactsForMenu()}" +
+                    $"{GetStaticText()}" +
                     $"\r\n\r\n Стол: {table}" +
                     $"\r\n *Посадочных мест: {table.NormalSeatAmount}*" +
                     $"\r\n\r\n К сожалению этот стол уже нельзя забронировать. Выберите пожалуйста другой.".EscapeFormat(),
@@ -139,7 +139,7 @@ namespace Bronya.Services
             }
 
             return SendOrEdit(
-                $"{GetContactsForMenu()}" +
+                $"{GetStaticText()}" +
                 $"\r\n\r\n Стол: {table}" +
                 $"\r\n *Посадочных мест: {table.NormalSeatAmount}*",
                 new InlineKeyboardConstructor()
@@ -161,7 +161,7 @@ namespace Bronya.Services
             AccountService.AccountDS.Save(Package.Account);
 
             return SendOrEdit(
-                $"{GetContactsForMenu()}" +
+                $"{GetStaticText()}" +
                 $"\r\n\r\n Стол: {Package.Account.SelectedTable}" +
                 $"\r\n *Посадочных мест: {Package.Account.SelectedTable.NormalSeatAmount}*" +
                 $"\r\n На {Package.Account.SelectedTime.ToddMM_HHmm()}",
@@ -181,7 +181,7 @@ namespace Bronya.Services
             if (!BookService.GetAvailableTimesForBook(Package.Account.SelectedTable, Package.Account).Contains(Package.Account.SelectedTime))
             {
                 return SendOrEdit(
-                    $"{GetContactsForMenu()}" +
+                    $"{GetStaticText()}" +
                     $"\r\n\r\n Похоже кто-то успел раньше вас забронировать стол на это время. Выберите другой столик или время :)".EscapeFormat(),
                     new InlineKeyboardConstructor()
                         .AddButtonDown("Другой столик", $"/book")
@@ -211,7 +211,7 @@ namespace Bronya.Services
             }
 
             return SendOrEdit(
-                $"{GetContactsForMenu()}" +
+                $"{GetStaticText()}" +
                 $"\r\n\r\n Вы забронировали стол: {book.Table}" +
                 $"\r\n *На {book.ActualBookStartTime.ToddMM_HHmm()}" +
                 $"\r\n Гостей: {book.SeatAmount}*",
@@ -235,13 +235,13 @@ namespace Bronya.Services
             if (!BookService.CanCancel(book))
             {
                 return SendOrEdit(
-                    $"{GetContactsForMenu()}" +
+                    $"{GetStaticText()}" +
                     $"\r\n\r\n *Бронь не получится отменить*",
                     new InlineKeyboardConstructor()
                         .AddButtonDown("Назад", $"/mybooklist"));
             }
             return SendOrEdit(
-                $"{GetContactsForMenu()}" +
+                $"{GetStaticText()}" +
                 $"\r\n\r\n *Отменить бронь на {book.ActualBookStartTime.ToddMM_HHmm()}?*",
                 new InlineKeyboardConstructor()
                     .AddButtonDown("Отменить", $"/cancel/{book.Id}")
@@ -263,7 +263,7 @@ namespace Bronya.Services
             else
             {
                 return SendOrEdit(
-                    $"{GetContactsForMenu()}" +
+                    $"{GetStaticText()}" +
                     $"\r\n\r\n *Бронь не получилось перенести*",
                     new InlineKeyboardConstructor()
                         .AddButtonDown("Назад", $"/mybook/{book.Id}"));
@@ -281,14 +281,14 @@ namespace Bronya.Services
             if (!BookService.CanMove(book, Package.Account))
             {
                 return SendOrEdit(
-                    $"{GetContactsForMenu()}" +
+                    $"{GetStaticText()}" +
                     $"\r\n\r\n *Бронь не получится перенести*",
                     new InlineKeyboardConstructor()
                         .AddButtonDown("Назад", $"/mybook/{book.Id}"));
             }
             var newTime = BookService.GetTimeAfterMove(book);
             return SendOrEdit(
-                $"{GetContactsForMenu()}" +
+                $"{GetStaticText()}" +
                 $"\r\n\r\n Перенести бронь на {newTime.ToddMM_HHmm()}?",
                 new InlineKeyboardConstructor()
                     .AddButtonDown("Перенести", $"/move_book/{book.Id}")
@@ -310,7 +310,7 @@ namespace Bronya.Services
             else
             {
                 return SendOrEdit(
-                    $"{GetContactsForMenu()}" +
+                    $"{GetStaticText()}" +
                     $"\r\n\r\n *Бронь не получилось перенести*",
                     new InlineKeyboardConstructor()
                         .AddButtonDown("Назад", $"/mybook/{book.Id}"));
@@ -330,7 +330,7 @@ namespace Bronya.Services
             }
 
             return SendOrEdit(
-                $"{GetContactsForMenu()}" +
+                $"{GetStaticText()}" +
                 $"\r\n\r\n Ваши брони:",
                 new InlineKeyboardConstructor()
                     .AddButtonDown("+Новая бронь", $"/book")
@@ -343,14 +343,9 @@ namespace Bronya.Services
         {
             return SendOrEdit(
                 $"Для того, чтобы забронировать стол на такое количество гостей, позвоните администратору:".EscapeFormat() +
-                $"\r\n{GetContactsForMenu()}",
+                $"\r\n{GetStaticText()}",
                 new InlineKeyboardConstructor()
                     .AddButtonDown("Главное меню", "/menu"));
-        }
-
-        private static string GetContactsForMenu()
-        {
-            return "+7(992)076-17-47".EscapeFormat();
         }
     }
 }

@@ -27,12 +27,50 @@ namespace Bronya.Services
                     .AddButtonDown("График работы", "/work_schedule")
                     .AddButtonDown("🔲 Столы", "/tables")
                     .AddButtonDown("Изменить картинку столов", "/select_table_schema")
-                    .AddButtonDown("Изменить постоянный текст", "/select_text")
+                    .AddButtonDown("Изменить постоянный текст", "/select_static_text")
                     .AddButtonDown("Изменить правила", "/select_rules")
                     .AddButtonDown("Изменить меню заведения", "/select_menu_pdf")
                     .AddButtonDownIf(() => Package.Account.Id == new Guid("4be29f89-f887-48a1-a8af-cad15d032758"), "Роль", "/show_role")
                 );
         }
+
+        #region static text
+        [ApiPointer("select_static_text")]
+        private string SelectStaticText()
+        {
+            Package.Account.Waiting = WaitingText.SetStatickText;
+            AccountService.AccountDS.Save(Package.Account);
+
+            return SendOrEdit(
+                "Текущий текст:" +
+                $"\r\n{GetStaticText()}" +
+                "\r\n\r\nНапишите новый постоянный текст:",
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("Отмена", "/cancel_static_text")
+            );
+        }
+
+        [ApiPointer("cancel_static_text")]
+        private string CancelStaticText()
+        {
+            AccountService.ResetWaiting(Package.Account);
+            return Menu();
+        }
+
+        [ApiPointer("set_static_text")]
+        private string SetStaticText()
+        {
+            StaticTextDS.Save(new StaticText() { Name = Package.Update.Message.Text });
+            AccountService.ResetWaiting(Package.Account);
+
+            return SendOrEdit(
+                "Новый постоянный текст установлен:" +
+                $"\r\n{GetStaticText()}",
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("В меню", "/menu")
+            );
+        }
+        #endregion
 
         #region schema
         [ApiPointer("cancel_select_table_schema")]

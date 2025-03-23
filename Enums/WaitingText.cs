@@ -71,5 +71,11 @@ namespace Bronya.Enums
         /// </summary>
         [ApiPointer("set_table_name")]
         TableName,
+
+        /// <summary>
+        /// Администратор устанавливает статичный текст
+        /// </summary>
+        [ApiPointer("set_static_text")]
+        SetStatickText,
     }
 }
