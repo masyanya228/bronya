@@ -26,11 +26,10 @@ namespace Bronya.Services
         public DataPackage Package { get; set; }
         public LogToFileService LogToFileService { get; }
         public TGAPI TGAPI { get; set; }
-        public IDomainService<TableSchemaImage> TableSchemaImageDS { get; set; }
         public LogService LogService { get; set; }
         public ConversationLogService ConversationLogService { get; set; }
         public AccountService AccountService { get; set; }
-
+        public IDomainService<TableSchemaImage> TableSchemaImageDS { get; set; }
         public IDomainService<StaticText> StaticTextDS { get; set; }
         private IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> _availablePointers = null;
         public IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> AvailablePointers

@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.FileProviders;
 using Bronya.Entities;
 using Bronya.Services;
@@ -15,9 +13,6 @@ using Bronya.DomainServices;
 using Bronya.DomainServices.DomainStructure;
 using Bronya.Repositories.Implementations.Postgres;
 using Bronya.Repositories.RepositoryStructure;
-using Buratino.Xtensions;
-using System.Diagnostics;
-using System.Text;
 
 namespace Bronya
 {
