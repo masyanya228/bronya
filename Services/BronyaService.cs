@@ -3,6 +3,7 @@ using Bronya.Xtensions;
 using Bronya.API;
 using Bronya.Helpers;
 using Bronya.Attributes;
+using Bronya.Enums;
 
 namespace Bronya.Services
 {
@@ -35,10 +36,13 @@ namespace Bronya.Services
 
         private string AskPhone()
         {
+            Package.Account.Waiting = WaitingText.AskPhone;
+            AccountService.AccountDS.Save(Package.Account);
             Package.MessageId = default;
             return SendOrEdit(
-                $"\r\nПожалуйста, поделитесь своим номером телефона, чтобы бронировать столы:".EscapeFormat(),
                 $"{GetStaticText()}" +
+                $"\r\nПожалуйста, поделитесь своим номером телефона, чтобы бронировать столы.".EscapeFormat() +
+                $"\r\n_Кнопка внизу_",
                 new ReplyMarkupConstructor().
                     AddButtonDown("Поделиться телефоном", true)
             );
@@ -47,11 +51,23 @@ namespace Bronya.Services
         [ApiPointer("set_phone")]
         private string SetPhone(string phone)
         {
+            Package.Account.Waiting = WaitingText.None;
             Package.Account.Phone = AccountService.ParseNumber(phone);
             Package.Account.IsPhoneRequested = true;
             AccountService.AccountDS.Save(Package.Account);
             SendOrEdit("Спасибо! Теперь вы можете забронировать стол.".EscapeFormat());
             return Menu();
+        }
+
+        [ApiPointer("phone_by_text")]
+        private string SetPhoneByText(string phone)
+        {
+            return SendOrEdit(
+                $"\r\nНе нужно вводить телефон вручную. Пожалуйста, нажмите кнопку 'Поделиться телефоном'.".EscapeFormat() +
+                $"\r\n_Кнопка внизу_",
+                new ReplyMarkupConstructor().
+                    AddButtonDown("Поделиться телефоном", true)
+            );
         }
 
         [ApiPointer("rules")]

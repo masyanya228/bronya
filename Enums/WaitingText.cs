@@ -73,6 +73,12 @@ namespace Bronya.Enums
         TableName,
 
         /// <summary>
+        /// У пользователя запрашивается телефон. Этот атрибут для метода, который указывает на ошибочное заполнение телефона
+        /// </summary>
+        [ApiPointer("phone_by_text")]
+        AskPhone,
+
+        /// <summary>
         /// Администратор устанавливает статичный текст
         /// </summary>
         [ApiPointer("set_static_text")]
