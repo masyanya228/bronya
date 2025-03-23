@@ -315,8 +315,6 @@ namespace Bronya.Services
                 Package.Account.Roles.Add(newRole);
             }
             AccountService.AccountDS.Save(Package.Account);
-            Container.Get<ICacheService<Account>>().Remove(Package.Account);
-
             return ShowRole();
         }
         

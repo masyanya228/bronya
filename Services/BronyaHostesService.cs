@@ -35,7 +35,7 @@ namespace Bronya.Services
                     .AddButtonDown("🔲 Столы", "/tables")
                     .AddButtonDown("➕📋 Новая бронь", "/book_select_time")
                     .AddButtonDown("👤Гости", "/get_accounts")
-                    .AddButtonDownIf(() => Package.Account.Id == new Guid("4be29f89-f887-48a1-a8af-cad15d032758"), "Роль", "/show_role")
+                    .AddButtonDownIf(() => Package.Account == AccountService.MainTester, "Роль", "/show_role")
                 );
         }
 
@@ -1004,7 +1004,9 @@ namespace Bronya.Services
             Package.Account.SelectedAccount = default;
             AccountService.AccountDS.Save(Package.Account);
 
-            selectedAccount.CardNumber = AccountService.ParseNumber(card);
+            selectedAccount.CardNumber = Package.Account != AccountService.MainTester && selectedAccount == AccountService.MainTester
+                ? selectedAccount.CardNumber
+                : AccountService.ParseNumber(card);
             AccountService.AccountDS.Save(selectedAccount);
             return Account(selectedAccount);
         }

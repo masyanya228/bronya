@@ -14,7 +14,7 @@ namespace Bronya.Services
     public class AccountService
     {
         public static readonly Account RootAccount = new() { Id = new Guid("da8c13be-6d97-4287-b47e-34caada8d315") };
-        public static readonly Account MainTester = new() { Id = new Guid("4be29f89-f887-48a1-a8af-cad15d032758") };
+        public static readonly Account MainTester = new() { Id = new Guid("4be29f89-f887-48a1-a8af-cad15d032758"), TGChatId = "1029089379" };
         public static readonly Account AliceRoot = new() { Id = new Guid("feb095a9-25be-42ae-b6a7-a48243636f37") };
         public IDomainService<Account> AccountDS { get; set; }
         public ICacheService<Account> AccountCacheService { get; set; }
@@ -28,7 +28,7 @@ namespace Bronya.Services
         public Account GetAccount(Update update)
         {
             var chatId = update.Message?.Chat?.Id ?? update.CallbackQuery?.Message?.Chat?.Id ?? throw new NotImplementedException("Такой тип события не поддерживается");
-            var acc = AccountCacheService.Get(() => GetAccountByChatId(chatId), chatId.ToString());
+            Account acc = GetAccountWithCache(chatId.ToString());
             if (acc is null)
             {
                 string name = string.Empty;
@@ -57,9 +57,14 @@ namespace Bronya.Services
             return acc;
         }
 
-        public Account GetAccountByChatId(long chatId)
+        public Account GetAccountWithCache(string chatId)
         {
-            return AccountDS.GetAll().Where(x => x.TGChatId == chatId.ToString()).SingleOrDefault();
+            return AccountCacheService.Get(() => GetAccountByChatId(chatId), chatId);
+        }
+
+        public Account GetAccountByChatId(string chatId)
+        {
+            return AccountDS.GetAll().Where(x => x.TGChatId == chatId).SingleOrDefault();
         }
 
         public IEnumerable<Account> FindAccount(string fullName, bool allowOnlyName)

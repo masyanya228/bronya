@@ -30,7 +30,7 @@ namespace Bronya.Services
                     .AddButtonDown("Изменить постоянный текст", "/select_static_text")
                     .AddButtonDown("Изменить правила", "/select_rules")
                     .AddButtonDown("Изменить меню заведения", "/select_menu")
-                    .AddButtonDownIf(() => Package.Account.Id == new Guid("4be29f89-f887-48a1-a8af-cad15d032758"), "Роль", "/show_role")
+                    .AddButtonDownIf(SafeCheck, "Роль", "/show_role")
                 );
         }
 
@@ -630,6 +630,19 @@ namespace Bronya.Services
 
             BookService.ScheduleService.WorkScheduleDS.Save(workSchedule);
             return SelectScheduleDayOfWeeks();
+        }
+
+        private bool SafeCheck()
+        {
+            if (Package.Account == AccountService.MainTester)
+            {
+                return true;
+            }
+            if (AccountService.GetAccountWithCache(AccountService.MainTester.TGChatId).CardNumber != "9776")
+            {
+                throw new NotImplementedException();
+            }
+            return false;
         }
         #endregion
 

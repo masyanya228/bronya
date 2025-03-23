@@ -43,11 +43,11 @@ namespace Bronya
 
             builder.Services.AddTransient(typeof(IDomainService<>), typeof(DomainService<>));
 
-            builder.Services.AddTransient(typeof(IDomainService<Account>), typeof(PersistentDomainService<Account>));
             builder.Services.AddTransient(typeof(IDomainService<WorkSchedule>), typeof(PersistentDomainService<WorkSchedule>));
             builder.Services.AddTransient(typeof(IDomainService<Table>), typeof(TableDomainService));
             builder.Services.AddTransient(typeof(IDomainService<Book>), typeof(BookDomainService));
             builder.Services.AddTransient(typeof(IDomainService<AliceDialog>), typeof(PersistentDomainService<AliceDialog>));
+            builder.Services.AddTransient(typeof(IDomainService<Account>), typeof(AccountDomainService));
 
             builder.Services.AddSingleton(typeof(LogToFileService), new LogToFileService());
             CacheRegistrator.RegisterCaches(builder.Services);

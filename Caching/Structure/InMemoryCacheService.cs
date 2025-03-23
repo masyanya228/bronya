@@ -54,7 +54,7 @@ namespace Bronya.Caching.Structure
 
         public virtual void OnRemoved(CacheEntryRemovedArguments removedArguments)
         {
-            ConsoleXtensions.ColoredPrint($"{GetType().Name}: {removedArguments.CacheItem.Key}", ConsoleColor.DarkRed);
+            ConsoleXtensions.ColoredPrint($"{GetType().Name}: {removedArguments.CacheItem.Key}", ConsoleColor.White);
         }
 
         public virtual string GetKey(T entity)
