@@ -60,9 +60,7 @@ namespace Bronya.Services
             return SendOrEdit(
                 $"{GetStaticText()}" +
                 $"\r\n\r\n Правила заведения:" +
-                $"\r\n 1 трезвость" +
-                $"\r\n 2 без детей" +
-                $"\r\n 3 ",
+                $"\r\n{GetRules()}",
                 new InlineKeyboardConstructor()
                     .AddButtonDown("Назад", $"/menu"));
         }

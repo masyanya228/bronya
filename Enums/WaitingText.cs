@@ -77,5 +77,11 @@ namespace Bronya.Enums
         /// </summary>
         [ApiPointer("set_static_text")]
         SetStatickText,
+
+        /// <summary>
+        /// Администратор устанавливает правила для гостей заведения
+        /// </summary>
+        [ApiPointer("set_rules")]
+        SetRules,
     }
 }

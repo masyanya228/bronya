@@ -34,6 +34,44 @@ namespace Bronya.Services
                 );
         }
 
+        #region rules
+        [ApiPointer("select_rules")]
+        private string SelectRules()
+        {
+            Package.Account.Waiting = WaitingText.SetRules;
+            AccountService.AccountDS.Save(Package.Account);
+
+            return SendOrEdit(
+                "Текущие правила:" +
+                $"\r\n{GetRules()}" +
+                "\r\n\r\nНапишите новые правила:",
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("Отмена", "/cancel_rules")
+            );
+        }
+
+        [ApiPointer("cancel_rules")]
+        private string CancelRules()
+        {
+            AccountService.ResetWaiting(Package.Account);
+            return Menu();
+        }
+
+        [ApiPointer("set_rules")]
+        private string SetRules()
+        {
+            RulesTextDS.Save(new RulesText() { Name = Package.Update.Message.Text });
+            AccountService.ResetWaiting(Package.Account);
+
+            return SendOrEdit(
+                "Новые правила установлены:" +
+                $"\r\n{GetRules()}",
+                new InlineKeyboardConstructor()
+                    .AddButtonDown("В меню", "/menu")
+            );
+        }
+        #endregion
+
         #region static text
         [ApiPointer("select_static_text")]
         private string SelectStaticText()

@@ -31,6 +31,8 @@ namespace Bronya.Services
         public AccountService AccountService { get; set; }
         public IDomainService<TableSchemaImage> TableSchemaImageDS { get; set; }
         public IDomainService<StaticText> StaticTextDS { get; set; }
+        public IDomainService<RulesText> RulesTextDS { get; set; }
+        
         private IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> _availablePointers = null;
         public IEnumerable<KeyValuePair<MethodInfo, ApiPointer>> AvailablePointers
         {
@@ -68,6 +70,7 @@ namespace Bronya.Services
             BookService = new(account);
             TableSchemaImageDS = Container.GetDomainService<TableSchemaImage>(account);
             StaticTextDS = Container.GetDomainService<StaticText>(account);
+            RulesTextDS = Container.GetDomainService<RulesText>(account);
             LogService = new(account);
             ConversationLogService = new(account);
             TGAPI = tGAPI;
@@ -357,6 +360,12 @@ namespace Bronya.Services
         {
             using var query = StaticTextDS.GetAllQuery();
             return (query.Query.OrderByDescending(x => x.TimeStamp).FirstOrDefault()?.Name ?? "+7(992)076-17-47").EscapeFormat();
+        }
+
+        protected string GetRules()
+        {
+            using var query = RulesTextDS.GetAllQuery();
+            return (query.Query.OrderByDescending(x => x.TimeStamp).FirstOrDefault()?.Name ?? "1. Быть трезвым\r\n2. Без детей\r\n3. ...").EscapeFormat();
         }
     }
 }
