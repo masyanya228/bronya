@@ -5,6 +5,7 @@ using Bronya.Xtensions;
 using Bronya.API;
 using Bronya.Helpers;
 using Bronya.Attributes;
+using System.Data;
 
 namespace Bronya.Services
 {
@@ -629,12 +630,14 @@ namespace Bronya.Services
         {
             Package.Account.Waiting = WaitingText.Name;
             AccountService.AccountDS.Save(Package.Account);
+            var accs = new RelevantGuestListService().GetAccountsList();
 
             return SendOrEdit(
                 $"{Package.Account.GetNewBookState()}" +
-                $"\r\n\r\n*Имя брони:*" +
+                $"\r\n\r\n*Введите имя брони:*" +
                 $"\r\n_Пример: Иван, 1111_",
                 new InlineKeyboardConstructor()
+                    .AddHostesShowAccounts(accs.Take(6), "set_name_true")
                     .AddButtonDown("🗑", $"/reset_all")
                     .AddButtonRight("✏️⏱️", $"/book_select_time")
                     .AddButtonRight("✏️🔲", $"/select_table")
@@ -831,7 +834,7 @@ namespace Bronya.Services
         [ApiPointer("account_books")]
         private string AccountBooks(Account mainAccount)
         {
-            var books = BookService.GetBooks(mainAccount).GroupBy(x => x.ActualBookStartTime.Date).ToArray();
+            var books = BookService.GetBooks(mainAccount).GroupBy(x => x.ActualBookStartTime.Date).OrderBy(x => x.Key).ToArray();
             var constructor = new InlineKeyboardConstructor();
             foreach (var book in books)
             {
@@ -871,7 +874,11 @@ namespace Bronya.Services
         [ApiPointer("abbd")]
         private string AccountBooksByDate(Account mainAccount, DateTime date)
         {
-            var books = BookService.GetBooks(mainAccount).Where(x => x.ActualBookStartTime.Date == date.Date).ToArray();
+            var books = BookService.GetBooks(mainAccount)
+                .Where(x => x.ActualBookStartTime.Date == date.Date)
+                .OrderBy(x => x.ActualBookStartTime)
+                .ToArray();
+
             return SendOrEdit(
                 $"{mainAccount.GetCard()}" +
                 $"\r\nНесколько броней на {date.ToddMM()}",
