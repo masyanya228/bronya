@@ -109,7 +109,7 @@ namespace Bronya.Services
         [ApiPointer("set_rules")]
         private string SetRules()
         {
-            RulesTextDS.Save(new RulesText() { Name = Package.Update.Message.Text });
+            RulesTextDS.Save(new RulesText() { RuleText = Package.Update.Message.Text });
             AccountService.ResetWaiting(Package.Account);
 
             return SendOrEdit(

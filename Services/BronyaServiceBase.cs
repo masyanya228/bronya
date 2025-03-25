@@ -365,7 +365,7 @@ namespace Bronya.Services
         protected string GetRules()
         {
             using var query = RulesTextDS.GetAllQuery();
-            return (query.Query.OrderByDescending(x => x.TimeStamp).FirstOrDefault()?.Name ?? "1. Быть трезвым\r\n2. Без детей\r\n3. ...").EscapeFormat();
+            return (query.Query.OrderByDescending(x => x.TimeStamp).FirstOrDefault()?.RuleText ?? "1. Быть трезвым\r\n2. Без детей\r\n3. ...").EscapeFormat();
         }
 
         protected TGInputImplict GetMenu()

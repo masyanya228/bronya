@@ -18,7 +18,7 @@ namespace Bronya.Services
 
         public void LogEvent(string update)
         {
-            ConversationLogDS.Save(new ConversationLog() { Name = update });
+            ConversationLogDS.Save(new ConversationLog() { Name = update.Substring(0, Math.Min(update.Length, 255)) });
         }
     }
 }
