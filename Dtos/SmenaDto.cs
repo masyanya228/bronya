@@ -27,6 +27,13 @@ namespace Bronya.Dtos
                 : correctTime;
         }
 
+        public DateTime GetMaximumTimeToBook(Account account, SmenaDto smena)
+        {
+            return (account?.Roles?.Count ?? 0) > 0
+                ? smena.SmenaEnd.Subtract(smena.Schedule.Step * 2)
+                : smena.SmenaEnd.Subtract(smena.Schedule.MinPeriod);
+        }
+
         public WorkSchedule Schedule { get; set; }
     }
 }

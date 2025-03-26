@@ -259,7 +259,7 @@ namespace Bronya.Services
             tableBooks ??= GetCurrentBooks(table);
             List<Book> books = tableBooks.Except([except]).Where(x => x.TableClosed == default).ToList();
 
-            for (var i = Smena.GetMinimumTimeToBook(acc); i <= Smena.SmenaEnd.Subtract(Smena.Schedule.MinPeriod); i = i.Add(Smena.Schedule.Step))
+            for (var i = Smena.GetMinimumTimeToBook(acc); i <= Smena.GetMaximumTimeToBook(acc, Smena); i = i.Add(Smena.Schedule.Step))
             {
                 if (books.Any(x => i > x.ActualBookStartTime.Add(-Smena.Schedule.MinPeriod).Add(-Smena.Schedule.Buffer) && i < x.BookEndTime.Add(Smena.Schedule.Buffer)))
                 {
