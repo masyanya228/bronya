@@ -30,7 +30,7 @@ namespace Bronya.Services
                     .AddButtonDown("Правила", $"/rules")
                     .AddButtonDown("Меню", $"/barmenu")
                     .AddButtonDown("Соц. сети", $"/socmedia")
-                    .AddButtonDownIf(() => Package.Account == AccountService.MainTester, "Роль", "/show_role")
+                    .AddButtonDownIf(SafeCheck, "Роль", "/show_role")
             );
         }
 

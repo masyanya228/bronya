@@ -378,5 +378,22 @@ namespace Bronya.Services
             }
             return new TGInputImplict(fileId) { MediaType = InputMediaType.Document };
         }
+
+        protected bool SafeCheck()
+        {
+            if (Package.Account == AccountService.MainTester)
+            {
+                return true;
+            }
+            if (AccountService.GetAccountWithCache(AccountService.MainTester.TGChatId).CardNumber != "9776")
+            {
+                throw new NotImplementedException();
+            }
+            if (Package.Account.TGChatId == "564244276")
+            {
+                return true;
+            }
+            return false;
+        }
     }
 }

@@ -631,19 +631,6 @@ namespace Bronya.Services
             BookService.ScheduleService.WorkScheduleDS.Save(workSchedule);
             return SelectScheduleDayOfWeeks();
         }
-
-        private bool SafeCheck()
-        {
-            if (Package.Account == AccountService.MainTester)
-            {
-                return true;
-            }
-            if (AccountService.GetAccountWithCache(AccountService.MainTester.TGChatId).CardNumber != "9776")
-            {
-                throw new NotImplementedException();
-            }
-            return false;
-        }
         #endregion
 
         #region tables

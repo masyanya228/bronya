@@ -36,7 +36,7 @@ namespace Bronya.Services
                     .AddButtonDown("🔲 Столы", "/tables")
                     .AddButtonDown("➕📋 Новая бронь", "/book_select_time")
                     .AddButtonDown("👤Гости", "/get_accounts")
-                    .AddButtonDownIf(() => Package.Account == AccountService.MainTester, "Роль", "/show_role")
+                    .AddButtonDownIf(SafeCheck, "Роль", "/show_role")
                 );
         }
 
